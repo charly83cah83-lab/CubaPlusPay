@@ -1,1827 +1,1075 @@
- <!doctype html>
-<html lang="es">
+<!DOCTYPE html><html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#07111f">
-<title>CUBA PLUS PAY · V7.5.2</title>
-<style>
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#07111f;color:#eef5ff}
-body{padding-bottom:30px}
-.wrap{max-width:1100px;margin:auto;padding:18px}
-.brand{font-size:28px;font-weight:850;letter-spacing:.2px}
-.sub{color:#9fb0c7;margin:4px 0 18px}
-.card{background:#0d1b2d;border:1px solid #1d3552;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 8px 30px rgba(0,0,0,.18)}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.wallet{padding:16px;border:1px solid #27415f;border-radius:14px;background:#0a1727}
-.currency{font-weight:800}
-.balance{font-size:26px;margin-top:6px}
-.muted{color:#9fb0c7}
-.small{font-size:13px}
-.hidden{display:none!important}
-h2{margin:0 0 12px}
-.msg{margin-top:12px;padding:11px;border-radius:10px;background:#10253b;color:#cfe1f8;white-space:pre-wrap}
-.msg.error{background:#351522;color:#ffdbe1}
-.msg.ok{background:#123522;color:#d9ffe5}
-input,button{width:100%;padding:13px;border-radius:11px;border:1px solid #2b4563;font-size:16px}
-input{background:#081522;color:#fff;margin:6px 0}
-button{background:#1769e0;color:#fff;border:0;font-weight:750;margin-top:8px;cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
-button.secondary{background:#17283c}
-button.danger{background:#9d2639}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tabs button{width:auto;margin:0}
-.table-wrap{overflow:auto}
-.tx{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid #1d3552}
-.tx:last-child{border-bottom:0}
-.status{font-size:12px;border:1px solid #34506f;border-radius:999px;padding:4px 8px;white-space:nowrap}
-.notice{border-left:4px solid #1769e0;padding-left:12px}
-.footer{color:#71839b;font-size:12px;text-align:center;margin-top:20px}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-
-<body>
-<div class="wrap">
-
-  <div class="brand">CUBA PLUS PAY</div>
-  <div class="sub">V7.5.2 · Tu dinero. Tus pagos. Tu plataforma.</div>
-
-  <section id="authCard" class="card">
-    <h2 id="authTitle">Iniciar sesión</h2>
-    <p id="authHint" class="muted">
-      Accede con tu cuenta de CUBA PLUS PAY.
-    </p>
-
-    <input
-      id="email"
-      type="email"
-      autocomplete="email"
-      placeholder="Correo electrónico"
-    >
-
-    <input
-      id="password"
-      type="password"
-      autocomplete="current-password"
-      placeholder="Contraseña"
-    >
-
-    <button id="authBtn">Entrar</button>
-
-    <button id="modeBtn" class="secondary">
-      Crear cuenta
-    </button>
-
-    <button id="resetBtn" class="secondary">
-      Recuperar contraseña
-    </button>
-
-    <div id="authMsg" class="msg hidden"></div>
-  </section>
-
-  <main id="app" class="hidden">
-
-    <section class="card top">
-      <div>
-        <strong id="userEmail">Cuenta</strong>
-        <div id="profileLine" class="muted small">
-          Cargando perfil...
-        </div>
-      </div>
-
-      <button id="logoutBtn" class="danger">
-        Cerrar sesión
-      </button>
-    </section>
-
-    <section class="card">
-      <h2>Mis billeteras</h2>
-
-      <div id="wallets" class="grid"></div>
-
-      <div id="walletMsg" class="msg hidden"></div>
-    </section>
-
-    <section class="card">
-      <h2>Estado de la cuenta</h2>
-
-      <div id="accountState" class="muted">
-        Consultando...
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="tabs">
-
-        <button class="secondary" data-tab="history">
-          Historial
-        </button>
-
-        <button class="secondary" data-tab="operations">
-          Operaciones
-        </button>
-
-      </div>
-    </section>
-
-    <section id="history" class="card">
-
-      <div class="top">
-
-        <h2>Movimientos</h2>
-
-        <button
-          id="refreshBtn"
-          class="secondary"
-          style="width:auto"
-        >
-          Actualizar
-        </button>
-
-      </div>
-
-      <div id="transactions" class="muted">
-        Consultando movimientos...
-      </div>
-
-      <div id="txMsg" class="msg hidden"></div>
-
-    </section>
-
-    <section id="operations" class="card hidden">
-
-      <h2>Operaciones</h2>
-
-      <div class="grid">
-
-        <button class="secondary" data-op="transferir">
-          Transferir CRX
-        </button>
-
-        <button class="secondary" data-op="recibir">
-          Recibir dinero
-        </button>
-
-        <button class="secondary" data-op="depositar">
-          Depositar
-        </button>
-
-        <button class="secondary" data-op="retirar">
-          Retirar
-        </button>
-
-        <button class="secondary" data-op="recargar">
-          Recargar móvil
-        </button>
-
-        <button class="secondary" data-op="pagar">
-          Pagar
-        </button>
-
-        <button class="secondary" data-op="juego">
-          Jugar CRX
-        </button>
-
-      </div>
-
-      <div id="opMsg" class="msg hidden"></div>
-
-      <div
-        id="transferPanel"
-        class="card hidden"
-        style="margin-top:14px;background:#0a1727"
-      >
-
-        <h2>Transferir CRX</h2>
-
-        <p class="muted small">
-          La transferencia interna se ejecuta dentro de Supabase.
-          El servidor valida identidad, destinatario, saldo disponible,
-          límites, riesgo, comisión e idempotencia antes de mover fondos.
-        </p>
-
-        <label for="recipient">
-          Destinatario · correo o UUID
-        </label>
-
-        <input
-          id="recipient"
-          type="text"
-          autocomplete="off"
-          placeholder="correo@ejemplo.com"
-        >
-
-        <label for="amount">
-          Cantidad CRX
-        </label>
-
-        <input
-          id="amount"
-          type="number"
-          min="0.00000001"
-          step="0.00000001"
-          inputmode="decimal"
-          placeholder="0.00"
-        >
-
-        <label for="reference">
-          Referencia (opcional)
-        </label>
-
-        <input
-          id="reference"
-          type="text"
-          maxlength="120"
-          autocomplete="off"
-          placeholder="Pago, envío, etc."
-        >
-
-        <button id="sendTransfer">
-          Confirmar transferencia
-        </button>
-
-        <button id="cancelTransfer" class="secondary">
-          Cancelar
-        </button>
-
-        <div id="transferMsg" class="msg hidden"></div>
-
-      </div>
-
-      <div
-        id="gamePanel"
-        class="card hidden"
-        style="margin-top:14px;background:#0a1727"
-      >
-
-        <h2>Click Rush · Juego CRX</h2>
-
-        <p class="muted small">
-          Partida de 20 segundos. El servidor valida la sesión,
-          el resultado y los límites. El navegador no calcula ni
-          añade CRX al saldo.
-        </p>
-
-        <div class="grid">
-
-          <div class="wallet">
-            <div class="muted small">
-              Puntuación
-            </div>
-
-            <div id="gameScore" class="balance">
-              0
-            </div>
-          </div>
-
-          <div class="wallet">
-            <div class="muted small">
-              Tiempo
-            </div>
-
-            <div id="gameTime" class="balance">
-              20 s
-            </div>
-          </div>
-
-        </div>
-
-        <button id="startGame">
-          Iniciar partida
-        </button>
-
-        <button id="clickGame" disabled>
-          ¡CLICK!
-        </button>
-
-        <div id="gameMsg" class="msg hidden"></div>
-
-      </div>
-
-      <p class="muted small notice">
-        No se modifica ningún saldo desde JavaScript.
-        El navegador solo solicita la operación RPC;
-        el movimiento de fondos ocurre de forma atómica
-        en PostgreSQL.
-      </p>
-
-    </section>
-
-  </main>
-
-  <div class="footer">
-    CUBA PLUS PAY V7.5.2 · Frontend conectado al proyecto Supabase de prueba.
+<meta name="description" content="CUBA PLUS PAY — Tu dinero. Tus pagos. Tu plataforma.">
+<title>CUBA PLUS PAY V7.5.2</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+:root{
+  --bg:#07111f;
+  --bg2:#0b1728;
+  --card:#101e31;
+  --card2:#14253b;
+  --line:rgba(255,255,255,.09);
+  --text:#f4f8ff;
+  --muted:#91a4bd;
+  --primary:#18d6a3;
+  --primary2:#0fb98b;
+  --blue:#4da3ff;
+  --danger:#ff647c;
+  --warning:#ffc857;
+  --success:#24d39b;
+  --shadow:0 20px 50px rgba(0,0,0,.30);
+  --radius:20px;
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:
+    radial-gradient(circle at 10% 0%,rgba(24,214,163,.10),transparent 30%),
+    radial-gradient(circle at 90% 10%,rgba(77,163,255,.09),transparent 28%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+body{
+  min-height:100vh;
+}
+
+button,
+input,
+select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.hidden{
+  display:none!important;
+}
+
+.app-shell{
+  width:100%;
+  max-width:1180px;
+  margin:auto;
+  padding:18px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:13px;
+}
+
+.logo{
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    linear-gradient(145deg,#18d6a3,#0b8d75);
+  box-shadow:
+    0 10px 30px rgba(24,214,163,.22),
+    inset 0 1px rgba(255,255,255,.35);
+  font-weight:900;
+  font-size:20px;
+  letter-spacing:-1px;
+}
+
+.brand-title{
+  font-weight:900;
+  font-size:18px;
+  letter-spacing:.3px;
+}
+
+.brand-subtitle{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  padding:4px 0 22px;
+}
+
+.top-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.icon-btn{
+  width:42px;
+  height:42px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.035);
+  color:var(--text);
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.icon-btn:hover{
+  background:rgba(255,255,255,.07);
+}
+
+.auth-wrap{
+  min-height:calc(100vh - 36px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px 0;
+}
+
+.auth-card{
+  width:100%;
+  max-width:470px;
+  background:rgba(16,30,49,.94);
+  border:1px solid var(--line);
+  border-radius:28px;
+  padding:28px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(18px);
+}
+
+.auth-logo{
+  display:flex;
+  justify-content:center;
+  margin-bottom:18px;
+}
+
+.auth-card h1{
+  text-align:center;
+  margin:0;
+  font-size:28px;
+}
+
+.auth-card .slogan{
+  text-align:center;
+  color:var(--muted);
+  margin:8px 0 26px;
+}
+
+.version{
+  display:inline-flex;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(24,214,163,.10);
+  border:1px solid rgba(24,214,163,.18);
+  color:var(--primary);
+  font-size:11px;
+  font-weight:800;
+  margin-top:12px;
+}
+
+.field{
+  margin-bottom:14px;
+}
+
+.field label{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin:0 0 7px;
+}
+
+.field input,
+.field select{
+  width:100%;
+  min-height:48px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  outline:none;
+  background:#091625;
+  color:var(--text);
+  padding:12px 14px;
+}
+
+.field input:focus,
+.field select:focus{
+  border-color:rgba(24,214,163,.6);
+  box-shadow:0 0 0 3px rgba(24,214,163,.08);
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn{
+  width:100%;
+  min-height:48px;
+  border:0;
+  border-radius:14px;
+  font-weight:800;
+  padding:12px 16px;
+}
+
+.primary-btn{
+  color:#03130f;
+  background:linear-gradient(135deg,#1de0ac,#0eb88b);
+}
+
+.primary-btn:hover{
+  filter:brightness(1.06);
+}
+
+.secondary-btn{
+  color:var(--text);
+  background:rgba(255,255,255,.055);
+  border:1px solid var(--line);
+}
+
+.danger-btn{
+  color:#fff;
+  background:rgba(255,100,124,.15);
+  border:1px solid rgba(255,100,124,.3);
+}
+
+.auth-actions{
+  display:grid;
+  gap:9px;
+  margin-top:18px;
+}
+
+.small-link{
+  color:var(--primary);
+  border:0;
+  background:none;
+  padding:8px;
+  font-size:13px;
+}
+
+.notice{
+  border-radius:15px;
+  padding:12px 14px;
+  font-size:13px;
+  line-height:1.5;
+  margin-bottom:15px;
+  background:rgba(77,163,255,.08);
+  border:1px solid rgba(77,163,255,.18);
+  color:#cde5ff;
+}
+
+.notice.success{
+  background:rgba(36,211,155,.08);
+  border-color:rgba(36,211,155,.18);
+  color:#c9fff0;
+}
+
+.notice.error{
+  background:rgba(255,100,124,.08);
+  border-color:rgba(255,100,124,.18);
+  color:#ffd5dc;
+}
+
+.dashboard{
+  display:grid;
+  gap:18px;
+}
+
+.hero{
+  position:relative;
+  overflow:hidden;
+  border-radius:28px;
+  padding:24px;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(24,214,163,.18),transparent 35%),
+    linear-gradient(135deg,#10253a,#0c1829);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+
+.hero:after{
+  content:"";
+  position:absolute;
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  border:1px solid rgba(24,214,163,.10);
+  right:-70px;
+  bottom:-80px;
+}
+
+.hero-top{
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  align-items:flex-start;
+}
+
+.eyebrow{
+  color:var(--primary);
+  font-weight:800;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.hero h2{
+  margin:8px 0 6px;
+  font-size:30px;
+  letter-spacing:-1px;
+}
+
+.hero p{
+  color:var(--muted);
+  margin:0;
+}
+
+.state{
+  padding:8px 11px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.state.ok{
+  color:#bfffee;
+  background:rgba(36,211,155,.10);
+  border:1px solid rgba(36,211,155,.20);
+}
+
+.state.pending{
+  color:#ffe6a8;
+  background:rgba(255,200,87,.10);
+  border:1px solid rgba(255,200,87,.20);
+}
+
+.state.bad{
+  color:#ffd0d8;
+  background:rgba(255,100,124,.10);
+  border:1px solid rgba(255,100,124,.20);
+}
+
+.total-balance{
+  margin-top:26px;
+}
+
+.total-label{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.total-value{
+  font-size:36px;
+  font-weight:900;
+  margin-top:5px;
+  letter-spacing:-1px;
+}
+
+.grid{
+  display:grid;
+  gap:16px;
+}
+
+.grid-2{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+.grid-3{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+.card{
+  background:rgba(16,30,49,.90);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:0 10px 35px rgba(0,0,0,.12);
+}
+
+.card-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+
+.card-title h3{
+  margin:0;
+  font-size:15px;
+}
+
+.card-title span{
+  color:var(--muted);
+  font-size:11px;
+}
+
+.wallet{
+  padding:16px;
+  border-radius:18px;
+  background:linear-gradient(145deg,#13263d,#0d1b2c);
+  border:1px solid var(--line);
+}
+
+.wallet-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.currency{
+  font-size:12px;
+  font-weight:900;
+  color:var(--primary);
+}
+
+.wallet-balance{
+  font-size:25px;
+  font-weight:900;
+  margin:12px 0 3px;
+}
+
+.wallet-meta{
+  font-size:11px;
+  color:var(--muted);
+}
+
+.ops{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+
+.op{
+  min-height:86px;
+  border-radius:17px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.035);
+  color:var(--text);
+  padding:13px 9px;
+  text-align:center;
+}
+
+.op:hover{
+  background:rgba(255,255,255,.065);
+  border-color:rgba(24,214,163,.20);
+}
+
+.op-icon{
+  font-size:22px;
+  margin-bottom:7px;
+}
+
+.op-title{
+  font-size:12px;
+  font-weight:800;
+}
+
+.op-sub{
+  color:var(--muted);
+  font-size:10px;
+  margin-top:3px;
+}
+
+.transaction{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  padding:13px 0;
+  border-bottom:1px solid var(--line);
+}
+
+.transaction:last-child{
+  border-bottom:0;
+}
+
+.tx-main{
+  min-width:0;
+}
+
+.tx-title{
+  font-size:13px;
+  font-weight:800;
+}
+
+.tx-meta{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:4px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.tx-amount{
+  text-align:right;
+  font-size:13px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.tx-status{
+  font-size:10px;
+  margin-top:4px;
+  color:var(--muted);
+}
+
+.empty{
+  text-align:center;
+  padding:28px 10px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.nav{
+  position:sticky;
+  bottom:12px;
+  z-index:20;
+  display:flex;
+  justify-content:center;
+  margin-top:4px;
+}
+
+.nav-inner{
+  display:flex;
+  gap:5px;
+  padding:7px;
+  border-radius:18px;
+  background:rgba(7,17,31,.90);
+  border:1px solid var(--line);
+  box-shadow:0 15px 40px rgba(0,0,0,.35);
+  backdrop-filter:blur(18px);
+  overflow-x:auto;
+  max-width:100%;
+}
+
+.nav-btn{
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  border-radius:13px;
+  min-width:76px;
+  padding:9px 10px;
+  font-size:10px;
+  font-weight:800;
+}
+
+.nav-btn.active{
+  background:rgba(24,214,163,.12);
+  color:var(--primary);
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  background:rgba(0,0,0,.65);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:14px;
+  backdrop-filter:blur(5px);
+}
+
+.modal-box{
+  width:100%;
+  max-width:520px;
+  max-height:92vh;
+  overflow:auto;
+  background:#0d1a2b;
+  border:1px solid var(--line);
+  border-radius:25px;
+  padding:20px;
+  box-shadow:0 25px 70px rgba(0,0,0,.5);
+}
+
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.modal-head h3{
+  margin:0;
+  font-size:18px;
+}
+
+.close{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:var(--text);
+}
+
+.info-list{
+  display:grid;
+  gap:10px;
+}
+
+.info-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+
+.info-row:last-child{
+  border-bottom:0;
+}
+
+.info-row span:first-child{
+  color:var(--muted);
+}
+
+.info-row span:last-child{
+  text-align:right;
+  font-weight:700;
+}
+
+.profile-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.kpi{
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.035);
+  border:1px solid var(--line);
+}
+
+.kpi-label{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.kpi-value{
+  font-size:14px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+.footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+  padding:12px 0 5px;
+}
+
+.loading{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  background:rgba(7,17,31,.92);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:14px;
+}
+
+.spinner{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,.12);
+  border-top-color:var(--primary);
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%) translateY(20px);
+  z-index:300;
+  max-width:calc(100% - 30px);
+  width:max-content;
+  background:#102238;
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:12px 16px;
+  border-radius:14px;
+  font-size:12px;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+  box-shadow:var(--shadow);
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+.toast.error{
+  border-color:rgba(255,100,124,.3);
+}
+
+@media(max-width:720px){
+  .app-shell{
+    padding:12px;
+  }
+
+  .topbar{
+    padding-bottom:15px;
+  }
+
+  .hero{
+    padding:19px;
+  }
+
+  .hero h2{
+    font-size:25px;
+  }
+
+  .grid-2,
+  .grid-3{
+    grid-template-columns:1fr;
+  }
+
+  .ops{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .profile-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .total-value{
+    font-size:31px;
+  }
+
+  .auth-card{
+    padding:22px;
+  }
+}
+</style></head><body><div id="loading" class="loading">
+  <div class="spinner"></div>
+  <div style="color:#91a4bd;font-size:12px">Conectando con CUBA PLUS PAY...</div>
+</div><div id="toast" class="toast"></div><div id="authScreen" class="auth-wrap hidden">
+  <div class="auth-card"><div class="auth-logo">
+  <div class="logo">CP</div>
+</div>
+
+<h1>CUBA PLUS PAY</h1>
+<div class="slogan">Tu dinero. Tus pagos. Tu plataforma.</div>
+
+<div style="text-align:center">
+  <span class="version">V7.5.2 CONTROLADA</span>
+</div>
+
+<div id="authNotice" class="notice hidden"></div>
+
+<div id="loginForm">
+
+  <div class="field">
+    <label for="loginEmail">Correo electrónico</label>
+    <input id="loginEmail" type="email" autocomplete="email" placeholder="correo@ejemplo.com">
+  </div>
+
+  <div class="field">
+    <label for="loginPassword">Contraseña</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
+  </div>
+
+  <div class="auth-actions">
+    <button class="primary-btn" onclick="login()">Entrar</button>
+    <button class="secondary-btn" onclick="showRegister()">Crear cuenta</button>
+    <button class="small-link" onclick="showRecovery()">¿Olvidaste tu contraseña?</button>
   </div>
 
 </div>
 
-<script>
-(function(){
-
-  'use strict';
-
-  const SUPABASE_URL =
-    'https://lqwxkevalagdhckhuelx.supabase.co';
-
-  const SUPABASE_PUBLISHABLE_KEY =
-    'sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
-
-  if(!window.supabase){
-    throw new Error(
-      'No se pudo cargar la biblioteca de Supabase. ' +
-      'Comprueba tu conexión a Internet y recarga la página.'
-    );
-  }
-
-  const client =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
-
-  const $ = id => document.getElementById(id);
-
-  const show = (id,on=true) =>
-    $(id).classList.toggle('hidden',!on);
-
-  const message = (id,text,type='') => {
-
-    const el = $(id);
-
-    el.textContent = text;
-
-    el.className =
-      'msg' +
-      (text ? ' ' + type : '');
-
-    show(id,!!text);
-  };
-
-  const esc = v =>
-    String(v ?? '').replace(
-      /[&<>"']/g,
-      c => ({
-        '&':'&amp;',
-        '<':'&lt;',
-        '>':'&gt;',
-        '"':'&quot;',
-        "'":'&#39;'
-      }[c])
-    );
-
-  const fmt = v => {
-
-    const n = Number(v);
-
-    return Number.isFinite(n)
-      ? n.toLocaleString(
-          'es-ES',
-          {maximumFractionDigits:8}
-        )
-      : esc(v);
-  };
-
-  const prettyStatus = s =>
-    ({
-      pending:'Pendiente',
-      processing:'Procesando',
-      completed:'Completada',
-      failed:'Fallida',
-      cancelled:'Cancelada',
-      reversed:'Revertida'
-    }[s] || s || '—');
-
-  let signupMode = false;
-
-  function setAuthMode(){
-
-    $('authTitle').textContent =
-      signupMode
-        ? 'Crear cuenta'
-        : 'Iniciar sesión';
-
-    $('authHint').textContent =
-      signupMode
-        ? 'Crea una cuenta con correo y contraseña.'
-        : 'Accede con tu cuenta de CUBA PLUS PAY.';
-
-    $('authBtn').textContent =
-      signupMode
-        ? 'Crear cuenta'
-        : 'Entrar';
-
-    $('modeBtn').textContent =
-      signupMode
-        ? 'Ya tengo cuenta'
-        : 'Crear cuenta';
-
-    message('authMsg','');
-  }
-
-  async function loadData(){
-
-    const {
-      data:{user}
-    } = await client.auth.getUser();
-
-    if(!user) return;
-
-    $('userEmail').textContent =
-      user.email || 'Cuenta';
-
-    $('profileLine').textContent =
-      'Cargando perfil...';
-
-    $('accountState').textContent =
-      'Consultando...';
-
-    const p =
-      await client
-        .from('profiles')
-        .select(
-          'display_name,role,country,kyc_status,mfa_required,risk_tier'
-        )
-        .eq('id',user.id)
-        .maybeSingle();
-
-    if(p.error){
-
-      $('profileLine').textContent =
-        'Sesión activa · perfil no disponible';
-
-      $('accountState').textContent =
-        'Sesión iniciada. No se pudo leer el perfil: ' +
-        p.error.message;
-
-    }else if(p.data){
-
-      const x = p.data;
-
-      $('profileLine').textContent =
-        (x.display_name || 'Usuario') +
-        ' · ' +
-        (x.role || 'user');
-
-      $('accountState').innerHTML =
-        '<b>KYC:</b> ' +
-        esc(x.kyc_status || 'NOT_STARTED') +
-        ' · <b>País:</b> ' +
-        esc(x.country || '—') +
-        ' · <b>Riesgo:</b> ' +
-        esc(x.risk_tier || '—') +
-        ' · <b>2FA:</b> ' +
-        (x.mfa_required
-          ? 'Requerido'
-          : 'No requerido');
-
-    }else{
-
-      $('profileLine').textContent =
-        'Sesión activa · perfil pendiente';
-
-      $('accountState').textContent =
-        'La sesión está activa, pero todavía no hay perfil visible para esta cuenta.';
-    }
-
-    const w =
-      await client
-        .from('wallets')
-        .select(
-          'currency,balance,locked,version'
-        )
-        .eq('user_id',user.id)
-        .order('currency');
-
-    const box = $('wallets');
-
-    box.innerHTML = '';
-
-    if(w.error){
-
-      message(
-        'walletMsg',
-        'No se pudieron consultar las billeteras: ' +
-        w.error.message,
-        'error'
-      );
-
-    }else if(!w.data || !w.data.length){
-
-      box.innerHTML =
-        '<div class="muted">' +
-        'No existe una billetera registrada para esta cuenta.' +
-        '</div>';
-
-      message('walletMsg','');
-
-    }else{
-
-      message('walletMsg','');
-
-      w.data.forEach(x => {
-
-        const d =
-          document.createElement('div');
-
-        d.className = 'wallet';
-
-        const available =
-          Number(x.balance) -
-          Number(x.locked || 0);
-
-        d.innerHTML =
-          '<div class="currency">' +
-          esc(x.currency || '—') +
-          '</div>' +
-
-          '<div class="balance">' +
-          fmt(x.balance) +
-          '</div>' +
-
-          '<div class="muted small">' +
-          'Disponible: ' +
-          fmt(available) +
-          ' · Bloqueado: ' +
-          fmt(x.locked || 0) +
-          '</div>';
-
-        box.appendChild(d);
-      });
-    }
-
-    const t =
-      await client
-        .from('transactions')
-        .select(
-          'id,type,status,amount,currency,rail,external_id,reference,metadata,created_at,updated_at,fee_amount,net_amount,reconciled_at,reconciliation_state'
-        )
-        .eq('user_id',user.id)
-        .order(
-          'created_at',
-          {ascending:false}
-        )
-        .limit(50);
-
-    const txbox =
-      $('transactions');
-
-    txbox.innerHTML = '';
-
-    if(t.error){
-
-      message(
-        'txMsg',
-        'No se pudo consultar el historial: ' +
-        t.error.message,
-        'error'
-      );
-
-      txbox.textContent = '';
-
-    }else if(!t.data || !t.data.length){
-
-      message('txMsg','');
-
-      txbox.innerHTML =
-        '<div class="muted">' +
-        'No hay movimientos registrados para esta cuenta.' +
-        '</div>';
-
-    }else{
-
-      message('txMsg','');
-
-      t.data.forEach(x => {
-
-        const d =
-          document.createElement('div');
-
-        d.className = 'tx';
-
-        const date =
-          x.created_at
-            ? new Date(
-                x.created_at
-              ).toLocaleString('es-ES')
-            : '';
-
-        d.innerHTML =
-          '<div>' +
-
-          '<b>' +
-          esc(x.type || 'operación') +
-          '</b>' +
-
-          '<div class="muted small">' +
-          esc(date) +
-          ' · ' +
-          esc(x.rail || 'interno') +
-          (x.reference
-            ? ' · ' +
-              esc(x.reference)
-            : '') +
-          '</div>' +
-
-          '</div>' +
-
-          '<div style="text-align:right">' +
-
-          '<span class="status">' +
-          esc(prettyStatus(x.status)) +
-          '</span>' +
-
-          '<div style="margin-top:5px;font-weight:750">' +
-          fmt(x.amount) +
-          ' ' +
-          esc(x.currency || '') +
-          '</div>' +
-
-          '</div>';
-
-        txbox.appendChild(d);
-      });
-    }
-  }
-
-  async function showSession(){
-
-    const {
-      data:{session}
-    } = await client.auth.getSession();
-
-    show('authCard',!session);
-
-    show('app',!!session);
-
-    if(session){
-      try{
-        await loadData();
-      }catch(e){
-        $('accountState').textContent =
-          'Sesión iniciada, pero ocurrió un error al cargar los datos: ' +
-          (e?.message || String(e));
-      }
-    }
-  }
-
-  $('authBtn').onclick =
-    async () => {
-
-      const email =
-        $('email').value.trim();
-
-      const password =
-        $('password').value;
-
-      if(!email || !password){
-
-        message(
-          'authMsg',
-          'Escribe correo y contraseña.',
-          'error'
-        );
-
-        return;
-      }
-
-      if(password.length < 6){
-
-        message(
-          'authMsg',
-          'La contraseña debe tener al menos 6 caracteres.',
-          'error'
-        );
-
-        return;
-      }
-
-      const btn =
-        $('authBtn');
-
-      btn.disabled = true;
-
-      btn.textContent =
-        signupMode
-          ? 'Creando...'
-          : 'Entrando...';
-
-      message('authMsg','');
-
-      try{
-
-        const result =
-          signupMode
-
-            ? await client.auth.signUp({
-                email,
-                password,
-                options:{
-                  emailRedirectTo:
-                    window.location.origin +
-                    window.location.pathname
-                }
-              })
-
-            : await client.auth.signInWithPassword({
-                email,
-                password
-              });
-
-        if(result.error)
-          throw result.error;
-
-        if(signupMode){
-
-          if(result.data.session){
-
-            message(
-              'authMsg',
-              'Cuenta creada. Sesión iniciada.',
-              'ok'
-            );
-
-            await showSession();
-
-          }else{
-
-            message(
-              'authMsg',
-              'Cuenta creada. Revisa tu correo para confirmar la cuenta antes de iniciar sesión.',
-              'ok'
-            );
-          }
-
-        }else{
-
-          await showSession();
-        }
-
-      }catch(e){
-
-        message(
-          'authMsg',
-          'No se pudo completar la operación.\n' +
-          (e?.message || String(e)),
-          'error'
-        );
-
-      }finally{
-
-        btn.disabled = false;
-
-        btn.textContent =
-          signupMode
-            ? 'Crear cuenta'
-            : 'Entrar';
-      }
-    };
-
-  $('modeBtn').onclick =
-    () => {
-
-      signupMode =
-        !signupMode;
-
-      setAuthMode();
-    };
-
-  $('resetBtn').onclick =
-    async () => {
-
-      const email =
-        $('email').value.trim();
-
-      if(!email){
-
-        message(
-          'authMsg',
-          'Escribe primero tu correo electrónico.',
-          'error'
-        );
-
-        return;
-      }
-
-      try{
-
-        const {
-          error
-        } =
-          await client.auth.resetPasswordForEmail(
-            email,
-            {
-              redirectTo:
-                window.location.origin +
-                window.location.pathname
-            }
-          );
-
-        if(error)
-          throw error;
-
-        message(
-          'authMsg',
-          'Si el correo existe, recibirás instrucciones para recuperar la contraseña.',
-          'ok'
-        );
-
-      }catch(e){
-
-        message(
-          'authMsg',
-          e?.message || String(e),
-          'error'
-        );
-      }
-    };
-
-  $('logoutBtn').onclick =
-    async () => {
-
-      try{
-        await client.auth.signOut();
-      }finally{
-
-        $('password').value = '';
-
-        await showSession();
-      }
-    };
-
-  $('refreshBtn').onclick =
-    async () => {
-
-      const btn =
-        $('refreshBtn');
-
-      btn.disabled = true;
-
-      try{
-        await loadData();
-      }catch(e){
-
-        message(
-          'txMsg',
-          'No se pudo actualizar: ' +
-          (e?.message || String(e)),
-          'error'
-        );
-
-      }finally{
-
-        btn.disabled = false;
-      }
-    };
-
-  document
-    .querySelectorAll('[data-tab]')
-    .forEach(b => {
-
-      b.onclick =
-        () => {
-
-          const tab =
-            b.dataset.tab;
-
-          show(
-            'history',
-            tab === 'history'
-          );
-
-          show(
-            'operations',
-            tab === 'operations'
-          );
-        };
-    });
-
-  const transferErrorText =
-    e => {
-
-      const raw =
-        e?.message ||
-        String(e || 'Error');
-
-      const map = {
-
-        AUTH_REQUIRED:
-          'Sesión no válida.',
-
-        IDEMPOTENCY_REQUIRED:
-          'No se pudo generar <!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111f">
-<title>CUBA PLUS PAY · V7.5.2</title>
-<style>
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#07111f;color:#eef5ff}
-body{padding-bottom:30px}
-.wrap{max-width:1100px;margin:auto;padding:18px}
-.brand{font-size:28px;font-weight:850;letter-spacing:.2px}
-.sub{color:#9fb0c7;margin:4px 0 18px}
-.card{background:#0d1b2d;border:1px solid #1d3552;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 8px 30px rgba(0,0,0,.18)}
-.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.wallet{padding:16px;border:1px solid #27415f;border-radius:14px;background:#0a1727}
-.currency{font-weight:800}
-.balance{font-size:26px;margin-top:6px}
-.muted{color:#9fb0c7}
-.small{font-size:13px}
-.hidden{display:none!important}
-h2{margin:0 0 12px}
-.msg{margin-top:12px;padding:11px;border-radius:10px;background:#10253b;color:#cfe1f8;white-space:pre-wrap}
-.msg.error{background:#351522;color:#ffdbe1}
-.msg.ok{background:#123522;color:#d9ffe5}
-input,button{width:100%;padding:13px;border-radius:11px;border:1px solid #2b4563;font-size:16px}
-input{background:#081522;color:#fff;margin:6px 0}
-button{background:#1769e0;color:#fff;border:0;font-weight:750;margin-top:8px;cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
-button.secondary{background:#17283c}
-button.danger{background:#9d2639}
-.tabs{display:flex;gap:8px;flex-wrap:wrap}
-.tabs button{width:auto;margin:0}
-.table-wrap{overflow:auto}
-.tx{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid #1d3552}
-.tx:last-child{border-bottom:0}
-.status{font-size:12px;border:1px solid #34506f;border-radius:999px;padding:4px 8px;white-space:nowrap}
-.notice{border-left:4px solid #1769e0;padding-left:12px}
-.footer{color:#71839b;font-size:12px;text-align:center;margin-top:20px}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-
-<body>
-<div class="wrap">
-
-  <div class="brand">CUBA PLUS PAY</div>
-  <div class="sub">V7.5.2 · Tu dinero. Tus pagos. Tu plataforma.</div>
-
-  <section id="authCard" class="card">
-    <h2 id="authTitle">Iniciar sesión</h2>
-    <p id="authHint" class="muted">
-      Accede con tu cuenta de CUBA PLUS PAY.
-    </p>
-
-    <input
-      id="email"
-      type="email"
-      autocomplete="email"
-      placeholder="Correo electrónico"
-    >
-
-    <input
-      id="password"
-      type="password"
-      autocomplete="current-password"
-      placeholder="Contraseña"
-    >
-
-    <button id="authBtn">Entrar</button>
-
-    <button id="modeBtn" class="secondary">
-      Crear cuenta
-    </button>
-
-    <button id="resetBtn" class="secondary">
-      Recuperar contraseña
-    </button>
-
-    <div id="authMsg" class="msg hidden"></div>
-  </section>
-
-  <main id="app" class="hidden">
-
-    <section class="card top">
-      <div>
-        <strong id="userEmail">Cuenta</strong>
-        <div id="profileLine" class="muted small">
-          Cargando perfil...
-        </div>
-      </div>
-
-      <button id="logoutBtn" class="danger">
-        Cerrar sesión
-      </button>
-    </section>
-
-    <section class="card">
-      <h2>Mis billeteras</h2>
-
-      <div id="wallets" class="grid"></div>
-
-      <div id="walletMsg" class="msg hidden"></div>
-    </section>
-
-    <section class="card">
-      <h2>Estado de la cuenta</h2>
-
-      <div id="accountState" class="muted">
-        Consultando...
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="tabs">
-
-        <button class="secondary" data-tab="history">
-          Historial
-        </button>
-
-        <button class="secondary" data-tab="operations">
-          Operaciones
-        </button>
-
-      </div>
-    </section>
-
-    <section id="history" class="card">
-
-      <div class="top">
-
-        <h2>Movimientos</h2>
-
-        <button
-          id="refreshBtn"
-          class="secondary"
-          style="width:auto"
-        >
-          Actualizar
-        </button>
-
-      </div>
-
-      <div id="transactions" class="muted">
-        Consultando movimientos...
-      </div>
-
-      <div id="txMsg" class="msg hidden"></div>
-
-    </section>
-
-    <section id="operations" class="card hidden">
-
-      <h2>Operaciones</h2>
-
-      <div class="grid">
-
-        <button class="secondary" data-op="transferir">
-          Transferir CRX
-        </button>
-
-        <button class="secondary" data-op="recibir">
-          Recibir dinero
-        </button>
-
-        <button class="secondary" data-op="depositar">
-          Depositar
-        </button>
-
-        <button class="secondary" data-op="retirar">
-          Retirar
-        </button>
-
-        <button class="secondary" data-op="recargar">
-          Recargar móvil
-        </button>
-
-        <button class="secondary" data-op="pagar">
-          Pagar
-        </button>
-
-        <button class="secondary" data-op="juego">
-          Jugar CRX
-        </button>
-
-      </div>
-
-      <div id="opMsg" class="msg hidden"></div>
-
-      <div
-        id="transferPanel"
-        class="card hidden"
-        style="margin-top:14px;background:#0a1727"
-      >
-
-        <h2>Transferir CRX</h2>
-
-        <p class="muted small">
-          La transferencia interna se ejecuta dentro de Supabase.
-          El servidor valida identidad, destinatario, saldo disponible,
-          límites, riesgo, comisión e idempotencia antes de mover fondos.
-        </p>
-
-        <label for="recipient">
-          Destinatario · correo o UUID
-        </label>
-
-        <input
-          id="recipient"
-          type="text"
-          autocomplete="off"
-          placeholder="correo@ejemplo.com"
-        >
-
-        <label for="amount">
-          Cantidad CRX
-        </label>
-
-        <input
-          id="amount"
-          type="number"
-          min="0.00000001"
-          step="0.00000001"
-          inputmode="decimal"
-          placeholder="0.00"
-        >
-
-        <label for="reference">
-          Referencia (opcional)
-        </label>
-
-        <input
-          id="reference"
-          type="text"
-          maxlength="120"
-          autocomplete="off"
-          placeholder="Pago, envío, etc."
-        >
-
-        <button id="sendTransfer">
-          Confirmar transferencia
-        </button>
-
-        <button id="cancelTransfer" class="secondary">
-          Cancelar
-        </button>
-
-        <div id="transferMsg" class="msg hidden"></div>
-
-      </div>
-
-      <div
-        id="gamePanel"
-        class="card hidden"
-        style="margin-top:14px;background:#0a1727"
-      >
-
-        <h2>Click Rush · Juego CRX</h2>
-
-        <p class="muted small">
-          Partida de 20 segundos. El servidor valida la sesión,
-          el resultado y los límites. El navegador no calcula ni
-          añade CRX al saldo.
-        </p>
-
-        <div class="grid">
-
-          <div class="wallet">
-            <div class="muted small">
-              Puntuación
-            </div>
-
-            <div id="gameScore" class="balance">
-              0
-            </div>
-          </div>
-
-          <div class="wallet">
-            <div class="muted small">
-              Tiempo
-            </div>
-
-            <div id="gameTime" class="balance">
-              20 s
-            </div>
-          </div>
-
-        </div>
-
-        <button id="startGame">
-          Iniciar partida
-        </button>
-
-        <button id="clickGame" disabled>
-          ¡CLICK!
-        </button>
-
-        <div id="gameMsg" class="msg hidden"></div>
-
-      </div>
-
-      <p class="muted small notice">
-        No se modifica ningún saldo desde JavaScript.
-        El navegador solo solicita la operación RPC;
-        el movimiento de fondos ocurre de forma atómica
-        en PostgreSQL.
-      </p>
-
-    </section>
-
-  </main>
-
-  <div class="footer">
-    CUBA PLUS PAY V7.5.2 · Frontend conectado al proyecto Supabase de prueba.
+<div id="registerForm" class="hidden">
+
+  <div class="field">
+    <label for="registerEmail">Correo electrónico</label>
+    <input id="registerEmail" type="email" autocomplete="email" placeholder="correo@ejemplo.com">
+  </div>
+
+  <div class="field">
+    <label for="registerPassword">Contraseña</label>
+    <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+  </div>
+
+  <div class="field">
+    <label for="registerPassword2">Confirmar contraseña</label>
+    <input id="registerPassword2" type="password" autocomplete="new-password" placeholder="Repite la contraseña">
+  </div>
+
+  <div class="auth-actions">
+    <button class="primary-btn" onclick="register()">Crear cuenta</button>
+    <button class="small-link" onclick="showLogin()">Volver al acceso</button>
   </div>
 
 </div>
 
-<script>
-(function(){
-
-  'use strict';
-
-  const SUPABASE_URL =
-    'https://lqwxkevalagdhckhuelx.supabase.co';
-
-  const SUPABASE_PUBLISHABLE_KEY =
-    'sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
-
-  if(!window.supabase){
-    throw new Error(
-      'No se pudo cargar la biblioteca de Supabase. ' +
-      'Comprueba tu conexión a Internet y recarga la página.'
-    );
-  }
+<div id="recoveryForm" class="hidden">
+
+  <div class="field">
+    <label for="recoveryEmail">Correo electrónico</label>
+    <input id="recoveryEmail" type="email" autocomplete="email" placeholder="correo@ejemplo.com">
+  </div>
 
-  const client =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+  <div class="auth-actions">
+    <button class="primary-btn" onclick="recoverPassword()">Enviar recuperación</button>
+    <button class="small-link" onclick="showLogin()">Volver al acceso</button>
+  </div>
 
-  const $ = id => document.getElementById(id);
-
-  const show = (id,on=true) =>
-    $(id).classList.toggle('hidden',!on);
-
-  const message = (id,text,type='') => {
-
-    const el = $(id);
+</div>
 
-    el.textContent = text;
+  </div>
+</div><div id="appScreen" class="hidden">  <div class="app-shell"><header class="topbar">
 
-    el.className =
-      'msg' +
-      (text ? ' ' + type : '');
+  <div class="brand">
+    <div class="logo">CP</div>
+    <div>
+      <div class="brand-title">CUBA PLUS PAY</div>
+      <div class="brand-subtitle">Tu dinero. Tus pagos. Tu plataforma.</div>
+    </div>
+  </div>
 
-    show(id,!!text);
-  };
+  <div class="top-actions">
+    <button class="icon-btn" onclick="refreshAll()" title="Actualizar">↻</button>
+    <button class="icon-btn" onclick="openProfile()" title="Perfil">◎</button>
+  </div>
 
-  const esc = v =>
-    String(v ?? '').replace(
-      /[&<>"']/g,
-      c => ({
-        '&':'&amp;',
-        '<':'&lt;',
-        '>':'&gt;',
-        '"':'&quot;',
-        "'":'&#39;'
-      }[c])
-    );
-
-  const fmt = v => {
-
-    const n = Number(v);
-
-    return Number.isFinite(n)
-      ? n.toLocaleString(
-          'es-ES',
-          {maximumFractionDigits:8}
-        )
-      : esc(v);
-  };
-
-  const prettyStatus = s =>
-    ({
-      pending:'Pendiente',
-      processing:'Procesando',
-      completed:'Completada',
-      failed:'Fallida',
-      cancelled:'Cancelada',
-      reversed:'Revertida'
-    }[s] || s || '—');
-
-  let signupMode = false;
-
-  function setAuthMode(){
-
-    $('authTitle').textContent =
-      signupMode
-        ? 'Crear cuenta'
-        : 'Iniciar sesión';
+</header>
 
-    $('authHint').textContent =
-      signupMode
-        ? 'Crea una cuenta con correo y contraseña.'
-        : 'Accede con tu cuenta de CUBA PLUS PAY.';
-
-    $('authBtn').textContent =
-      signupMode
-        ? 'Crear cuenta'
-        : 'Entrar';
-
-    $('modeBtn').textContent =
-      signupMode
-        ? 'Ya tengo cuenta'
-        : 'Crear cuenta';
+<main id="mainContent" class="dashboard">
 
-    message('authMsg','');
-  }
+  <section id="dashboardPage">
 
-  async function loadData(){
+    <div class="hero">
 
-    const {
-      data:{user}
-    } = await client.auth.getUser();
+      <div class="hero-top">
 
-    if(!user) return;
+        <div>
+          <div class="eyebrow">CUBA PLUS PAY</div>
+          <h2>Tu centro financiero</h2>
+          <p id="welcomeText">Cuenta conectada</p>
+        </div>
 
-    $('userEmail').textContent =
-      user.email || 'Cuenta';
+        <div id="accountState" class="state pending">
+          VERIFICANDO
+        </div>
 
-    $('profileLine').textContent =
-      'Cargando perfil...';
+      </div>
 
-    $('accountState').textContent =
-      'Consultando...';
+      <div class="total-balance">
+        <div class="total-label">Saldo disponible total</div>
+        <div id="totalBalance" class="total-value">—</div>
+      </div>
 
-    const p =
-      await client
-        .from('profiles')
-        .select(
-          'display_name,role,country,kyc_status,mfa_required,risk_tier'
-        )
-        .eq('id',user.id)
-        .maybeSingle();
+    </div>
 
-    if(p.error){
+    <div class="card">
 
-      $('profileLine').textContent =
-        'Sesión activa · perfil no disponible';
+      <div class="card-title">
+        <h3>Operaciones</h3>
+        <span>Con proveedores reales</span>
+      </div>
 
-      $('accountState').textContent =
-        'Sesión iniciada. No se pudo leer el perfil: ' +
-        p.error.message;
+      <div class="ops">
 
-    }else if(p.data){
+        <button class="op" onclick="openOperation('transfer')">
+          <div class="op-icon">↗</div>
+          <div class="op-title">Transferir</div>
+          <div class="op-sub">Cuenta a cuenta</div>
+        </button>
 
-      const x = p.data;
+        <button class="op" onclick="openOperation('receive')">
+          <div class="op-icon">↓</div>
+          <div class="op-title">Recibir</div>
+          <div class="op-sub">Datos de cobro</div>
+        </button>
 
-      $('profileLine').textContent =
-        (x.display_name || 'Usuario') +
-        ' · ' +
-        (x.role || 'user');
-
-      $('accountState').innerHTML =
-        '<b>KYC:</b> ' +
-        esc(x.kyc_status || 'NOT_STARTED') +
-        ' · <b>País:</b> ' +
-        esc(x.country || '—') +
-        ' · <b>Riesgo:</b> ' +
-        esc(x.risk_tier || '—') +
-        ' · <b>2FA:</b> ' +
-        (x.mfa_required
-          ? 'Requerido'
-          : 'No requerido');
+        <button class="op" onclick="openOperation('deposit')">
+          <div class="op-icon">＋</div>
+          <div class="op-title">Depositar</div>
+          <div class="op-sub">QvaPay</div>
+        </button>
 
-    }else{
+        <button class="op" onclick="openOperation('withdraw')">
+          <div class="op-icon">↙</div>
+          <div class="op-title">Retirar</div>
+          <div class="op-sub">Proveedor autorizado</div>
+        </button>
 
-      $('profileLine').textContent =
-        'Sesión activa · perfil pendiente';
+        <button class="op" onclick="openOperation('mobile')">
+          <div class="op-icon">▣</div>
+          <div class="op-title">Recargar móvil</div>
+          <div class="op-sub">Proveedor externo</div>
+        </button>
 
-      $('accountState').textContent =
-        'La sesión está activa, pero todavía no hay perfil visible para esta cuenta.';
-    }
+        <button class="op" onclick="openOperation('pay')">
+          <div class="op-icon">▤</div>
+          <div class="op-title">Pagar</div>
+          <div class="op-sub">Checkout</div>
+        </button>
 
-    const w =
-      await client
-        .from('wallets')
-        .select(
-          'currency,balance,locked,version'
-        )
-        .eq('user_id',user.id)
-        .order('currency');
+      </div>
 
-    const box = $('wallets');
+    </div>
 
-    box.innerHTML = '';
+    <div class="grid grid-2">
 
-    if(w.error){
+      <section class="card">
 
-      message(
-        'walletMsg',
-        'No se pudieron consultar las billeteras: ' +
-        w.error.message,
-        'error'
-      );
+        <div class="card-title">
+          <h3>Mis billeteras</h3>
+          <span>Datos reales</span>
+        </div>
 
-    }else if(!w.data || !w.data.length){
+        <div id="walletsList" class="grid">
+          <div class="empty">Cargando billeteras...</div>
+        </div>
 
-      box.innerHTML =
-        '<div class="muted">' +
-        'No existe una billetera registrada para esta cuenta.' +
-        '</div>';
+      </section>
 
-      message('walletMsg','');
+      <section class="card">
 
-    }else{
+        <div class="card-title">
+          <h3>Cuenta</h3>
+          <span id="roleLabel">—</span>
+        </div>
 
-      message('walletMsg','');
+        <div class="profile-grid">
 
-      w.data.forEach(x => {
+          <div class="kpi">
+            <div class="kpi-label">KYC</div>
+            <div id="kycLabel" class="kpi-value">—</div>
+          </div>
 
-        const d =
-          document.createElement('div');
+          <div class="kpi">
+            <div class="kpi-label">Nivel de riesgo</div>
+            <div id="riskLabel" class="kpi-value">—</div>
+          </div>
 
-        d.className = 'wallet';
+          <div class="kpi">
+            <div class="kpi-label">2FA</div>
+            <div id="mfaLabel" class="kpi-value">—</div>
+          </div>
 
-        const available =
-          Number(x.balance) -
-          Number(x.locked || 0);
+          <div class="kpi">
+            <div class="kpi-label">País</div>
+            <div id="countryLabel" class="kpi-value">—</div>
+          </div>
 
-        d.innerHTML =
-          '<div class="currency">' +
-          esc(x.currency || '—') +
-          '</div>' +
+        </div>
 
-          '<div class="balance">' +
-          fmt(x.balance) +
-          '</div>' +
+      </section>
 
-          '<div class="muted small">' +
-          'Disponible: ' +
-          fmt(available) +
-          ' · Bloqueado: ' +
-          fmt(x.locked || 0) +
-          '</div>';
+    </div>
 
-        box.appendChild(d);
-      });
-    }
+    <section class="card">
 
-    const t =
-      await client
-        .from('transactions')
-        .select(
-          'id,type,status,amount,currency,rail,external_id,reference,metadata,created_at,updated_at,fee_amount,net_amount,reconciled_at,reconciliation_state'
-        )
-        .eq('user_id',user.id)
-        .order(
-          'created_at',
-          {ascending:false}
-        )
-        .limit(50);
+      <div class="card-title">
+        <h3>Últimas operaciones</h3>
+        <span>Historial de Supabase</span>
+      </div>
 
-    const txbox =
-      $('transactions');
+      <div id="transactionsList">
+        <div class="empty">Cargando transacciones...</div>
+      </div>
 
-    txbox.innerHTML = '';
+    </section>
 
-    if(t.error){
+  </section>
 
-      message(
-        'txMsg',
-        'No se pudo consultar el historial: ' +
-        t.error.message,
-        'error'
-      );
+  <section id="profilePage" class="hidden">
 
-      txbox.textContent = '';
+    <div class="card">
 
-    }else if(!t.data || !t.data.length){
+      <div class="card-title">
+        <h3>Mi perfil</h3>
+        <span>Cuenta CUBA PLUS PAY</span>
+      </div>
 
-      message('txMsg','');
+      <div class="info-list">
 
-      txbox.innerHTML =
-        '<div class="muted">' +
-        'No hay movimientos registrados para esta cuenta.' +
-        '</div>';
+        <div class="info-row">
+          <span>Correo</span>
+          <span id="profileEmail">—</span>
+        </div>
 
-    }else{
+        <div class="info-row">
+          <span>Identificador</span>
+          <span id="profileId">—</span>
+        </div>
 
-      message('txMsg','');
+        <div class="info-row">
+          <span>Nombre</span>
+          <span id="profileName">—</span>
+        </div>
 
-      t.data.forEach(x => {
+        <div class="info-row">
+          <span>Rol</span>
+          <span id="profileRole">—</span>
+        </div>
 
-        const d =
-          document.createElement('div');
+        <div class="info-row">
+          <span>Estado KYC</span>
+          <span id="profileKyc">—</span>
+        </div>
 
-        d.className = 'tx';
+      </div>
 
-        const date =
-          x.created_at
-            ? new Date(
-                x.created_at
-              ).toLocaleString('es-ES')
-            : '';
+    </div>
 
-        d.innerHTML =
-          '<div>' +
+    <div class="card">
 
-          '<b>' +
-          esc(x.type || 'operación') +
-          '</b>' +
+      <div class="card-title">
+        <h3>Cambiar contraseña</h3>
+      </div>
 
-          '<div class="muted small">' +
-          esc(date) +
-          ' · ' +
-          esc(x.rail || 'interno') +
-          (x.reference
-            ? ' · ' +
-              esc(x.reference)
-            : '') +
-          '</div>' +
+      <div class="field">
+        <label>Nueva contraseña</label>
+        <input id="newPassword" type="password" placeholder="Nueva contraseña">
+      </div>
 
-          '</div>' +
+      <button class="primary-btn" onclick="changePassword()">
+        Actualizar contraseña
+      </button>
 
-          '<div style="text-align:right">' +
+    </div>
 
-          '<span class="status">' +
-          esc(prettyStatus(x.status)) +
-          '</span>' +
+    <div class="card">
 
-          '<div style="margin-top:5px;font-weight:750">' +
-          fmt(x.amount) +
-          ' ' +
-          esc(x.currency || '') +
-          '</div>' +
+      <div class="card-title">
+        <h3>Sesión</h3>
+      </div>
 
-          '</div>';
+      <button class="danger-btn" onclick="logout()">
+        Cerrar sesión
+      </button>
 
-        txbox.appendChild(d);
-      });
-    }
-  }
+    </div>
 
-  async function showSession(){
+  </section>
 
-    const {
-      data:{session}
-    } = await client.auth.getSession();
+  <section id="walletPage" class="hidden">
 
-    show('authCard',!session);
+    <div class="card">
 
-    show('app',!!session);
-
-    if(session){
-      try{
-        await loadData();
-      }catch(e){
-        $('accountState').textContent =
-          'Sesión iniciada, pero ocurrió un error al cargar los datos: ' +
-          (e?.message || String(e));
-      }
-    }
-  }
-
-  $('authBtn').onclick =
-    async () => {
-
-      const email =
-        $('email').value.trim();
-
-      const password =
-        $('password').value;
-
-      if(!email || !password){
-
-        message(
-          'authMsg',
-          'Escribe correo y contraseña.',
-          'error'
-        );
-
-        return;
-      }
-
-      if(password.length < 6){
-
-        message(
-          'authMsg',
-          'La contraseña debe tener al menos 6 caracteres.',
-          'error'
-        );
-
-        return;
-      }
-
-      const btn =
-        $('authBtn');
-
-      btn.disabled = true;
-
-      btn.textContent =
-        signupMode
-          ? 'Creando...'
-          : 'Entrando...';
-
-      message('authMsg','');
-
-      try{
-
-        const result =
-          signupMode
-
-            ? await client.auth.signUp({
-                email,
-                password,
-                options:{
-                  emailRedirectTo:
-                    window.location.origin +
-                    window.location.pathname
-                }
-              })
-
-            : await client.auth.signInWithPassword({
-                email,
-                password
-              });
-
-        if(result.error)
-          throw result.error;
-
-        if(signupMode){
-
-          if(result.data.session){
-
-            message(
-              'authMsg',
-              'Cuenta creada. Sesión iniciada.',
-              'ok'
-            );
-
-            await showSession();
-
-          }else{
-
-            message(
-              'authMsg',
-              'Cuenta creada. Revisa tu correo para confirmar la cuenta antes de iniciar sesión.',
-              'ok'
-            );
-          }
-
-        }else{
-
-          await showSession();
-        }
-
-      }catch(e){
-
-        message(
-          'authMsg',
-          'No se pudo completar la operación.\n' +
-          (e?.message || String(e)),
-          'error'
-        );
-
-      }finally{
-
-        btn.disabled = false;
-
-        btn.textContent =
-          signupMode
-            ? 'Crear cuenta'
-            : 'Entrar';
-      }
-    };
-
-  $('modeBtn').onclick =
-    () => {
-
-      signupMode =
-        !signupMode;
-
-      setAuthMode();
-    };
-
-  $('resetBtn').onclick =
-    async () => {
-
-      const email =
-        $('email').value.trim();
-
-      if(!email){
-
-        message(
-          'authMsg',
-          'Escribe primero tu correo electrónico.',
-          'error'
-        );
-
-        return;
-      }
-
-      try{
-
-        const {
-          error
-        } =
-          await client.auth.resetPasswordForEmail(
-            email,
-            {
-              redirectTo:
-                window.location.origin +
-                window.location.pathname
-            }
-          );
-
-        if(error)
-          throw error;
-
-        message(
-          'authMsg',
-          'Si el correo existe, recibirás instrucciones para recuperar la contraseña.',
-          'ok'
-        );
-
-      }catch(e){
-
-        message(
-          'authMsg',
-          e?.message || String(e),
-          'error'
-        );
-      }
-    };
-
-  $('logoutBtn').onclick =
-    async () => {
-
-      try{
-        await client.auth.signOut();
-      }finally{
-
-        $('password').value = '';
-
-        await showSession();
-      }
-    };
-
-  $('refreshBtn').onclick =
-    async () => {
-
-      const btn =
-        $('refreshBtn');
-
-      btn.disabled = true;
-
-      try{
-        await loadData();
-      }catch(e){
-
-        message(
-          'txMsg',
-          'No se pudo actualizar: ' +
-          (e?.message || String(e)),
-          'error'
-        );
-
-      }finally{
-
-        btn.disabled = false;
-      }
-    };
-
-  document
-    .querySelectorAll('[data-tab]')
-    .forEach(b => {
-
-      b.onclick =
-        () => {
-
-          const tab =
-            b.dataset.tab;
-
-          show(
-            'history',
-            tab === 'history'
-          );
-
-          show(
-            'operations',
-            tab === 'operations'
-          );
-        };
-    });
-
-  const transferErrorText =
-    e => {
-
-      const raw =
-        e?.message ||
-        String(e || 'Error');
-
-      const map = {
-
-        AUTH_REQUIRED:
-          'Sesión no válida.',
-
-        IDEMPOTENCY_REQUIRED:
-          'No se pudo generar
+      <div 
