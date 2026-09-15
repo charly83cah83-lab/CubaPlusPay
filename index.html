@@ -1,1949 +1,1047 @@
-<!DOCTYPE html><html lang="es">
+<!doctype html>
+<html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111f">
-<meta name="description" content="CUBA PLUS PAY — Tu dinero. Tus pagos. Tu plataforma.">
-<title>CUBA PLUS PAY</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
-:root{
-  --bg:#050b14;
-  --bg2:#081322;
-  --panel:#0d1929;
-  --panel2:#101f33;
-  --line:rgba(255,255,255,.09);
-  --text:#f4f8ff;
-  --muted:#8ea2ba;
-  --primary:#38bdf8;
-  --primary2:#2563eb;
-  --success:#22c55e;
-  --warning:#f59e0b;
-  --danger:#ef4444;
-  --shadow:0 20px 60px rgba(0,0,0,.35);
-  --radius:22px;
-}
+<meta name="theme-color" content="#06101f">
+<title>CUBA PLUS PAY · V7.5.2</title>
 
+<style>
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
-radial-gradient(circle at top right,rgba(37,99,235,.16),transparent 32%),
-radial-gradient(circle at bottom left,rgba(14,165,233,.10),transparent 28%),
-var(--bg);color:var(--text)}
-button,input,select,textarea{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
-
-.loading{
- position:fixed;inset:0;z-index:9999;
- display:flex;align-items:center;justify-content:center;
- flex-direction:column;gap:16px;
- background:#050b14;
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:#06101f;
+  color:#f4f8ff
 }
-.spinner{
- width:42px;height:42px;border:4px solid rgba(255,255,255,.12);
- border-top-color:var(--primary);border-radius:50%;
- animation:spin .8s linear infinite;
+body{
+  padding:18px 0 40px;
+  background:radial-gradient(circle at 20% 0%,#12335c 0,#06101f 38%,#040b15 100%)
 }
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.auth-wrap{
- min-height:100vh;display:flex;align-items:center;justify-content:center;
- padding:22px;
-}
-.auth-card{
- width:min(460px,100%);
- background:rgba(13,25,41,.92);
- border:1px solid var(--line);
- border-radius:30px;
- box-shadow:var(--shadow);
- padding:30px;
- backdrop-filter:blur(20px);
-}
-.brand{
- display:flex;align-items:center;gap:13px;margin-bottom:25px;
+.wrap{max-width:1120px;margin:auto;padding:0 16px}
+.brandbar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:4px 0 18px
 }
 .logo{
- width:52px;height:52px;border-radius:17px;
- display:grid;place-items:center;
- font-weight:950;font-size:18px;
- background:linear-gradient(135deg,#38bdf8,#2563eb 70%,#7c3aed);
- box-shadow:0 12px 30px rgba(37,99,235,.35);
+  width:48px;
+  height:48px;
+  border-radius:15px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg,#1d82ff,#1749b9);
+  box-shadow:0 10px 28px #0b55b855;
+  font-weight:950;
+  letter-spacing:-2px;
+  font-size:21px
 }
-.brand-name{font-weight:900;letter-spacing:.5px}
-.brand-sub{font-size:12px;color:var(--muted);margin-top:2px}
-
-h1,h2,h3,p{margin-top:0}
-h1{font-size:28px}
-h2{font-size:21px}
-h3{font-size:16px}
-
-.muted{color:var(--muted)}
-.small{font-size:12px}
-
-.form-group{margin-bottom:15px}
-label{
- display:block;font-size:12px;font-weight:700;color:#b9c8da;
- margin-bottom:7px;
+.brand{font-size:22px;font-weight:900;letter-spacing:.4px}
+.sub{font-size:12px;color:#8ea6c5;margin-top:2px}
+.pill{
+  margin-left:auto;
+  border:1px solid #28547f;
+  background:#0b2038;
+  color:#9dcbff;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  font-weight:800
 }
-input,select,textarea{
- width:100%;padding:13px 14px;border-radius:13px;
- border:1px solid var(--line);outline:none;
- color:var(--text);background:#081322;
-}
-input:focus,select:focus,textarea:focus{
- border-color:rgba(56,189,248,.7);
- box-shadow:0 0 0 3px rgba(56,189,248,.10);
-}
-
-.btn{
- border:0;border-radius:13px;padding:12px 16px;
- font-weight:800;color:white;
- background:linear-gradient(135deg,var(--primary2),#0284c7);
- transition:.18s transform,.18s opacity;
-}
-.btn:hover{transform:translateY(-1px)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn.secondary{background:#16263b}
-.btn.success{background:linear-gradient(135deg,#16a34a,#22c55e)}
-.btn.danger{background:linear-gradient(135deg,#b91c1c,#ef4444)}
-.btn.full{width:100%}
-
-.auth-actions{
- display:flex;gap:10px;margin-top:13px;flex-wrap:wrap;
-}
-.link-btn{
- background:none;border:0;color:var(--primary);padding:4px;font-weight:700;
-}
-
-.message{
- padding:12px 14px;border-radius:12px;margin:12px 0;
- font-size:13px;line-height:1.45;
-}
-.message.info{background:rgba(56,189,248,.10);color:#b9eaff}
-.message.success{background:rgba(34,197,94,.10);color:#a7f3c0}
-.message.warning{background:rgba(245,158,11,.10);color:#fde68a}
-.message.error{background:rgba(239,68,68,.10);color:#fecaca}
-
-.app{min-height:100vh}
-.topbar{
- position:sticky;top:0;z-index:100;
- display:flex;align-items:center;justify-content:space-between;
- padding:12px 18px;
- background:rgba(5,11,20,.86);
- border-bottom:1px solid var(--line);
- backdrop-filter:blur(18px);
-}
-.top-brand{display:flex;align-items:center;gap:10px}
-.top-logo{width:40px;height:40px;border-radius:13px;font-size:14px}
-.user-area{display:flex;align-items:center;gap:9px}
-.avatar{
- width:38px;height:38px;border-radius:50%;
- background:linear-gradient(135deg,#1d4ed8,#06b6d4);
- display:grid;place-items:center;font-weight:900;
-}
-.menu-btn{
- background:#122136;border:1px solid var(--line);color:white;
- border-radius:12px;padding:9px 11px;
-}
-
-.layout{
- display:grid;grid-template-columns:245px 1fr;
- min-height:calc(100vh - 65px);
-}
-.sidebar{
- padding:18px 12px;border-right:1px solid var(--line);
- background:rgba(7,17,30,.72);
-}
-.nav-title{
- color:#61748c;font-size:10px;font-weight:900;
- letter-spacing:1.5px;padding:12px 12px 7px;
-}
-.nav-btn{
- width:100%;display:flex;align-items:center;gap:10px;
- border:1px solid transparent;background:transparent;color:#9fb0c5;
- padding:11px 12px;border-radius:13px;margin:2px 0;
- text-align:left;font-weight:700;
-}
-.nav-btn:hover,.nav-btn.active{
- background:#102137;color:white;border-color:var(--line);
-}
-.main{padding:22px;max-width:1450px;width:100%;margin:auto}
-.page{display:none}
-.page.active{display:block}
-
-.hero{
- padding:23px;border:1px solid var(--line);
- border-radius:25px;background:
- linear-gradient(135deg,rgba(37,99,235,.18),rgba(14,165,233,.05)),
- var(--panel);
- margin-bottom:18px;
-}
-.hero-row{
- display:flex;align-items:center;justify-content:space-between;gap:15px;
-}
-.hero h1{margin-bottom:6px}
-
-.grid{
- display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;
-}
-.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .card{
- background:rgba(13,25,41,.88);
- border:1px solid var(--line);
- border-radius:var(--radius);
- padding:18px;
- box-shadow:0 8px 30px rgba(0,0,0,.13);
+  background:linear-gradient(145deg,#0c1c30,#091526);
+  border:1px solid #183754;
+  border-radius:22px;
+  padding:18px;
+  margin:14px 0;
+  box-shadow:0 18px 55px #0005
 }
-.stat-label{font-size:12px;color:var(--muted);font-weight:700}
-.stat-value{font-size:25px;font-weight:900;margin:8px 0}
-.badge{
- display:inline-flex;align-items:center;
- border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;
- background:#17283e;color:#b9c8da;
+.hero{padding:24px}
+.eyebrow{
+  color:#6fb5ff;
+  text-transform:uppercase;
+  letter-spacing:1.3px;
+  font-size:11px;
+  font-weight:900
 }
-.badge.success{background:rgba(34,197,94,.13);color:#86efac}
-.badge.warning{background:rgba(245,158,11,.13);color:#fcd34d}
-.badge.danger{background:rgba(239,68,68,.13);color:#fca5a5}
-
-.actions{
- display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
- margin-top:15px;
+.hero h1{font-size:30px;line-height:1.05;margin:7px 0}
+.hero p{color:#9db1c9;margin:0;max-width:650px}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap
 }
-.action{
- padding:15px;border-radius:16px;border:1px solid var(--line);
- background:#0d1b2e;color:white;text-align:left;
+.profile{display:flex;gap:12px;align-items:center}
+.avatar{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  background:#102d4a;
+  display:grid;
+  place-items:center;
+  color:#7dc0ff;
+  font-weight:900
 }
-.action strong{display:block;margin-bottom:4px}
-.action span{font-size:11px;color:var(--muted)}
-
-.section-head{
- display:flex;align-items:center;justify-content:space-between;
- gap:10px;margin:20px 0 12px;
+.muted{color:#8fa5bf}
+.small{font-size:12px}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:12px
 }
-.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:650px}
-th,td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
-th{color:#7890aa;font-size:11px;text-transform:uppercase}
-.empty{
- padding:30px;text-align:center;color:var(--muted);
- border:1px dashed var(--line);border-radius:16px;
+.wallet{
+  padding:17px;
+  border:1px solid #1d405f;
+  border-radius:17px;
+  background:#081625
 }
-
-.wallet-card{
- position:relative;overflow:hidden;
- background:linear-gradient(135deg,#102d55,#0c1729);
+.currency{font-weight:900;color:#a9cfff}
+.balance{font-size:27px;font-weight:900;margin:7px 0}
+.available{color:#8fa8c4;font-size:12px}
+.sectionTitle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:13px
 }
-.wallet-card:after{
- content:"";position:absolute;width:180px;height:180px;
- right:-70px;top:-70px;border-radius:50%;
- background:rgba(56,189,248,.12);
+.sectionTitle h2{margin:0;font-size:18px}
+input,button{font:inherit}
+input{
+  width:100%;
+  padding:13px 14px;
+  border-radius:13px;
+  border:1px solid #244662;
+  background:#061321;
+  color:#fff;
+  outline:none;
+  margin:6px 0
 }
-.balance{
- font-size:35px;font-weight:950;letter-spacing:-1px;
+input:focus{
+  border-color:#2787ff;
+  box-shadow:0 0 0 3px #1680ff22
 }
-.currency{color:#8bdcff;font-size:13px;font-weight:800}
-
+button{
+  padding:12px 14px;
+  border:0;
+  border-radius:13px;
+  background:#1878ef;
+  color:#fff;
+  font-weight:850;
+  cursor:pointer;
+  transition:.15s;
+  box-shadow:0 8px 22px #0d5ec033
+}
+button:hover{transform:translateY(-1px)}
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  transform:none
+}
+button.secondary{
+  background:#12263d;
+  color:#cfe3fb;
+  border:1px solid #24435e;
+  box-shadow:none
+}
+button.danger{background:#7d2338}
+.auth{max-width:560px;margin:35px auto}
+.auth h2{font-size:25px;margin:5px 0}
+.formrow{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px
+}
+.msg{
+  padding:11px 13px;
+  border-radius:12px;
+  background:#0c2945;
+  color:#cfe7ff;
+  margin-top:10px;
+  white-space:pre-wrap
+}
+.msg.ok{background:#0c3528;color:#c8ffe5}
+.msg.error{background:#3b1822;color:#ffd8df}
+.hidden{display:none!important}
+.ops{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:11px
+}
+.op{
+  min-height:92px;
+  text-align:left;
+  background:#0a1b2e;
+  border:1px solid #1c405e;
+  box-shadow:none
+}
+.op strong{display:block;margin-top:8px}
+.op span{font-size:22px}
+.notice{border-left:3px solid #2584ff;padding-left:12px}
+.tx{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  padding:14px 0;
+  border-bottom:1px solid #17334d
+}
+.tx:last-child{border-bottom:0}
+.status{
+  font-size:11px;
+  border:1px solid #31516e;
+  border-radius:999px;
+  padding:5px 8px;
+  white-space:nowrap
+}
+.right{text-align:right}
+.footer{
+  text-align:center;
+  color:#617790;
+  font-size:11px;
+  margin:22px 0
+}
 .modal{
- position:fixed;inset:0;z-index:500;
- display:flex;align-items:center;justify-content:center;
- padding:20px;background:rgba(0,0,0,.7);
- backdrop-filter:blur(7px);
+  position:fixed;
+  inset:0;
+  background:#020914bb;
+  backdrop-filter:blur(8px);
+  display:grid;
+  place-items:center;
+  padding:16px;
+  z-index:10
 }
-.modal-card{
- width:min(520px,100%);max-height:90vh;overflow:auto;
- background:#0c192a;border:1px solid var(--line);
- border-radius:24px;padding:22px;
- box-shadow:var(--shadow);
+.modalbox{
+  width:min(560px,100%);
+  background:#0a192b;
+  border:1px solid #21445f;
+  border-radius:22px;
+  padding:20px;
+  box-shadow:0 25px 80px #0009
 }
-.modal-head{
- display:flex;align-items:center;justify-content:space-between;
- gap:10px;margin-bottom:16px;
+.close{float:right;width:auto}
+.mini{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#8fb9df;
+  font-size:11px
 }
-.close{
- width:35px;height:35px;border-radius:11px;
- border:1px solid var(--line);background:#15263a;color:white;
+.link{color:#6eb5ff;cursor:pointer}
+@media(max-width:650px){
+  .pill{margin-left:0}
+  .ops{grid-template-columns:repeat(2,1fr)}
+  .formrow{grid-template-columns:1fr}
+  .hero h1{font-size:26px}
 }
+</style>
 
-.bottom-nav{display:none}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
 
-@media(max-width:1000px){
- .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media(max-width:760px){
- .layout{display:block}
- .sidebar{
-  display:none;
-  position:fixed;left:0;top:65px;bottom:0;width:270px;z-index:300;
- }
- .sidebar.open{display:block}
- .main{padding:14px 12px 90px}
- .grid,.grid-2{grid-template-columns:1fr}
- .hero-row{display:block}
- .topbar{padding:10px 12px}
- .bottom-nav{
-  position:fixed;display:grid;grid-template-columns:repeat(5,1fr);
-  bottom:0;left:0;right:0;z-index:200;
-  background:rgba(5,11,20,.94);border-top:1px solid var(--line);
-  backdrop-filter:blur(15px);
- }
- .bottom-nav button{
-  border:0;background:transparent;color:#8296ad;
-  padding:9px 2px;font-size:10px;font-weight:800;
- }
- .bottom-nav button.active{color:#58c9ff}
-}
+<body>
+<div class="wrap">
 
-@media(min-width:761px){
- #menuButton{display:none}
-}
-
-.toast{
- position:fixed;right:18px;bottom:18px;z-index:10000;
- max-width:360px;padding:14px 16px;border-radius:15px;
- background:#13243a;border:1px solid var(--line);
- box-shadow:var(--shadow);font-size:13px;
- transform:translateY(20px);opacity:0;pointer-events:none;
- transition:.25s;
-}
-.toast.show{transform:translateY(0);opacity:1}
-</style></head><body><div id="loading" class="loading">
-  <div class="logo">CP</div>
-  <div class="spinner"></div>
-  <strong>CUBA PLUS PAY</strong>
-  <div id="loadingText" class="muted small">Preparando tu plataforma...</div>
-</div><!-- AUTENTICACIÓN --><section id="authScreen" class="auth-wrap hidden">
-  <div class="auth-card"><div class="brand">
+<header class="brandbar">
   <div class="logo">CP</div>
   <div>
-    <div class="brand-name">CUBA PLUS PAY</div>
-    <div class="brand-sub">Tu dinero. Tus pagos. Tu plataforma.</div>
+    <div class="brand">CUBA PLUS PAY</div>
+    <div class="sub">Tu dinero. Tus pagos. Tu plataforma.</div>
   </div>
-</div>
+  <div class="pill">V7.5.2 · PRODUCCIÓN CONTROLADA</div>
+</header>
 
-<div id="loginView">
-  <h1>Bienvenido</h1>
-  <p class="muted">Accede de forma segura a tu cuenta.</p>
-
-  <div class="form-group">
-    <label>Correo electrónico</label>
-    <input id="loginEmail" type="email" autocomplete="email" placeholder="tu@email.com">
-  </div>
-
-  <div class="form-group">
-    <label>Contraseña</label>
-    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña">
+<section id="authCard" class="card auth">
+  <div class="hero">
+    <div class="eyebrow">CUBA PLUS PAY</div>
+    <h1 id="authTitle">Bienvenido</h1>
+    <p id="authHint">Accede a tu cuenta de forma segura.</p>
   </div>
 
-  <button class="btn full" id="loginBtn">Entrar a CUBA PLUS PAY</button>
+  <div style="padding:0 6px 6px">
+    <input
+      id="email"
+      type="email"
+      autocomplete="email"
+      placeholder="Correo electrónico"
+    >
 
-  <div class="auth-actions">
-    <button class="link-btn" id="showRegister">Crear cuenta</button>
-    <button class="link-btn" id="showRecovery">¿Olvidaste tu contraseña?</button>
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Contraseña"
+    >
+
+    <button id="authBtn">Iniciar sesión</button>
+
+    <div class="formrow">
+      <button id="modeBtn" class="secondary">Crear cuenta</button>
+      <button id="resetBtn" class="secondary">Recuperar contraseña</button>
+    </div>
+
+    <div id="authMsg" class="msg hidden"></div>
   </div>
-</div>
+</section>
 
-<div id="registerView" class="hidden">
-  <h1>Crear cuenta</h1>
-  <p class="muted">Regístrate para comenzar.</p>
+<main id="app" class="hidden">
 
-  <div class="form-group">
-    <label>Nombre</label>
-    <input id="registerName" type="text" placeholder="Nombre para mostrar">
-  </div>
+<section class="card hero">
+  <div class="top">
 
-  <div class="form-group">
-    <label>Correo electrónico</label>
-    <input id="registerEmail" type="email" placeholder="tu@email.com">
-  </div>
+    <div>
+      <div class="eyebrow">CUENTA</div>
+      <h1 id="hello">Hola</h1>
+      <p id="profileLine">Cargando perfil...</p>
+    </div>
 
-  <div class="form-group">
-    <label>Contraseña</label>
-    <input id="registerPassword" type="password" placeholder="Mínimo 8 caracteres">
-  </div>
-
-  <button class="btn full" id="registerBtn">Crear mi cuenta</button>
-
-  <div class="auth-actions">
-    <button class="link-btn" id="backLogin1">Ya tengo una cuenta</button>
-  </div>
-</div>
-
-<div id="recoveryView" class="hidden">
-  <h1>Recuperar acceso</h1>
-  <p class="muted">Te enviaremos instrucciones al correo asociado.</p>
-
-  <div class="form-group">
-    <label>Correo electrónico</label>
-    <input id="recoveryEmail" type="email" placeholder="tu@email.com">
-  </div>
-
-  <button class="btn full" id="recoveryBtn">Enviar recuperación</button>
-
-  <div class="auth-actions">
-    <button class="link-btn" id="backLogin2">Volver al acceso</button>
-  </div>
-</div>
-
-<div id="authMessage"></div>
+    <div class="profile">
+      <div class="avatar" id="avatar">CP</div>
+      <button id="logoutBtn" class="danger">Cerrar sesión</button>
+    </div>
 
   </div>
-</section><!-- APP --><section id="appScreen" class="app hidden">  <header class="topbar">
-    <div class="top-brand">
-      <button id="menuButton" class="menu-btn">☰</button>
-      <div class="logo top-logo">CP</div>
-      <div>
-        <div class="brand-name">CUBA PLUS PAY</div>
-        <div class="brand-sub">Tu dinero. Tus pagos. Tu plataforma.</div>
-      </div>
-    </div><div class="user-area">
-  <div>
-    <div id="topUserName" style="font-size:12px;font-weight:800;text-align:right">Usuario</div>
-    <div id="topUserRole" class="small muted" style="text-align:right">Cuenta</div>
-  </div>
-  <div id="topAvatar" class="avatar">U</div>
-</div>
+</section>
 
-  </header>  <div class="layout"><aside id="sidebar" class="sidebar">
-
-  <div class="nav-title">PRINCIPAL</div>
-  <button class="nav-btn active" data-page="dashboard">⌂ <span>Inicio</span></button>
-  <button class="nav-btn" data-page="wallet">◈ <span>Billetera</span></button>
-  <button class="nav-btn" data-page="transactions">↔ <span>Movimientos</span></button>
-
-  <div class="nav-title">OPERACIONES</div>
-  <button class="nav-btn" data-page="transfer">⇄ <span>Transferir</span></button>
-  <button class="nav-btn" data-page="deposit">＋ <span>Depositar</span></button>
-  <button class="nav-btn" data-page="withdraw">↗ <span>Retirar</span></button>
-  <button class="nav-btn" data-page="recharge">▣ <span>Recargas</span></button>
-  <button class="nav-btn" data-page="payments">▤ <span>Pagos</span></button>
-
-  <div class="nav-title">NEGOCIOS</div>
-  <button class="nav-btn" data-page="invoices">▧ <span>Facturas</span></button>
-  <button class="nav-btn" data-page="links">⌁ <span>Enlaces de pago</span></button>
-  <button class="nav-btn" data-page="marketplace">◇ <span>Marketplace</span></button>
-  <button class="nav-btn" data-page="orders">▤ <span>Órdenes</span></button>
-
-  <div class="nav-title">CUENTA</div>
-  <button class="nav-btn" data-page="profile">◎ <span>Mi perfil</span></button>
-  <button class="nav-btn" data-page="security">⌁ <span>Seguridad</span></button>
-  <button class="nav-btn" data-page="admin" id="adminNav">⚙ <span>Administración</span></button>
-
-  <button class="nav-btn" id="logoutBtn" style="margin-top:20px;color:#fca5a5">↪ <span>Cerrar sesión</span></button>
-</aside>
-
-<main class="main">
-
-  <!-- DASHBOARD -->
-  <div id="page-dashboard" class="page active">
-    <div class="hero">
-      <div class="hero-row">
-        <div>
-          <div class="badge">● CUENTA CONECTADA</div>
-          <h1 style="margin-top:12px">Tu centro financiero</h1>
-          <p class="muted">Administra tus fondos, pagos y operaciones desde un solo lugar.</p>
-        </div>
-        <button class="btn" id="refreshBtn">↻ Actualizar</button>
-      </div>
-    </div>
-
-    <div class="grid" id="walletStats"></div>
-
-    <div class="section-head">
-      <h2>Acciones rápidas</h2>
-    </div>
-
-    <div class="actions">
-      <button class="action" data-go="transfer">
-        <strong>⇄ Transferir</strong>
-        <span>Envía fondos desde tu cuenta.</span>
-      </button>
-      <button class="action" data-go="deposit">
-        <strong>＋ Depositar</strong>
-        <span>Genera una operación de depósito.</span>
-      </button>
-      <button class="action" data-go="withdraw">
-        <strong>↗ Retirar</strong>
-        <span>Solicita un retiro mediante un proveedor conectado.</span>
-      </button>
-      <button class="action" data-go="recharge">
-        <strong>▣ Recargar</strong>
-        <span>Servicios móviles y recargas.</span>
-      </button>
-    </div>
-
-    <div class="section-head">
-      <h2>Actividad reciente</h2>
-      <button class="link-btn" data-go="transactions">Ver movimientos</button>
-    </div>
-
-    <div class="card">
-      <div id="recentTransactions" class="empty">Cargando movimientos reales...</div>
-    </div>
+<section class="card">
+  <div class="sectionTitle">
+    <h2>Estado de la cuenta</h2>
+    <span class="mini">● Conectado</span>
   </div>
 
-  <!-- WALLET -->
-  <div id="page-wallet" class="page">
-    <div class="hero">
-      <h1>Billetera</h1>
-      <p class="muted">Tus saldos reales disponibles en CUBA PLUS PAY.</p>
-    </div>
-    <div id="walletCards" class="grid"></div>
+  <div id="accountState" class="muted">
+    Consultando Supabase...
+  </div>
+</section>
+
+<section class="card">
+
+  <div class="sectionTitle">
+    <h2>Mis billeteras</h2>
+    <button id="refreshBtn" class="secondary" style="width:auto">
+      Actualizar
+    </button>
   </div>
 
-  <!-- TRANSACTIONS -->
-  <div id="page-transactions" class="page">
-    <div class="hero">
-      <h1>Movimientos</h1>
-      <p class="muted">Historial obtenido desde la base de datos.</p>
-    </div>
-    <div class="card">
-      <div id="transactionsTable" class="empty">Cargando...</div>
-    </div>
+  <div id="wallets" class="grid"></div>
+  <div id="walletMsg" class="msg hidden"></div>
+
+</section>
+
+<section class="card">
+
+  <div class="sectionTitle">
+    <h2>Operaciones</h2>
+    <span class="mini">
+      Acciones reales cuando el backend está habilitado
+    </span>
   </div>
 
-  <!-- TRANSFER -->
-  <div id="page-transfer" class="page">
-    <div class="hero">
-      <h1>Transferir fondos</h1>
-      <p class="muted">La transferencia se ejecuta mediante el ledger seguro de CUBA PLUS PAY.</p>
-    </div>
+  <div class="ops">
 
-    <div class="card" style="max-width:600px">
-      <div class="form-group">
-        <label>Destinatario</label>
-        <input id="transferRecipient" placeholder="UUID o identificador del destinatario">
-      </div>
+    <button class="op" data-op="transferir">
+      <span>↗</span>
+      <strong>Transferir</strong>
+      <small class="muted">Fondos internos</small>
+    </button>
 
-      <div class="form-group">
-        <label>Monto</label>
-        <input id="transferAmount" type="number" min="0.000001" step="any" placeholder="0.00">
-      </div>
+    <button class="op" data-op="recibir">
+      <span>↓</span>
+      <strong>Recibir dinero</strong>
+      <small class="muted">Enlace de recepción</small>
+    </button>
 
-      <div class="form-group">
-        <label>Referencia</label>
-        <input id="transferReference" placeholder="Concepto de la transferencia">
-      </div>
+    <button class="op" data-op="depositar">
+      <span>＋</span>
+      <strong>Depositar</strong>
+      <small class="muted">QvaPay</small>
+    </button>
 
-      <button class="btn full" id="transferBtn">Ejecutar transferencia</button>
-      <div id="transferMessage"></div>
-    </div>
+    <button class="op" data-op="retirar">
+      <span>↙</span>
+      <strong>Retirar</strong>
+      <small class="muted">Proveedor autorizado</small>
+    </button>
+
+    <button class="op" data-op="recargar">
+      <span>▣</span>
+      <strong>Recargar móvil</strong>
+      <small class="muted">Proveedor autorizado</small>
+    </button>
+
+    <button class="op" data-op="pagar">
+      <span>◆</span>
+      <strong>Pagar</strong>
+      <small class="muted">Checkout</small>
+    </button>
+
   </div>
 
-  <!-- DEPOSIT -->
-  <div id="page-deposit" class="page">
-    <div class="hero">
-      <h1>Depositar</h1>
-      <p class="muted">Genera un checkout mediante la integración segura con QvaPay.</p>
-    </div>
+  <div id="opMsg" class="msg hidden"></div>
 
-    <div class="card" style="max-width:600px">
-      <div class="message info">
-        El secreto de QvaPay permanece exclusivamente en Supabase Edge Functions.
-        Nunca se expone en este navegador.
-      </div>
+</section>
 
-      <div class="form-group">
-        <label>Monto</label>
-        <input id="depositAmount" type="number" min="0.01" step="0.01" placeholder="10.00">
-      </div>
+<section id="depositCard" class="card hidden">
 
-      <div class="form-group">
-        <label>Descripción</label>
-        <input id="depositDescription" placeholder="Depósito a CUBA PLUS PAY">
-      </div>
-
-      <button class="btn full" id="depositBtn">Crear depósito con QvaPay</button>
-      <div id="depositMessage"></div>
-    </div>
+  <div class="sectionTitle">
+    <h2>Depositar con QvaPay</h2>
+    <button id="closeDeposit" class="secondary close">
+      Cerrar
+    </button>
   </div>
 
-  <!-- WITHDRAW -->
-  <div id="page-withdraw" class="page">
-    <div class="hero">
-      <h1>Retirar fondos</h1>
-      <p class="muted">Solicita un retiro cuando exista un proveedor conectado y habilitado.</p>
+  <p class="muted small">
+    La factura se crea mediante el Edge Function seguro de
+    CUBA PLUS PAY. La clave secreta de QvaPay permanece en
+    Supabase y nunca se expone en este HTML.
+  </p>
+
+  <div class="formrow">
+
+    <div>
+      <label class="small muted">Monto USD</label>
+      <input
+        id="amount"
+        type="number"
+        min="1"
+        max="100000"
+        step="0.01"
+        placeholder="10.00"
+      >
     </div>
 
-    <div class="card">
-      <div class="message warning">
-        El retiro no se simula. Para mover dinero real es necesario tener configurado
-        un proveedor de retiro y sus reglas de conciliación.
-      </div>
-
-      <div class="grid grid-2">
-        <div class="form-group">
-          <label>Monto</label>
-          <input id="withdrawAmount" type="number" min="0.01" step="0.01" placeholder="0.00">
-        </div>
-        <div class="form-group">
-          <label>Método</label>
-          <select id="withdrawMethod">
-            <option>USDT-TRC20</option>
-            <option>BTC</option>
-            <option>TRX</option>
-            <option>Transferencia bancaria</option>
-          </select>
-        </div>
-      </div>
-
-      <button class="btn" id="withdrawBtn">Solicitar retiro</button>
-      <div id="withdrawMessage"></div>
+    <div>
+      <label class="small muted">Descripción</label>
+      <input
+        id="description"
+        maxlength="255"
+        value="Depósito CUBA PLUS PAY"
+      >
     </div>
+
   </div>
 
-  <!-- RECHARGE -->
-  <div id="page-recharge" class="page">
-    <div class="hero">
-      <h1>Recargas</h1>
-      <p class="muted">Servicios móviles y recargas mediante proveedores reales.</p>
-    </div>
+  <button id="qvaBtn">
+    Crear factura QvaPay
+  </button>
 
-    <div class="card">
-      <div class="message warning">
-        No se generan recargas ficticias. Esta sección queda preparada para conectarse
-        al proveedor de recargas correspondiente.
-      </div>
+  <div id="qvaMsg" class="msg hidden"></div>
 
-      <div class="grid grid-2">
-        <div class="form-group">
-          <label>Número</label>
-          <input id="rechargePhone" placeholder="+53...">
-        </div>
-        <div class="form-group">
-          <label>Monto</label>
-          <input id="rechargeAmount" type="number" min="0.01" step="0.01" placeholder="0.00">
-        </div>
-      </div>
+</section>
 
-      <button class="btn" id="rechargeBtn">Continuar con recarga</button>
-      <div id="rechargeMessage"></div>
-    </div>
+<section class="card">
+
+  <div class="sectionTitle">
+    <h2>Historial real</h2>
+    <span class="mini">Últimos 50 movimientos</span>
   </div>
 
-  <!-- PAYMENTS -->
-  <div id="page-payments" class="page">
-    <div class="hero">
-      <h1>Pagos</h1>
-      <p class="muted">Gestiona pagos y checkouts desde CUBA PLUS PAY.</p>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <h3>Checkout</h3>
-        <p class="muted small">Procesa un pago mediante un enlace válido.</p>
-        <button class="btn" data-go="links">Crear enlace</button>
-      </div>
-      <div class="card">
-        <h3>Facturación</h3>
-        <p class="muted small">Gestiona tus facturas.</p>
-        <button class="btn" data-go="invoices">Ver facturas</button>
-      </div>
-      <div class="card">
-        <h3>Marketplace</h3>
-        <p class="muted small">Compra y vende dentro de la plataforma.</p>
-        <button class="btn" data-go="marketplace">Abrir marketplace</button>
-      </div>
-      <div class="card">
-        <h3>Órdenes</h3>
-        <p class="muted small">Consulta tus órdenes.</p>
-        <button class="btn" data-go="orders">Ver órdenes</button>
-      </div>
-    </div>
+  <div id="transactions" class="muted">
+    Consultando movimientos...
   </div>
 
-  <!-- INVOICES -->
-  <div id="page-invoices" class="page">
-    <div class="hero">
-      <div class="hero-row">
-        <div>
-          <h1>Facturas</h1>
-          <p class="muted">Facturación preparada para operaciones reales.</p>
-        </div>
-        <button class="btn" id="newInvoiceBtn">＋ Nueva factura</button>
-      </div>
-    </div>
+  <div id="txMsg" class="msg hidden"></div>
 
-    <div class="card">
-      <div class="empty">
-        Las facturas aparecerán aquí cuando estén registradas en la base de datos.
-      </div>
-    </div>
-  </div>
-
-  <!-- LINKS -->
-  <div id="page-links" class="page">
-    <div class="hero">
-      <div class="hero-row">
-        <div>
-          <h1>Enlaces de pago</h1>
-          <p class="muted">Crea enlaces para cobrar mediante checkout.</p>
-        </div>
-        <button class="btn" id="newLinkBtn">＋ Crear enlace</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="empty">
-        No existen enlaces registrados para mostrar.
-      </div>
-    </div>
-  </div>
-
-  <!-- MARKETPLACE -->
-  <div id="page-marketplace" class="page">
-    <div class="hero">
-      <h1>Marketplace</h1>
-      <p class="muted">Tiendas, productos y operaciones comerciales.</p>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <h3>Productos</h3>
-        <p class="muted small">Los productos reales aparecerán cuando estén publicados.</p>
-        <button class="btn secondary" id="productsBtn">Ver productos</button>
-      </div>
-      <div class="card">
-        <h3>Mi tienda</h3>
-        <p class="muted small">Administra tu catálogo comercial.</p>
-        <button class="btn secondary" id="storeBtn">Administrar tienda</button>
-      </div>
-      <div class="card">
-        <h3>Vender</h3>
-        <p class="muted small">Prepara un producto para venta.</p>
-        <button class="btn" id="sellBtn">Crear producto</button>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:15px">
-      <div class="empty">No hay productos reales disponibles para mostrar.</div>
-    </div>
-  </div>
-
-  <!-- ORDERS -->
-  <div id="page-orders" class="page">
-    <div class="hero">
-      <h1>Órdenes</h1>
-      <p class="muted">Consulta las órdenes asociadas a tu cuenta.</p>
-    </div>
-    <div class="card">
-      <div class="empty">No hay órdenes registradas.</div>
-    </div>
-  </div>
-
-  <!-- PROFILE -->
-  <div id="page-profile" class="page">
-    <div class="hero">
-      <h1>Mi perfil</h1>
-      <p class="muted">Información de tu cuenta y estado de verificación.</p>
-    </div>
-
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>Datos de cuenta</h3>
-        <div class="form-group">
-          <label>Nombre</label>
-          <input id="profileName">
-        </div>
-        <div class="form-group">
-          <label>País</label>
-          <input id="profileCountry">
-        </div>
-        <button class="btn" id="saveProfileBtn">Guardar cambios</button>
-        <div id="profileMessage"></div>
-      </div>
-
-      <div class="card">
-        <h3>Estado KYC</h3>
-        <div id="kycStatus" class="badge">Cargando...</div>
-        <p class="muted small" style="margin-top:15px">
-          La verificación de identidad debe gestionarse mediante el flujo KYC
-          configurado en el backend.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECURITY -->
-  <div id="page-security" class="page">
-    <div class="hero">
-      <h1>Seguridad</h1>
-      <p class="muted">Protege el acceso a tu cuenta.</p>
-    </div>
-
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>Cambiar contraseña</h3>
-
-        <div class="form-group">
-          <label>Nueva contraseña</label>
-          <input id="newPassword" type="password" placeholder="Nueva contraseña">
-        </div>
-
-        <button class="btn" id="changePasswordBtn">Actualizar contraseña</button>
-        <div id="passwordMessage"></div>
-      </div>
-
-      <div class="card">
-        <h3>Sesión</h3>
-        <p class="muted small">Sesión autenticada mediante Supabase Auth.</p>
-        <button class="btn danger" id="logoutSecurityBtn">Cerrar sesión</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADMIN -->
-  <div id="page-admin" class="page">
-    <div class="hero">
-      <h1>Administración</h1>
-      <p class="muted">Panel reservado según el rol real de la cuenta.</p>
-    </div>
-
-    <div id="adminContent" class="grid"></div>
-  </div>
+</section>
 
 </main>
 
-  </div>  <nav class="bottom-nav">
-    <button data-page="dashboard">⌂<br>Inicio</button>
-    <button data-page="wallet">◈<br>Billetera</button>
-    <button data-page="transfer">⇄<br>Transferir</button>
-    <button data-page="transactions">↔<br>Movimientos</button>
-    <button id="bottomMenu">☰<br>Menú</button>
-  </nav>
-</section><!-- MODAL --><div id="modal" class="modal hidden">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h2 id="modalTitle">CUBA PLUS PAY</h2>
-      <button class="close" id="closeModal">×</button>
-    </div>
-    <div id="modalBody"></div>
-  </div>
-</div><div id="toast" class="toast"></div><script>
-"use strict";
+<div class="footer">
+  CUBA PLUS PAY V7.5.2 · Supabase · Sin saldos ficticios ni pagos simulados.
+</div>
 
-/* ============================================================
-   CUBA PLUS PAY V7.5.2
-   Frontend seguro para GitHub Pages + Supabase
-   IMPORTANTE:
-   - Nunca colocar QVAPAY_APP_SECRET aquí.
-   - Los secretos viven exclusivamente en Edge Functions.
-============================================================ */
+</div>
 
-const SUPABASE_URL = "https://lqwxkevalagdhckhuelx.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4";
+<script>
+(function(){
+'use strict';
 
-const db = window.supabase.createClient(
+const SUPABASE_URL =
+'https://lqwxkevalagdhckhuelx.supabase.co';
+
+const SUPABASE_PUBLISHABLE_KEY =
+'sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
+
+const client =
+window.supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_ANON_KEY
+  SUPABASE_PUBLISHABLE_KEY
 );
-
-let currentUser = null;
-let currentProfile = null;
-let wallets = [];
-let transactions = [];
-let bootStarted = false;
-let authListenerReady = false;
-
-/* =========================
-   UTILIDADES
-========================= */
 
 const $ = id => document.getElementById(id);
 
-function escapeHtml(value){
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
+const show = (id,on=true) =>
+  $(id).classList.toggle('hidden',!on);
 
-function setLoading(show,text){
-  const el = $("loading");
-  if(!el) return;
-  el.classList.toggle("hidden",!show);
-  if(text) $("loadingText").textContent = text;
-}
+const esc = v =>
+  String(v ?? '').replace(
+    /[&<>"']/g,
+    c => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[c])
+  );
 
-function showToast(message,type="info"){
-  const toast = $("toast");
-  toast.textContent = message;
-  toast.className = "toast show";
-  setTimeout(()=>toast.className="toast",3200);
-}
-
-function authMessage(text,type="info"){
-  $("authMessage").innerHTML =
-    `<div class="message ${type}">${escapeHtml(text)}</div>`;
-}
-
-function pageMessage(id,text,type="info"){
-  const el=$(id);
-  if(el) el.innerHTML=`<div class="message ${type}">${escapeHtml(text)}</div>`;
-}
-
-/*
-  Evita que una petición de red deje bloqueada la aplicación.
-*/
-function withTimeout(promise,ms,label="operación"){
-  return Promise.race([
-    promise,
-    new Promise((_,reject)=>{
-      setTimeout(()=>reject(new Error(
-        `Tiempo de espera agotado en ${label}.`
-      )),ms);
-    })
-  ]);
-}
-
-function formatMoney(value,currency){
-  const n=Number(value||0);
-  return `${n.toLocaleString("es-ES",{
-    minimumFractionDigits:2,
-    maximumFractionDigits:8
-  })} ${currency||""}`.trim();
-}
-
-function shortId(id){
-  if(!id) return "—";
-  return id.length>14 ? `${id.slice(0,8)}…${id.slice(-4)}` : id;
-}
-
-function statusBadge(status){
-  const s=String(status||"").toUpperCase();
-  let type="";
-  if(["COMPLETED","SUCCESS","PAID","APPROVED"].includes(s)) type="success";
-  if(["PENDING","PROCESSING","CREATED"].includes(s)) type="warning";
-  if(["FAILED","REJECTED","CANCELLED"].includes(s)) type="danger";
-  return `<span class="badge ${type}">${escapeHtml(status||"—")}</span>`;
-}
-
-/* =========================
-   NAVEGACIÓN
-========================= */
-
-function showPage(page){
-  document.querySelectorAll(".page").forEach(p=>{
-    p.classList.remove("active");
-  });
-
-  const target=$(`page-${page}`);
-  if(target) target.classList.add("active");
-
-  document.querySelectorAll("[data-page]").forEach(btn=>{
-    btn.classList.toggle("active",btn.dataset.page===page);
-  });
-
-  $("sidebar").classList.remove("open");
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-document.addEventListener("click",e=>{
-  const nav=e.target.closest("[data-page]");
-  if(nav){
-    e.preventDefault();
-    showPage(nav.dataset.page);
-    return;
-  }
-
-  const go=e.target.closest("[data-go]");
-  if(go){
-    e.preventDefault();
-    showPage(go.dataset.go);
-  }
-});
-
-$("menuButton").addEventListener("click",()=>{
-  $("sidebar").classList.toggle("open");
-});
-
-$("bottomMenu").addEventListener("click",()=>{
-  $("sidebar").classList.toggle("open");
-});
-
-/* =========================
-   AUTH
-========================= */
-
-function authView(view){
-  ["loginView","registerView","recoveryView"].forEach(id=>{
-    $(id).classList.add("hidden");
-  });
-  $(view).classList.remove("hidden");
-  $("authMessage").innerHTML="";
-}
-
-$("showRegister").onclick=()=>authView("registerView");
-$("showRecovery").onclick=()=>authView("recoveryView");
-$("backLogin1").onclick=()=>authView("loginView");
-$("backLogin2").onclick=()=>authView("loginView");
-
-$("loginBtn").onclick=async()=>{
-  const email=$("loginEmail").value.trim();
-  const password=$("loginPassword").value;
-
-  if(!email || !password){
-    authMessage("Introduce tu correo y contraseña.","warning");
-    return;
-  }
-
-  $("loginBtn").disabled=true;
-  $("loginBtn").textContent="Entrando...";
-
-  try{
-    const result=await withTimeout(
-      db.auth.signInWithPassword({email,password}),
-      10000,
-      "inicio de sesión"
-    );
-
-    if(result.error) throw result.error;
-
-    showToast("Sesión iniciada correctamente.","success");
-  }catch(error){
-    authMessage(error.message || "No fue posible iniciar sesión.","error");
-  }finally{
-    $("loginBtn").disabled=false;
-    $("loginBtn").textContent="Entrar a CUBA PLUS PAY";
-  }
+const msg = (id,t,type='') => {
+  const e=$(id);
+  e.textContent=t;
+  e.className='msg'+(t?' '+type:'');
+  show(id,!!t);
 };
 
-$("registerBtn").onclick=async()=>{
-  const name=$("registerName").value.trim();
-  const email=$("registerEmail").value.trim();
-  const password=$("registerPassword").value;
+const fmt = v => {
+  const n=Number(v);
+  return Number.isFinite(n)
+    ? n.toLocaleString(
+        'es-ES',
+        {maximumFractionDigits:8}
+      )
+    : '—';
+};
 
-  if(!email || password.length<8){
-    authMessage("Usa un correo válido y una contraseña de al menos 8 caracteres.","warning");
+const status = s =>
+({
+  pending:'Pendiente',
+  processing:'Procesando',
+  completed:'Completada',
+  failed:'Fallida',
+  cancelled:'Cancelada',
+  reversed:'Revertida'
+}[s] || s || '—');
+
+let signup=false;
+
+function authMode(){
+
+  $('authTitle').textContent =
+    signup ? 'Crear cuenta' : 'Bienvenido';
+
+  $('authHint').textContent =
+    signup
+      ? 'Crea tu cuenta de CUBA PLUS PAY con correo y contraseña.'
+      : 'Accede a tu cuenta de forma segura.';
+
+  $('authBtn').textContent =
+    signup ? 'Crear cuenta' : 'Iniciar sesión';
+
+  $('modeBtn').textContent =
+    signup ? 'Ya tengo cuenta' : 'Crear cuenta';
+
+  msg('authMsg','');
+}
+
+async function loadData(){
+
+  const {
+    data:{user}
+  } = await client.auth.getUser();
+
+  if(!user)return;
+
+  $('hello').textContent =
+    'Hola, '+(user.email||'usuario');
+
+  $('avatar').textContent =
+    (user.email||'CP')
+      .slice(0,2)
+      .toUpperCase();
+
+  $('profileLine').textContent =
+    'Cargando perfil...';
+
+  $('accountState').textContent =
+    'Consultando Supabase...';
+
+  const p =
+    await client
+      .from('profiles')
+      .select(
+        'display_name,role,country,kyc_status,mfa_required,risk_tier'
+      )
+      .eq('id',user.id)
+      .maybeSingle();
+
+  if(p.error){
+
+    $('profileLine').textContent =
+      'Sesión activa · perfil no disponible';
+
+    $('accountState').textContent =
+      'Sesión iniciada. Perfil no disponible: '
+      + p.error.message;
+
+  }else if(p.data){
+
+    const x=p.data;
+
+    $('profileLine').textContent =
+      (x.display_name||'Usuario')
+      +' · '
+      +(x.role||'user');
+
+    $('accountState').innerHTML =
+      '<b>KYC:</b> '
+      +esc(x.kyc_status||'NOT_STARTED')
+      +' · <b>País:</b> '
+      +esc(x.country||'—')
+      +' · <b>Riesgo:</b> '
+      +esc(x.risk_tier||'—')
+      +' · <b>2FA:</b> '
+      +(x.mfa_required
+        ? 'Requerido'
+        : 'No requerido');
+
+  }else{
+
+    $('profileLine').textContent =
+      'Sesión activa · perfil pendiente';
+
+    $('accountState').textContent =
+      'La sesión está activa, pero no existe un perfil visible para esta cuenta.';
+  }
+
+  const w =
+    await client
+      .from('wallets')
+      .select('currency,balance,locked,version')
+      .eq('user_id',user.id)
+      .order('currency');
+
+  const box=$('wallets');
+
+  box.innerHTML='';
+
+  if(w.error){
+
+    msg(
+      'walletMsg',
+      'No se pudieron consultar las billeteras: '
+      +w.error.message,
+      'error'
+    );
+
+  }else if(!w.data?.length){
+
+    box.innerHTML =
+      '<div class="muted">No existe una billetera registrada para esta cuenta.</div>';
+
+    msg('walletMsg','');
+
+  }else{
+
+    msg('walletMsg','');
+
+    w.data.forEach(x=>{
+
+      const d=document.createElement('div');
+
+      d.className='wallet';
+
+      const b=Number(x.balance)||0;
+      const l=Number(x.locked)||0;
+
+      d.innerHTML =
+        '<div class="currency">'
+        +esc(x.currency||'—')
+        +'</div>'
+
+        +'<div class="balance">'
+        +fmt(b)
+        +'</div>'
+
+        +'<div class="available">'
+        +'Disponible: '
+        +fmt(b-l)
+        +' · Bloqueado: '
+        +fmt(l)
+        +'</div>';
+
+      box.appendChild(d);
+    });
+  }
+
+  const t =
+    await client
+      .from('transactions')
+      .select(
+        'id,type,status,amount,currency,rail,external_id,reference,created_at,updated_at,fee_amount,net_amount,reconciled_at,reconciliation_state'
+      )
+      .eq('user_id',user.id)
+      .order(
+        'created_at',
+        {ascending:false}
+      )
+      .limit(50);
+
+  const tx=$('transactions');
+
+  tx.innerHTML='';
+
+  if(t.error){
+
+    msg(
+      'txMsg',
+      'No se pudo consultar el historial: '
+      +t.error.message,
+      'error'
+    );
+
+  }else if(!t.data?.length){
+
+    tx.innerHTML =
+      '<div class="muted">No hay movimientos registrados para esta cuenta.</div>';
+
+    msg('txMsg','');
+
+  }else{
+
+    msg('txMsg','');
+
+    t.data.forEach(x=>{
+
+      const d=document.createElement('div');
+
+      d.className='tx';
+
+      const date =
+        x.created_at
+          ? new Date(x.created_at)
+              .toLocaleString('es-ES')
+          : '';
+
+      d.innerHTML =
+        '<div>'
+        +'<b>'
+        +esc(x.type||'operación')
+        +'</b>'
+
+        +'<div class="muted small">'
+        +esc(date)
+        +' · '
+        +esc(x.rail||'interno')
+        +(x.reference
+          ? ' · '+esc(x.reference)
+          : '')
+        +'</div>'
+        +'</div>'
+
+        +'<div class="right">'
+        +'<span class="status">'
+        +esc(status(x.status))
+        +'</span>'
+
+        +'<div style="margin-top:5px;font-weight:850">'
+        +fmt(x.amount)
+        +' '
+        +esc(x.currency||'')
+        +'</div>'
+
+        +'</div>';
+
+      tx.appendChild(d);
+    });
+  }
+}
+
+async function session(){
+
+  const {
+    data:{session}
+  } = await client.auth.getSession();
+
+  show('authCard',!session);
+  show('app',!!session);
+
+  if(session)
+    await loadData();
+}
+
+$('authBtn').onclick=async()=>{
+
+  const email =
+    $('email').value.trim();
+
+  const password =
+    $('password').value;
+
+  if(!email||!password){
+
+    msg(
+      'authMsg',
+      'Escribe correo y contraseña.',
+      'error'
+    );
+
     return;
   }
 
-  $("registerBtn").disabled=true;
-  $("registerBtn").textContent="Creando cuenta...";
+  if(password.length<6){
 
-  try{
-    const result=await withTimeout(
-      db.auth.signUp({
-        email,
-        password,
-        options:{
-          data:{
-            display_name:name || null
+    msg(
+      'authMsg',
+      'La contraseña debe tener al menos 6 caracteres.',
+      'error'
+    );
+
+    return;
+  }
+
+  $('authBtn').disabled=true;
+
+  $('authBtn').textContent =
+    signup
+      ? 'Creando...'
+      : 'Entrando...';
+
+  let r =
+    signup
+      ? await client.auth.signUp({
+          email,
+          password,
+          options:{
+            emailRedirectTo:
+              window.location.origin
+              +window.location.pathname
           }
-        }
-      }),
-      10000,
-      "registro"
+        })
+      : await client.auth.signInWithPassword({
+          email,
+          password
+        });
+
+  $('authBtn').disabled=false;
+
+  authMode();
+
+  if(r.error){
+
+    msg(
+      'authMsg',
+      r.error.message,
+      'error'
     );
 
-    if(result.error) throw result.error;
+    return;
+  }
 
-    if(result.data.session){
-      showToast("Cuenta creada.","success");
-    }else{
-      authMessage(
-        "Cuenta creada. Revisa tu correo si la confirmación de email está habilitada.",
-        "success"
-      );
-    }
-  }catch(error){
-    authMessage(error.message || "No fue posible crear la cuenta.","error");
-  }finally{
-    $("registerBtn").disabled=false;
-    $("registerBtn").textContent="Crear mi cuenta";
+  if(signup&&!r.data.session){
+
+    msg(
+      'authMsg',
+      'Cuenta creada. Revisa tu correo para confirmar la cuenta.',
+      'ok'
+    );
+
+  }else{
+
+    await session();
   }
 };
 
-$("recoveryBtn").onclick=async()=>{
-  const email=$("recoveryEmail").value.trim();
+$('modeBtn').onclick=()=>{
+  signup=!signup;
+  authMode();
+};
+
+$('resetBtn').onclick=async()=>{
+
+  const email =
+    $('email').value.trim();
 
   if(!email){
-    authMessage("Introduce tu correo electrónico.","warning");
-    return;
-  }
 
-  $("recoveryBtn").disabled=true;
-
-  try{
-    const result=await withTimeout(
-      db.auth.resetPasswordForEmail(email,{
-        redirectTo:window.location.origin + window.location.pathname
-      }),
-      10000,
-      "recuperación de contraseña"
+    msg(
+      'authMsg',
+      'Escribe primero tu correo electrónico.',
+      'error'
     );
-
-    if(result.error) throw result.error;
-
-    authMessage(
-      "Si el correo está registrado, recibirás las instrucciones de recuperación.",
-      "success"
-    );
-  }catch(error){
-    authMessage(error.message || "No fue posible solicitar la recuperación.","error");
-  }finally{
-    $("recoveryBtn").disabled=false;
-  }
-};
-
-/* =========================
-   CARGA DE PERFIL
-========================= */
-
-async function loadProfile(){
-  if(!currentUser) return;
-
-  try{
-    const result=await withTimeout(
-      db.from("profiles")
-        .select("display_name,role,country,kyc_status,mfa_required,risk_tier")
-        .eq("id",currentUser.id)
-        .maybeSingle(),
-      8000,
-      "perfil"
-    );
-
-    if(result.error) throw result.error;
-
-    currentProfile=result.data || null;
-
-    const name=
-      currentProfile?.display_name ||
-      currentUser.user_metadata?.display_name ||
-      currentUser.email?.split("@")[0] ||
-      "Usuario";
-
-    $("topUserName").textContent=name;
-    $("topUserRole").textContent=currentProfile?.role || "Cuenta";
-    $("topAvatar").textContent=name.charAt(0).toUpperCase();
-
-    $("profileName").value=currentProfile?.display_name || "";
-    $("profileCountry").value=currentProfile?.country || "";
-
-    const kyc=currentProfile?.kyc_status || "NOT_STARTED";
-    $("kycStatus").textContent=kyc;
-
-    $("adminNav").style.display=
-      ["admin","super_admin"].includes(currentProfile?.role)
-      ? "flex"
-      : "none";
-
-    renderAdmin();
-
-  }catch(error){
-    console.warn("Perfil:",error.message);
-    $("topUserName").textContent=
-      currentUser.email?.split("@")[0] || "Usuario";
-    $("topUserRole").textContent="Cuenta";
-    $("kycStatus").textContent="NO DISPONIBLE";
-  }
-}
-
-/* =========================
-   CARGA DE BILLETERAS
-========================= */
-
-async function loadWallets(){
-  if(!currentUser) return;
-
-  try{
-    const result=await withTimeout(
-      db.from("wallets")
-        .select("currency,balance,locked,version")
-        .eq("user_id",currentUser.id)
-        .order("currency"),
-      8000,
-      "billeteras"
-    );
-
-    if(result.error) throw result.error;
-
-    wallets=result.data || [];
-    renderWallets();
-  }catch(error){
-    wallets=[];
-    renderWallets();
-    console.warn("Billeteras:",error.message);
-  }
-}
-
-function renderWallets(){
-  const stats=$("walletStats");
-  const cards=$("walletCards");
-
-  if(!wallets.length){
-    stats.innerHTML=`
-      <div class="card">
-        <div class="stat-label">Billetera</div>
-        <div class="stat-value">—</div>
-        <div class="muted small">Sin saldos registrados.</div>
-      </div>`;
-    cards.innerHTML=`
-      <div class="card" style="grid-column:1/-1">
-        <div class="empty">
-          No hay billeteras o saldos disponibles para esta cuenta.
-          No se muestran balances ficticios.
-        </div>
-      </div>`;
-    return;
-  }
-
-  stats.innerHTML=wallets.slice(0,4).map(w=>`
-    <div class="card wallet-card">
-      <div class="stat-label">${escapeHtml(w.currency)}</div>
-      <div class="stat-value">${formatMoney(w.balance,w.currency)}</div>
-      <div class="muted small">
-        Bloqueado: ${formatMoney(w.locked,w.currency)}
-      </div>
-    </div>
-  `).join("");
-
-  cards.innerHTML=wallets.map(w=>`
-    <div class="card wallet-card">
-      <div class="currency">${escapeHtml(w.currency)}</div>
-      <div class="balance">${formatMoney(w.balance,w.currency)}</div>
-      <div class="muted small" style="margin-top:8px">
-        Disponible según ledger: saldo registrado
-      </div>
-      <div style="margin-top:14px">
-        <span class="badge">Versión ${escapeHtml(w.version ?? "—")}</span>
-      </div>
-    </div>
-  `).join("");
-}
-
-/* =========================
-   TRANSACCIONES
-========================= */
-
-async function loadTransactions(){
-  if(!currentUser) return;
-
-  try{
-    const result=await withTimeout(
-      db.from("transactions")
-        .select("id,type,status,amount,currency,rail,reference,created_at")
-        .eq("user_id",currentUser.id)
-        .order("created_at",{ascending:false})
-        .limit(50),
-      8000,
-      "movimientos"
-    );
-
-    if(result.error) throw result.error;
-
-    transactions=result.data || [];
-    renderTransactions();
-  }catch(error){
-    transactions=[];
-    renderTransactions(error.message);
-    console.warn("Transacciones:",error.message);
-  }
-}
-
-function renderTransactions(error){
-  if(!transactions.length){
-    const message=error
-      ? "No fue posible cargar los movimientos en este momento."
-      : "No existen movimientos registrados para esta cuenta.";
-
-    $("recentTransactions").innerHTML=
-      `<div class="empty">${escapeHtml(message)}</div>`;
-
-    $("transactionsTable").innerHTML=
-      `<div class="empty">${escapeHtml(message)}</div>`;
 
     return;
   }
 
-  const recent=transactions.slice(0,5);
-
-  $("recentTransactions").innerHTML=recent.map(t=>`
-    <div style="display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)">
-      <div>
-        <strong>${escapeHtml(t.type || "OPERACIÓN")}</strong>
-        <div class="muted small">${escapeHtml(t.reference || shortId(t.id))}</div>
-      </div>
-      <div style="text-align:right">
-        <strong>${formatMoney(t.amount,t.currency)}</strong>
-        <div>${statusBadge(t.status)}</div>
-      </div>
-    </div>
-  `).join("");
-
-  $("transactionsTable").innerHTML=`
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Moneda</th>
-            <th>Rail</th>
-            <th>Estado</th>
-            <th>Referencia</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${transactions.map(t=>`
-            <tr>
-              <td>${escapeHtml(new Date(t.created_at).toLocaleString("es-ES"))}</td>
-              <td>${escapeHtml(t.type)}</td>
-              <td>${escapeHtml(t.amount)}</td>
-              <td>${escapeHtml(t.currency)}</td>
-              <td>${escapeHtml(t.rail || "—")}</td>
-              <td>${statusBadge(t.status)}</td>
-              <td>${escapeHtml(t.reference || shortId(t.id))}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-/* =========================
-   REFRESH
-========================= */
-
-async function refreshAll(showOverlay=false){
-  if(!currentUser) return;
-
-  if(showOverlay) setLoading(true,"Actualizando datos...");
-
-  try{
-    /*
-      Las consultas tienen timeout independiente.
-      La interfaz no queda bloqueada si Supabase tarda.
-    */
-    await Promise.allSettled([
-      loadProfile(),
-      loadWallets(),
-      loadTransactions()
-    ]);
-  }finally{
-    if(showOverlay) setLoading(false);
-  }
-}
-
-/* =========================
-   TRANSFERENCIA REAL
-========================= */
-
-$("transferBtn").onclick=async()=>{
-  if(!currentUser){
-    pageMessage("transferMessage","Debes iniciar sesión.","error");
-    return;
-  }
-
-  const recipient=$("transferRecipient").value.trim();
-  const amount=Number($("transferAmount").value);
-  const reference=
-    $("transferReference").value.trim() ||
-    "Transferencia CUBA PLUS PAY";
-
-  if(!recipient || !Number.isFinite(amount) || amount<=0){
-    pageMessage(
-      "transferMessage",
-      "Completa destinatario y un monto válido.",
-      "warning"
-    );
-    return;
-  }
-
-  $("transferBtn").disabled=true;
-  $("transferBtn").textContent="Procesando...";
-
-  try{
-    const result=await withTimeout(
-      db.rpc("transfer_crx_secure",{
-        p_recipient:recipient,
-        p_amount:amount,
-        p_reference:reference,
-        p_idempotency:crypto.randomUUID(),
-        p_metadata:{
-          client:"CUBA_PLUS_PAY_V7.5.2",
-          currency:"CRX"
-        }
-      }),
-      12000,
-      "transferencia"
-    );
-
-    if(result.error) throw result.error;
-
-    pageMessage(
-      "transferMessage",
-      "Transferencia procesada por el backend.",
-      "success"
-    );
-
-    $("transferRecipient").value="";
-    $("transferAmount").value="";
-    $("transferReference").value="";
-
-    await refreshAll(false);
-
-  }catch(error){
-    pageMessage(
-      "transferMessage",
-      error.message || "La transferencia no pudo completarse.",
-      "error"
-    );
-  }finally{
-    $("transferBtn").disabled=false;
-    $("transferBtn").textContent="Ejecutar transferencia";
-  }
-};
-
-/* =========================
-   QVAPAY
-========================= */
-
-$("depositBtn").onclick=async()=>{
-  const amount=Number($("depositAmount").value);
-  const description=
-    $("depositDescription").value.trim() ||
-    "Depósito CUBA PLUS PAY";
-
-  if(!Number.isFinite(amount) || amount<=0){
-    pageMessage("depositMessage","Introduce un monto válido.","warning");
-    return;
-  }
-
-  $("depositBtn").disabled=true;
-  $("depositBtn").textContent="Conectando con QvaPay...";
-
-  try{
-    const result=await withTimeout(
-      db.functions.invoke("qvapay-gateway",{
-        body:{
-          operation:"invoice",
-          amount,
-          description
-        }
-      }),
-      15000,
-      "QvaPay"
-    );
-
-    if(result.error) throw result.error;
-
-    const data=result.data || {};
-    const url=
-      data?.result?.url ||
-      data?.payment_url ||
-      data?.checkout_url ||
-      data?.result?.payment_url ||
-      data?.result?.checkout_url;
-
-    if(!url){
-      throw new Error(
-        "QvaPay respondió, pero no se recibió una URL de checkout válida."
-      );
-    }
-
-    pageMessage(
-      "depositMessage",
-      "Checkout creado. Abriendo QvaPay...",
-      "success"
-    );
-
-    setTimeout(()=>window.location.href=url,500);
-
-  }catch(error){
-    pageMessage(
-      "depositMessage",
-      error.message || "No fue posible crear el depósito.",
-      "error"
-    );
-  }finally{
-    $("depositBtn").disabled=false;
-    $("depositBtn").textContent="Crear depósito con QvaPay";
-  }
-};
-
-/* =========================
-   OPERACIONES SIN PROVEEDOR
-========================= */
-
-$("withdrawBtn").onclick=()=>{
-  pageMessage(
-    "withdrawMessage",
-    "El retiro real requiere un proveedor de retiro conectado al backend. No se ejecutó ninguna operación ficticia.",
-    "warning"
-  );
-};
-
-$("rechargeBtn").onclick=()=>{
-  pageMessage(
-    "rechargeMessage",
-    "La recarga real requiere un proveedor de telecomunicaciones conectado al backend. No se generó ninguna recarga ficticia.",
-    "warning"
-  );
-};
-
-$("productsBtn").onclick=()=>{
-  showModal(
-    "Marketplace",
-    `<div class="message info">
-      El catálogo mostrará solamente productos registrados realmente
-      en la base de datos. No se insertan productos ficticios.
-    </div>`
-  );
-};
-
-$("storeBtn").onclick=()=>{
-  showModal(
-    "Mi tienda",
-    `<div class="message info">
-      La gestión comercial queda preparada para conectarse al módulo
-      real de tiendas y productos de CUBA PLUS PAY.
-    </div>`
-  );
-};
-
-$("sellBtn").onclick=()=>{
-  showModal(
-    "Crear producto",
-    `
-      <div class="form-group">
-        <label>Nombre del producto</label>
-        <input id="newProductName" placeholder="Nombre">
-      </div>
-      <div class="form-group">
-        <label>Precio</label>
-        <input id="newProductPrice" type="number" step="0.01" placeholder="0.00">
-      </div>
-      <div class="message warning">
-        La publicación definitiva requiere las tablas y políticas comerciales
-        correspondientes en Supabase.
-      </div>
-      <button class="btn" onclick="showToast('El formulario está preparado; falta conectar el módulo de productos.','info');closeModal()">
-        Guardar preparación
-      </button>
-    `
-  );
-};
-
-/* =========================
-   FACTURAS / ENLACES
-========================= */
-
-$("newInvoiceBtn").onclick=()=>{
-  showModal(
-    "Nueva factura",
-    `
-      <div class="form-group">
-        <label>Concepto</label>
-        <input id="invoiceConcept" placeholder="Concepto">
-      </div>
-      <div class="form-group">
-        <label>Monto</label>
-        <input id="invoiceAmount" type="number" step="0.01" placeholder="0.00">
-      </div>
-      <div class="message info">
-        La factura se podrá crear cuando el esquema de facturación
-        esté conectado a las tablas correspondientes.
-      </div>
-      <button class="btn" onclick="showToast('No se creó ninguna factura ficticia.','warning');closeModal()">
-        Cerrar
-      </button>
-    `
-  );
-};
-
-$("newLinkBtn").onclick=()=>{
-  showModal(
-    "Nuevo enlace de pago",
-    `
-      <div class="form-group">
-        <label>Descripción</label>
-        <input id="linkDescription" placeholder="Cobro">
-      </div>
-      <div class="form-group">
-        <label>Monto</label>
-        <input id="linkAmount" type="number" step="0.01" placeholder="0.00">
-      </div>
-      <div class="message info">
-        El enlace final se genera mediante el módulo de checkout
-        cuando esté habilitada la tabla/API correspondiente.
-      </div>
-      <button class="btn" onclick="showToast('No se creó un enlace ficticio.','warning');closeModal()">
-        Cerrar
-      </button>
-    `
-  );
-};
-
-/* =========================
-   PERFIL
-========================= */
-
-$("saveProfileBtn").onclick=async()=>{
-  if(!currentUser) return;
-
-  const display_name=$("profileName").value.trim();
-  const country=$("profileCountry").value.trim();
-
-  $("saveProfileBtn").disabled=true;
-
-  try{
-    const result=await withTimeout(
-      db.from("profiles")
-        .update({
-          display_name,
-          country
-        })
-        .eq("id",currentUser.id),
-      10000,
-      "actualización del perfil"
-    );
-
-    if(result.error) throw result.error;
-
-    pageMessage(
-      "profileMessage",
-      "Perfil actualizado correctamente.",
-      "success"
-    );
-
-    await loadProfile();
-
-  }catch(error){
-    pageMessage(
-      "profileMessage",
-      error.message || "No fue posible actualizar el perfil.",
-      "error"
-    );
-  }finally{
-    $("saveProfileBtn").disabled=false;
-  }
-};
-
-/* =========================
-   CONTRASEÑA
-========================= */
-
-$("changePasswordBtn").onclick=async()=>{
-  const password=$("newPassword").value;
-
-  if(password.length<8){
-    pageMessage(
-      "passwordMessage",
-      "La nueva contraseña debe tener al menos 8 caracteres.",
-      "warning"
-    );
-    return;
-  }
-
-  $("changePasswordBtn").disabled=true;
-
-  try{
-    const result=await withTimeout(
-      db.auth.updateUser({password}),
-      10000,
-      "cambio de contraseña"
-    );
-
-    if(result.error) throw result.error;
-
-    $("newPassword").value="";
-
-    pageMessage(
-      "passwordMessage",
-      "Contraseña actualizada correctamente.",
-      "success"
-    );
-
-  }catch(error){
-    pageMessage(
-      "passwordMessage",
-      error.message || "No fue posible cambiar la contraseña.",
-      "error"
-    );
-  }finally{
-    $("changePasswordBtn").disabled=false;
-  }
-};
-
-/* =========================
-   ADMIN
-========================= */
-
-function renderAdmin(){
-  const allowed=["admin","super_admin"].includes(currentProfile?.role);
-
-  if(!allowed){
-    $("adminContent").innerHTML=`
-      <div class="card" style="grid-column:1/-1">
-        <div class="message warning">
-          Esta sección está protegida. Tu cuenta no tiene un rol administrativo.
-        </div>
-      </div>`;
-    return;
-  }
-
-  $("adminContent").innerHTML=`
-    <div class="card">
-      <div class="stat-label">ROL</div>
-      <div class="stat-value" style="font-size:20px">
-        ${escapeHtml(currentProfile.role)}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="stat-label">KYC</div>
-      <div class="stat-value" style="font-size:20px">
-        ${escapeHtml(currentProfile.kyc_status || "NOT_STARTED")}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="stat-label">RIESGO</div>
-      <div class="stat-value" style="font-size:20px">
-        ${escapeHtml(currentProfile.risk_tier || "—")}
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="stat-label">MFA</div>
-      <div class="stat-value" style="font-size:20px">
-        ${currentProfile.mfa_required ? "REQUERIDO" : "NO REQUERIDO"}
-      </div>
-    </div>
-
-    <div class="card" style="grid-column:1/-1">
-      <h3>Operaciones administrativas</h3>
-      <p class="muted small">
-        Las acciones administrativas definitivas deben ejecutarse mediante
-        RPC/Edge Functions protegidas y políticas RLS.
-      </p>
-      <button class="btn secondary" onclick="showToast('Panel administrativo conectado al rol real de Supabase.','info')">
-        Ver estado de seguridad
-      </button>
-    </div>
-  `;
-}
-
-/* =========================
-   MODAL
-========================= */
-
-function showModal(title,body){
-  $("modalTitle").textContent=title;
-  $("modalBody").innerHTML=body;
-  $("modal").classList.remove("hidden");
-}
-
-function closeModal(){
-  $("modal").classList.add("hidden");
-}
-
-$("closeModal").onclick=closeModal;
-
-$("modal").addEventListener("click",e=>{
-  if(e.target===$("modal")) closeModal();
-});
-
-/* =========================
-   LOGOUT
-========================= */
-
-async function logout(){
-  try{
-    await withTimeout(
-      db.auth.signOut(),
-      8000,
-      "cierre de sesión"
-    );
-  }catch(error){
-    console.warn(error.message);
-  }
-
-  currentUser=null;
-  currentProfile=null;
-  wallets=[];
-  transactions=[];
-
-  $("appScreen").classList.add("hidden");
-  $("authScreen").classList.remove("hidden");
-
-  authView("loginView");
-  showToast("Sesión cerrada.","info");
-}
-
-$("logoutBtn").onclick=logout;
-$("logoutSecurityBtn").onclick=logout;
-
-/* =========================
-   REFRESH
-========================= */
-
-$("refreshBtn").onclick=async()=>{
-  showToast("Actualizando datos reales...","info");
-  await refreshAll(false);
-  showToast("Actualización terminada.","success");
-};
-
-/* =========================
-   MOSTRAR APP
-========================= */
-
-function showApp(){
-  $("authScreen").classList.add("hidden");
-  $("appScreen").classList.remove("hidden");
-}
-
-function showAuth(){
-  $("appScreen").classList.add("hidden");
-  $("authScreen").classList.remove("hidden");
-  authView("loginView");
-}
-
-/* =========================
-   ARRANQUE ROBUSTO
-========================= */
-
-async function initialize(){
-
-  if(bootStarted) return;
-  bootStarted=true;
-
-  /*
-    El loading tiene límite absoluto.
-    Aunque Supabase o la red fallen, la interfaz de acceso aparecerá.
-  */
-  const emergencyTimer=setTimeout(()=>{
-    setLoading(false);
-    if(!currentUser){
-      showAuth();
-      authMessage(
-        "La conexión está tardando. Puedes intentar entrar nuevamente. La interfaz no se bloqueará.",
-        "warning"
-      );
-    }
-  },11000);
-
-  try{
-    setLoading(true,"Comprobando sesión...");
-
-    const result=await withTimeout(
-      db.auth.getSession(),
-      8000,
-      "sesión de Supabase"
-    );
-
-    if(result.error) throw result.error;
-
-    currentUser=result.data?.session?.user || null;
-
-    if(currentUser){
-      showApp();
-
-      /*
-        MUY IMPORTANTE:
-        La interfaz se muestra inmediatamente.
-        Los datos se cargan después y no bloquean la pantalla.
-      */
-      setLoading(false);
-      clearTimeout(emergencyTimer);
-
-      refreshAll(false).catch(error=>{
-        console.warn("Carga de datos:",error.message);
-      });
-
-    }else{
-      clearTimeout(emergencyTimer);
-      showAuth();
-      setLoading(false);
-    }
-
-  }catch(error){
-
-    clearTimeout(emergencyTimer);
-
-    console.warn("Arranque:",error);
-
-    currentUser=null;
-    showAuth();
-    setLoading(false);
-
-    authMessage(
-      "No fue posible comprobar la sesión. Revisa tu conexión e inténtalo nuevamente.",
-      "warning"
-    );
-  }
-}
-
-/* =========================
-   CAMBIOS DE AUTENTICACIÓN
-========================= */
-
-function setupAuthListener(){
-
-  if(authListenerReady) return;
-  authListenerReady=true;
-
-  db.auth.onAuthStateChange((event,session)=>{
-
-    /*
-      INITIAL_SESSION NO vuelve a ejecutar refreshAll.
-      initialize() ya se ocupa del arranque.
-      Esto evita carreras y dobles cargas.
-    */
-    if(event==="INITIAL_SESSION"){
-      return;
-    }
-
-    if(event==="SIGNED_IN"){
-      currentUser=session?.user || null;
-
-      if(currentUser){
-        showApp();
-        setLoading(false);
-
-        setTimeout(()=>{
-          refreshAll(false).catch(console.warn);
-        },0);
+  const {error} =
+    await client.auth.resetPasswordForEmail(
+      email,
+      {
+        redirectTo:
+          window.location.origin
+          +window.location.pathname
       }
+    );
 
-      return;
-    }
+  msg(
+    'authMsg',
+    error
+      ? error.message
+      : 'Si el correo existe, recibirás instrucciones para recuperar la contraseña.',
+    error ? 'error' : 'ok'
+  );
+};
 
-    if(event==="SIGNED_OUT"){
-      currentUser=null;
-      currentProfile=null;
-      wallets=[];
-      transactions=[];
-      showAuth();
-      setLoading(false);
-      return;
-    }
+$('logoutBtn').onclick=async()=>{
 
-    if(event==="PASSWORD_RECOVERY"){
-      showAuth();
-      authView("loginView");
-      authMessage(
-        "Puedes actualizar tu contraseña desde el flujo de recuperación.",
-        "info"
-      );
-    }
+  await client.auth.signOut();
+
+  $('password').value='';
+
+  await session();
+};
+
+$('refreshBtn').onclick=async()=>{
+
+  $('refreshBtn').disabled=true;
+
+  await loadData();
+
+  $('refreshBtn').disabled=false;
+};
+
+$('closeDeposit').onclick=()=>{
+  show('depositCard',false);
+};
+
+document
+  .querySelectorAll('[data-op]')
+  .forEach(b=>{
+
+    b.onclick=()=>{
+
+      const op=b.dataset.op;
+
+      if(op==='depositar'){
+
+        show('depositCard',true);
+
+        msg('opMsg','');
+
+      }else{
+
+        const texts={
+
+          transferir:
+            'Transferencia segura: el RPC de reserva/transferencia debe ejecutarse desde el backend autorizado; este HTML no mueve fondos directamente.',
+
+          recibir:
+            'Recepción: requiere un enlace o endpoint de recepción autorizado para crear la operación real.',
+
+          retirar:
+            'Retiro: requiere KYC, proveedor y endpoint de retiro autorizados.',
+
+          recargar:
+            'Recarga móvil: requiere proveedor, catálogo y credenciales autorizadas.',
+
+          pagar:
+            'Pago: requiere checkout o endpoint de pago autorizado.'
+        };
+
+        msg(
+          'opMsg',
+          texts[op]||'Operación no disponible.'
+        );
+      }
+    };
   });
-}
 
-/* =========================
-   INICIO
-========================= */
+$('qvaBtn').onclick=async()=>{
 
-setupAuthListener();
+  const amount =
+    Number($('amount').value);
 
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",initialize,{once:true});
-}else{
-  initialize();
-}
+  const description =
+    $('description').value.trim()
+    ||'Depósito CUBA PLUS PAY';
 
-</script></body>
-</html>
+  if(
+    !Number.isFinite(amount)
+    ||amount<1
+    ||amount>100000
+  ){
+
+    msg(
+      'qvaMsg',
+      'El monto debe estar entre 1 y 100000 USD.',
+      'error'
+    );
+
+    return;
+  }
+
+  if(description.length>255){
+
+    msg(
+      'qvaMsg',
+      'La descripción no puede superar 255 caracteres.',
+      'error'
+    );
+
+    return;
+  }
+
+  $('qvaBtn').disabled=true;
+
+  $('qvaBtn').textContent =
+    'Creando factura...';
+
+  msg('qvaMsg','');
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+      await client.functions.invoke(
+        'qvapay-gateway',
+        {
+          body:{
+            operation:'invoice',
+            amount,
+            description
+          }
+        }
+      );
+
+    if(error)
+      throw new Error(
+        error.message
+        ||'Error al invocar qvapay-gateway'
+      );
+
+    if(!data?.ok)
+      throw new Error(
+        data?.error
+        ||'QvaPay no creó la factura'
+      );
+
+    const url =
+      data?.result?.url
+      ||data?.result?.payment_url;
+
+    if(!url)
+      throw new Error(
+        'QvaPay no devolvió una URL de pago.'
+      );
+
+    msg(
+      'qvaMsg',
+      'Factura creada correctamente. Abriendo QvaPay...',
+      'ok'
+    );
+
+    setTimeout(()=>{
+      window.location.href=url;
+    },500);
+
+  }catch(e){
+
+    msg(
+      'qvaMsg',
+      e.message||String(e),
+      'error'
+ 
