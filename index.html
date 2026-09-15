@@ -42,8 +42,8 @@ button.danger{background:#9d2639}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
 
+<body>
 <div class="wrap">
 
   <div class="brand">CUBA PLUS PAY</div>
@@ -51,22 +51,32 @@ button.danger{background:#9d2639}
 
   <section id="authCard" class="card">
     <h2 id="authTitle">Iniciar sesión</h2>
-    <p id="authHint" class="muted">Accede con tu cuenta de CUBA PLUS PAY.</p>
+    <p id="authHint" class="muted">
+      Accede con tu cuenta de CUBA PLUS PAY.
+    </p>
 
-    <input id="email"
-           type="email"
-           autocomplete="email"
-           placeholder="Correo electrónico">
+    <input
+      id="email"
+      type="email"
+      autocomplete="email"
+      placeholder="Correo electrónico"
+    >
 
-    <input id="password"
-           type="password"
-           autocomplete="current-password"
-           placeholder="Contraseña">
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Contraseña"
+    >
 
     <button id="authBtn">Entrar</button>
-    <button id="modeBtn" class="secondary">Crear cuenta</button>
-    <button id="resetBtn" class="secondary">Recuperar contraseña">
 
+    <button id="modeBtn" class="secondary">
+      Crear cuenta
+    </button>
+
+    <button id="resetBtn" class="secondary">
+      Recuperar contraseña
     </button>
 
     <div id="authMsg" class="msg hidden"></div>
@@ -120,13 +130,17 @@ button.danger{background:#9d2639}
     <section id="history" class="card">
 
       <div class="top">
+
         <h2>Movimientos</h2>
 
-        <button id="refreshBtn"
-                class="secondary"
-                style="width:auto">
+        <button
+          id="refreshBtn"
+          class="secondary"
+          style="width:auto"
+        >
           Actualizar
         </button>
+
       </div>
 
       <div id="transactions" class="muted">
@@ -167,13 +181,19 @@ button.danger{background:#9d2639}
           Pagar
         </button>
 
+        <button class="secondary" data-op="juego">
+          Jugar CRX
+        </button>
+
       </div>
 
       <div id="opMsg" class="msg hidden"></div>
 
-      <div id="transferPanel"
-           class="card hidden"
-           style="margin-top:14px;background:#0a1727">
+      <div
+        id="transferPanel"
+        class="card hidden"
+        style="margin-top:14px;background:#0a1727"
+      >
 
         <h2>Transferir CRX</h2>
 
@@ -187,38 +207,43 @@ button.danger{background:#9d2639}
           Destinatario · correo o UUID
         </label>
 
-        <input id="recipient"
-               type="text"
-               autocomplete="off"
-               placeholder="correo@ejemplo.com">
+        <input
+          id="recipient"
+          type="text"
+          autocomplete="off"
+          placeholder="correo@ejemplo.com"
+        >
 
         <label for="amount">
           Cantidad CRX
         </label>
 
-        <input id="amount"
-               type="number"
-               min="0.00000001"
-               step="0.00000001"
-               inputmode="decimal"
-               placeholder="0.00">
+        <input
+          id="amount"
+          type="number"
+          min="0.00000001"
+          step="0.00000001"
+          inputmode="decimal"
+          placeholder="0.00"
+        >
 
         <label for="reference">
           Referencia (opcional)
         </label>
 
-        <input id="reference"
-               type="text"
-               maxlength="120"
-               autocomplete="off"
-               placeholder="Pago, envío, etc.">
+        <input
+          id="reference"
+          type="text"
+          maxlength="120"
+          autocomplete="off"
+          placeholder="Pago, envío, etc."
+        >
 
         <button id="sendTransfer">
           Confirmar transferencia
         </button>
 
-        <button id="cancelTransfer"
-                class="secondary">
+        <button id="cancelTransfer" class="secondary">
           Cancelar
         </button>
 
@@ -226,10 +251,61 @@ button.danger{background:#9d2639}
 
       </div>
 
+      <div
+        id="gamePanel"
+        class="card hidden"
+        style="margin-top:14px;background:#0a1727"
+      >
+
+        <h2>Click Rush · Juego CRX</h2>
+
+        <p class="muted small">
+          Partida de 20 segundos. El servidor valida la sesión,
+          el resultado y los límites. El navegador no calcula ni
+          añade CRX al saldo.
+        </p>
+
+        <div class="grid">
+
+          <div class="wallet">
+            <div class="muted small">
+              Puntuación
+            </div>
+
+            <div id="gameScore" class="balance">
+              0
+            </div>
+          </div>
+
+          <div class="wallet">
+            <div class="muted small">
+              Tiempo
+            </div>
+
+            <div id="gameTime" class="balance">
+              20 s
+            </div>
+          </div>
+
+        </div>
+
+        <button id="startGame">
+          Iniciar partida
+        </button>
+
+        <button id="clickGame" disabled>
+          ¡CLICK!
+        </button>
+
+        <div id="gameMsg" class="msg hidden"></div>
+
+      </div>
+
       <p class="muted small notice">
         No se modifica ningún saldo desde JavaScript.
         El navegador solo solicita la operación RPC;
-        el movimiento de fondos ocurre de forma atómica en PostgreSQL.
+        el movimiento de fondos ocurre de forma atómica
+        en PostgreSQL.
       </p>
 
     </section>
@@ -245,777 +321,594 @@ button.danger{background:#9d2639}
 <script>
 (function(){
 
-'use strict';
+  'use strict';
 
-const SUPABASE_URL =
-'https://lqwxkevalagdhckhuelx.supabase.co';
+  const SUPABASE_URL =
+    'https://lqwxkevalagdhckhuelx.supabase.co';
 
-const SUPABASE_PUBLISHABLE_KEY =
-'sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
+  const SUPABASE_PUBLISHABLE_KEY =
+    'sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
 
-const client =
-window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+  if(!window.supabase){
+    throw new Error(
+      'No se pudo cargar la biblioteca de Supabase. ' +
+      'Comprueba tu conexión a Internet y recarga la página.'
+    );
+  }
 
-const $ = id => document.getElementById(id);
+  const client =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
 
-const show = (id,on=true) =>
-  $(id).classList.toggle('hidden',!on);
+  const $ = id => document.getElementById(id);
 
-const message = (id,text,type='') => {
+  const show = (id,on=true) =>
+    $(id).classList.toggle('hidden',!on);
 
-  const el=$(id);
+  const message = (id,text,type='') => {
 
-  el.textContent=text;
+    const el = $(id);
 
-  el.className='msg'+
-    (text?' '+type:'');
+    el.textContent = text;
 
-  show(id,!!text);
-};
+    el.className =
+      'msg' +
+      (text ? ' ' + type : '');
 
-const esc = v =>
-String(v??'').replace(
-  /[&<>"']/g,
-  c=>({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }[c])
-);
+    show(id,!!text);
+  };
 
-const fmt = v => {
+  const esc = v =>
+    String(v ?? '').replace(
+      /[&<>"']/g,
+      c => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[c])
+    );
 
-  const n=Number(v);
+  const fmt = v => {
 
-  return Number.isFinite(n)
-    ? n.toLocaleString(
-        'es-ES',
-        {maximumFractionDigits:8}
-      )
-    : esc(v);
-};
+    const n = Number(v);
 
-const prettyStatus = s => ({
-  pending:'Pendiente',
-  processing:'Procesando',
-  completed:'Completada',
-  failed:'Fallida',
-  cancelled:'Cancelada',
-  reversed:'Revertida'
-}[s]||s||'—');
+    return Number.isFinite(n)
+      ? n.toLocaleString(
+          'es-ES',
+          {maximumFractionDigits:8}
+        )
+      : esc(v);
+  };
 
-let signupMode=false;
+  const prettyStatus = s =>
+    ({
+      pending:'Pendiente',
+      processing:'Procesando',
+      completed:'Completada',
+      failed:'Fallida',
+      cancelled:'Cancelada',
+      reversed:'Revertida'
+    }[s] || s || '—');
 
-function setAuthMode(){
+  let signupMode = false;
 
-  $('authTitle').textContent =
-    signupMode
-      ? 'Crear cuenta'
-      : 'Iniciar sesión';
+  function setAuthMode(){
 
-  $('authHint').textContent =
-    signupMode
-      ? 'Crea una cuenta con correo y contraseña.'
-      : 'Accede con tu cuenta de CUBA PLUS PAY.';
+    $('authTitle').textContent =
+      signupMode
+        ? 'Crear cuenta'
+        : 'Iniciar sesión';
 
-  $('authBtn').textContent =
-    signupMode
-      ? 'Crear cuenta'
-      : 'Entrar';
+    $('authHint').textContent =
+      signupMode
+        ? 'Crea una cuenta con correo y contraseña.'
+        : 'Accede con tu cuenta de CUBA PLUS PAY.';
 
-  $('modeBtn').textContent =
-    signupMode
-      ? 'Ya tengo cuenta'
-      : 'Crear cuenta';
+    $('authBtn').textContent =
+      signupMode
+        ? 'Crear cuenta'
+        : 'Entrar';
 
-  message('authMsg','');
-}
+    $('modeBtn').textContent =
+      signupMode
+        ? 'Ya tengo cuenta'
+        : 'Crear cuenta';
 
-async function loadData(){
+    message('authMsg','');
+  }
 
-  const {
-    data:{user}
-  } = await client.auth.getUser();
+  async function loadData(){
 
-  if(!user)return;
+    const {
+      data:{user}
+    } = await client.auth.getUser();
 
-  $('userEmail').textContent =
-    user.email||'Cuenta';
+    if(!user) return;
 
-  $('profileLine').textContent =
-    'Cargando perfil...';
-
-  $('accountState').textContent =
-    'Consultando...';
-
-  const p =
-    await client
-      .from('profiles')
-      .select(
-        'display_name,role,country,kyc_status,mfa_required,risk_tier'
-      )
-      .eq('id',user.id)
-      .maybeSingle();
-
-  if(p.error){
+    $('userEmail').textContent =
+      user.email || 'Cuenta';
 
     $('profileLine').textContent =
-      'Sesión activa · perfil no disponible';
+      'Cargando perfil...';
 
     $('accountState').textContent =
-      'Sesión iniciada. No se pudo leer el perfil: '+
-      p.error.message;
-
-  }else if(p.data){
-
-    const x=p.data;
-
-    $('profileLine').textContent =
-      (x.display_name||'Usuario')+
-      ' · '+
-      (x.role||'user');
-
-    $('accountState').innerHTML =
-      '<b>KYC:</b> '+
-      esc(x.kyc_status||'NOT_STARTED')+
-      ' · <b>País:</b> '+
-      esc(x.country||'—')+
-      ' · <b>Riesgo:</b> '+
-      esc(x.risk_tier||'—')+
-      ' · <b>2FA:</b> '+
-      (x.mfa_required
-        ? 'Requerido'
-        : 'No requerido');
-
-  }else{
-
-    $('profileLine').textContent =
-      'Sesión activa · perfil pendiente';
-
-    $('accountState').textContent =
-      'La sesión está activa, pero todavía no hay perfil visible para esta cuenta.';
-  }
-
-  const w =
-    await client
-      .from('wallets')
-      .select(
-        'currency,balance,locked,version'
-      )
-      .eq('user_id',user.id)
-      .order('currency');
-
-  const box=$('wallets');
-
-  box.innerHTML='';
-
-  if(w.error){
-
-    message(
-      'walletMsg',
-      'No se pudieron consultar las billeteras: '+
-      w.error.message,
-      'error'
-    );
-
-  }else if(!w.data||!w.data.length){
-
-    box.innerHTML =
-      '<div class="muted">'+
-      'No existe una billetera registrada para esta cuenta.'+
-      '</div>';
-
-    message('walletMsg','');
-
-  }else{
-
-    message('walletMsg','');
-
-    w.data.forEach(x=>{
-
-      const d=document.createElement('div');
-
-      d.className='wallet';
-
-      const available =
-        Number(x.balance)-
-        Number(x.locked||0);
-
-      d.innerHTML =
-        '<div class="currency">'+
-        esc(x.currency||'—')+
-        '</div>'+
-        '<div class="balance">'+
-        fmt(x.balance)+
-        '</div>'+
-        '<div class="muted small">'+
-        'Disponible: '+
-        fmt(available)+
-        ' · Bloqueado: '+
-        fmt(x.locked||0)+
-        '</div>';
-
-      box.appendChild(d);
-    });
-  }
-
-  const t =
-    await client
-      .from('transactions')
-      .select(
-        'id,type,status,amount,currency,rail,external_id,reference,metadata,created_at,updated_at,fee_amount,net_amount,reconciled_at,reconciliation_state'
-      )
-      .eq('user_id',user.id)
-      .order(
-        'created_at',
-        {ascending:false}
-      )
-      .limit(50);
-
-  const txbox=$('transactions');
-
-  txbox.innerHTML='';
-
-  if(t.error){
-
-    message(
-      'txMsg',
-      'No se pudo consultar el historial: '+
-      t.error.message,
-      'error'
-    );
-
-    txbox.textContent='';
-
-  }else if(!t.data||!t.data.length){
-
-    message('txMsg','');
-
-    txbox.innerHTML =
-      '<div class="muted">'+
-      'No hay movimientos registrados para esta cuenta.'+
-      '</div>';
-
-  }else{
-
-    message('txMsg','');
-
-    t.data.forEach(x=>{
-
-      const d=document.createElement('div');
-
-      d.className='tx';
-
-      const date =
-        x.created_at
-          ? new Date(x.created_at)
-              .toLocaleString('es-ES')
-          : '';
-
-      d.innerHTML =
-        '<div>'+
-        '<b>'+
-        esc(x.type||'operación')+
-        '</b>'+
-        '<div class="muted small">'+
-        esc(date)+
-        ' · '+
-        esc(x.rail||'interno')+
-        (x.reference
-          ? ' · '+esc(x.reference)
-          : '')+
-        '</div>'+
-        '</div>'+
-        '<div style="text-align:right">'+
-        '<span class="status">'+
-        esc(prettyStatus(x.status))+
-        '</span>'+
-        '<div style="margin-top:5px;font-weight:750">'+
-        fmt(x.amount)+
-        ' '+
-        esc(x.currency||'')+
-        '</div>'+
-        '</div>';
-
-      txbox.appendChild(d);
-    });
-  }
-}
-
-async function showSession(){
-
-  const {
-    data:{session}
-  } = await client.auth.getSession();
-
-  show('authCard',!session);
-  show('app',!!session);
-
-  if(session)
-    await loadData();
-}
-
-$('authBtn').onclick=async()=>{
-
-  const email =
-    $('email').value.trim();
-
-  const password =
-    $('password').value;
-
-  if(!email||!password){
-
-    message(
-      'authMsg',
-      'Escribe correo y contraseña.',
-      'error'
-    );
-
-    return;
-  }
-
-  if(password.length<6){
-
-    message(
-      'authMsg',
-      'La contraseña debe tener al menos 6 caracteres.',
-      'error'
-    );
-
-    return;
-  }
-
-  $('authBtn').disabled=true;
-
-  $('authBtn').textContent =
-    signupMode
-      ? 'Creando...'
-      : 'Entrando...';
-
-  message('authMsg','');
-
-  let result;
-
-  if(signupMode){
-
-    result =
-      await client.auth.signUp({
-        email,
-        password,
-        options:{
-          emailRedirectTo:
-            window.location.origin+
-            window.location.pathname
-        }
-      });
-
-  }else{
-
-    result =
-      await client.auth.signInWithPassword({
-        email,
-        password
-      });
-  }
-
-  $('authBtn').disabled=false;
-
-  setAuthMode();
-
-  if(result.error){
-
-    message(
-      'authMsg',
-      result.error.message,
-      'error'
-    );
-
-    return;
-  }
-
-  if(signupMode){
-
-    if(result.data.session){
-
-      message(
-        'authMsg',
-        'Cuenta creada. Sesión iniciada.',
-        'ok'
-      );
-
-      showSession();
+      'Consultando...';
+
+    const p =
+      await client
+        .from('profiles')
+        .select(
+          'display_name,role,country,kyc_status,mfa_required,risk_tier'
+        )
+        .eq('id',user.id)
+        .maybeSingle();
+
+    if(p.error){
+
+      $('profileLine').textContent =
+        'Sesión activa · perfil no disponible';
+
+      $('accountState').textContent =
+        'Sesión iniciada. No se pudo leer el perfil: ' +
+        p.error.message;
+
+    }else if(p.data){
+
+      const x = p.data;
+
+      $('profileLine').textContent =
+        (x.display_name || 'Usuario') +
+        ' · ' +
+        (x.role || 'user');
+
+      $('accountState').innerHTML =
+        '<b>KYC:</b> ' +
+        esc(x.kyc_status || 'NOT_STARTED') +
+        ' · <b>País:</b> ' +
+        esc(x.country || '—') +
+        ' · <b>Riesgo:</b> ' +
+        esc(x.risk_tier || '—') +
+        ' · <b>2FA:</b> ' +
+        (x.mfa_required
+          ? 'Requerido'
+          : 'No requerido');
 
     }else{
 
-      message(
-        'authMsg',
-        'Cuenta creada. Revisa tu correo para confirmar la cuenta antes de iniciar sesión.',
-        'ok'
-      );
+      $('profileLine').textContent =
+        'Sesión activa · perfil pendiente';
+
+      $('accountState').textContent =
+        'La sesión está activa, pero todavía no hay perfil visible para esta cuenta.';
     }
 
-  }else{
+    const w =
+      await client
+        .from('wallets')
+        .select(
+          'currency,balance,locked,version'
+        )
+        .eq('user_id',user.id)
+        .order('currency');
 
-    await showSession();
+    const box = $('wallets');
+
+    box.innerHTML = '';
+
+    if(w.error){
+
+      message(
+        'walletMsg',
+        'No se pudieron consultar las billeteras: ' +
+        w.error.message,
+        'error'
+      );
+
+    }else if(!w.data || !w.data.length){
+
+      box.innerHTML =
+        '<div class="muted">' +
+        'No existe una billetera registrada para esta cuenta.' +
+        '</div>';
+
+      message('walletMsg','');
+
+    }else{
+
+      message('walletMsg','');
+
+      w.data.forEach(x => {
+
+        const d =
+          document.createElement('div');
+
+        d.className = 'wallet';
+
+        const available =
+          Number(x.balance) -
+          Number(x.locked || 0);
+
+        d.innerHTML =
+          '<div class="currency">' +
+          esc(x.currency || '—') +
+          '</div>' +
+
+          '<div class="balance">' +
+          fmt(x.balance) +
+          '</div>' +
+
+          '<div class="muted small">' +
+          'Disponible: ' +
+          fmt(available) +
+          ' · Bloqueado: ' +
+          fmt(x.locked || 0) +
+          '</div>';
+
+        box.appendChild(d);
+      });
+    }
+
+    const t =
+      await client
+        .from('transactions')
+        .select(
+          'id,type,status,amount,currency,rail,external_id,reference,metadata,created_at,updated_at,fee_amount,net_amount,reconciled_at,reconciliation_state'
+        )
+        .eq('user_id',user.id)
+        .order(
+          'created_at',
+          {ascending:false}
+        )
+        .limit(50);
+
+    const txbox =
+      $('transactions');
+
+    txbox.innerHTML = '';
+
+    if(t.error){
+
+      message(
+        'txMsg',
+        'No se pudo consultar el historial: ' +
+        t.error.message,
+        'error'
+      );
+
+      txbox.textContent = '';
+
+    }else if(!t.data || !t.data.length){
+
+      message('txMsg','');
+
+      txbox.innerHTML =
+        '<div class="muted">' +
+        'No hay movimientos registrados para esta cuenta.' +
+        '</div>';
+
+    }else{
+
+      message('txMsg','');
+
+      t.data.forEach(x => {
+
+        const d =
+          document.createElement('div');
+
+        d.className = 'tx';
+
+        const date =
+          x.created_at
+            ? new Date(
+                x.created_at
+              ).toLocaleString('es-ES')
+            : '';
+
+        d.innerHTML =
+          '<div>' +
+
+          '<b>' +
+          esc(x.type || 'operación') +
+          '</b>' +
+
+          '<div class="muted small">' +
+          esc(date) +
+          ' · ' +
+          esc(x.rail || 'interno') +
+          (x.reference
+            ? ' · ' +
+              esc(x.reference)
+            : '') +
+          '</div>' +
+
+          '</div>' +
+
+          '<div style="text-align:right">' +
+
+          '<span class="status">' +
+          esc(prettyStatus(x.status)) +
+          '</span>' +
+
+          '<div style="margin-top:5px;font-weight:750">' +
+          fmt(x.amount) +
+          ' ' +
+          esc(x.currency || '') +
+          '</div>' +
+
+          '</div>';
+
+        txbox.appendChild(d);
+      });
+    }
   }
-};
 
-$('modeBtn').onclick=()=>{
+  async function showSession(){
 
-  signupMode=!signupMode;
+    const {
+      data:{session}
+    } = await client.auth.getSession();
 
-  setAuthMode();
-};
+    show('authCard',!session);
 
-$('resetBtn').onclick=async()=>{
+    show('app',!!session);
 
-  const email =
-    $('email').value.trim();
-
-  if(!email){
-
-    message(
-      'authMsg',
-      'Escribe primero tu correo electrónico.',
-      'error'
-    );
-
-    return;
-  }
-
-  const {error} =
-    await client.auth.resetPasswordForEmail(
-      email,
-      {
-        redirectTo:
-          window.location.origin+
-          window.location.pathname
+    if(session){
+      try{
+        await loadData();
+      }catch(e){
+        $('accountState').textContent =
+          'Sesión iniciada, pero ocurrió un error al cargar los datos: ' +
+          (e?.message || String(e));
       }
-    );
+    }
+  }
 
-  message(
-    'authMsg',
-    error
-      ? error.message
-      : 'Si el correo existe, recibirás instrucciones para recuperar la contraseña.',
-    error
-      ? 'error'
-      : 'ok'
-  );
-};
+  $('authBtn').onclick =
+    async () => {
 
-$('logoutBtn').onclick=async()=>{
+      const email =
+        $('email').value.trim();
 
-  await client.auth.signOut();
+      const password =
+        $('password').value;
 
-  $('password').value='';
-
-  await showSession();
-};
-
-$('refreshBtn').onclick=async()=>{
-
-  $('refreshBtn').disabled=true;
-
-  await loadData();
-
-  $('refreshBtn').disabled=false;
-};
-
-document
-  .querySelectorAll('[data-tab]')
-  .forEach(b=>{
-
-    b.onclick=()=>{
-
-      const tab=b.dataset.tab;
-
-      show(
-        'history',
-        tab==='history'
-      );
-
-      show(
-        'operations',
-        tab==='operations'
-      );
-    };
-  });
-
-const transferPanel =
-  $('transferPanel');
-
-const transferErrorText=e=>{
-
-  const raw =
-    e?.message||
-    String(e||'Error');
-
-  const map={
-
-    AUTH_REQUIRED:
-      'Sesión no válida.',
-
-    IDEMPOTENCY_REQUIRED:
-      'No se pudo generar una clave segura de operación.',
-
-    INVALID_AMOUNT:
-      'La cantidad no es válida.',
-
-    AMOUNT_TOO_LARGE:
-      'La cantidad supera el límite permitido.',
-
-    RECIPIENT_NOT_FOUND:
-      'No se encontró el destinatario.',
-
-    SELF_TRANSFER_NOT_ALLOWED:
-      'No puedes transferir a tu propia cuenta.',
-
-    SENDER_WALLET_NOT_FOUND:
-      'No existe tu billetera CRX.',
-
-    RECIPIENT_WALLET_NOT_FOUND:
-      'El destinatario no tiene una billetera CRX activa.',
-
-    INSUFFICIENT_FUNDS:
-      'Saldo CRX disponible insuficiente.',
-
-    RISK_BLOCKED:
-      'La operación fue bloqueada por control de riesgo.'
-  };
-
-  for(const k in map)
-
-    if(raw.includes(k))
-      return map[k];
-
-  return raw;
-};
-
-document
-  .querySelectorAll('[data-op]')
-  .forEach(b=>{
-
-    b.onclick=()=>{
-
-      const op=b.dataset.op;
-
-      if(op==='transferir'){
-
-        show(
-          'transferPanel',
-          true
-        );
+      if(!email || !password){
 
         message(
-          'opMsg',
-          ''
+          'authMsg',
+          'Escribe correo y contraseña.',
+          'error'
         );
-
-        $('recipient').focus();
 
         return;
       }
 
-      show(
-        'transferPanel',
-        false
-      );
+      if(password.length < 6){
 
-      const texts={
+        message(
+          'authMsg',
+          'La contraseña debe tener al menos 6 caracteres.',
+          'error'
+        );
 
-        recibir:
-          'Recibir dinero: enlace/endpoint de recepción pendiente.',
+        return;
+      }
 
-        depositar:
-          'Depositar: requiere proveedor y endpoint de depósito autorizados.',
+      const btn =
+        $('authBtn');
 
-        retirar:
-          'Retirar: requiere proveedor, KYC y endpoint de retiro autorizados.',
+      btn.disabled = true;
 
-        recargar:
-          'Recargar móvil: requiere catálogo/token del proveedor autorizado.',
+      btn.textContent =
+        signupMode
+          ? 'Creando...'
+          : 'Entrando...';
 
-        pagar:
-          'Pagar: requiere checkout o endpoint de pago autorizado.'
-      };
+      message('authMsg','');
 
-      message(
-        'opMsg',
-        texts[op]||
-        'Operación pendiente de configuración.'
-      );
-    };
-  });
+      try{
 
-$('cancelTransfer').onclick=()=>{
+        const result =
+          signupMode
 
-  show(
-    'transferPanel',
-    false
-  );
+            ? await client.auth.signUp({
+                email,
+                password,
+                options:{
+                  emailRedirectTo:
+                    window.location.origin +
+                    window.location.pathname
+                }
+              })
 
-  message(
-    'transferMsg',
-    ''
-  );
+            : await client.auth.signInWithPassword({
+                email,
+                password
+              });
 
-  $('recipient').value='';
+        if(result.error)
+          throw result.error;
 
-  $('amount').value='';
+        if(signupMode){
 
-  $('reference').value='';
-};
+          if(result.data.session){
 
-$('sendTransfer').onclick=async()=>{
+            message(
+              'authMsg',
+              'Cuenta creada. Sesión iniciada.',
+              'ok'
+            );
 
-  const recipient =
-    $('recipient').value.trim();
+            await showSession();
 
-  const amount =
-    Number($('amount').value);
+          }else{
 
-  const reference =
-    $('reference').value.trim()||
-    null;
-
-  if(!recipient){
-
-    message(
-      'transferMsg',
-      'Escribe el correo o UUID del destinatario.',
-      'error'
-    );
-
-    return;
-  }
-
-  if(!Number.isFinite(amount)||amount<=0){
-
-    message(
-      'transferMsg',
-      'Escribe una cantidad CRX válida mayor que cero.',
-      'error'
-    );
-
-    return;
-  }
-
-  if(amount>1000000000){
-
-    message(
-      'transferMsg',
-      'La cantidad supera el límite técnico permitido.',
-      'error'
-    );
-
-    return;
-  }
-
-  const btn =
-    $('sendTransfer');
-
-  btn.disabled=true;
-
-  btn.textContent =
-    'Procesando de forma segura...';
-
-  message(
-    'transferMsg',
-    'Validando destinatario, saldo, límites y riesgo...'
-  );
-
-  try{
-
-    const idempotency =
-      crypto.randomUUID
-        ? crypto.randomUUID()
-        : (
-            Date.now()+
-            '-'+
-            Math.random()
-          ).replace('.','');
-
-    const {
-      data,
-      error
-    } =
-      await client.rpc(
-        'transfer_crx_secure',
-        {
-          p_recipient:recipient,
-          p_amount:amount,
-          p_reference:reference,
-          p_idempotency:idempotency,
-          p_metadata:{
-            source:'web',
-            version:'7.5.2'
+            message(
+              'authMsg',
+              'Cuenta creada. Revisa tu correo para confirmar la cuenta antes de iniciar sesión.',
+              'ok'
+            );
           }
+
+        }else{
+
+          await showSession();
         }
-      );
 
-    if(error)
-      throw error;
+      }catch(e){
 
-    message(
-      'transferMsg',
-      'Transferencia completada.\n'+
-      'Referencia: '+
-      (data.reference||'—')+
-      '\nEnviado: '+
-      fmt(data.amount)+
-      ' CRX\nComisión: '+
-      fmt(data.fee)+
-      ' CRX\nRecibido: '+
-      fmt(data.net)+
-      ' CRX\nID: '+
-      data.transaction_id,
-      'ok'
-    );
+        message(
+          'authMsg',
+          'No se pudo completar la operación.\n' +
+          (e?.message || String(e)),
+          'error'
+        );
 
-    $('amount').value='';
+      }finally{
 
-    $('reference').value='';
+        btn.disabled = false;
 
-    await loadData();
+        btn.textContent =
+          signupMode
+            ? 'Crear cuenta'
+            : 'Entrar';
+      }
+    };
 
-  }catch(e){
+  $('modeBtn').onclick =
+    () => {
 
-    message(
-      'transferMsg',
-      'No se realizó la transferencia.\n'+
-      transferErrorText(e),
-      'error'
-    );
+      signupMode =
+        !signupMode;
 
-  }finally{
+      setAuthMode();
+    };
 
-    btn.disabled=false;
+  $('resetBtn').onclick =
+    async () => {
 
-    btn.textContent =
-      'Confirmar transferencia';
-  }
-};
+      const email =
+        $('email').value.trim();
 
-client.auth.onAuthStateChange(
-  (event,session)=>{
+      if(!email){
 
-    show(
-      'authCard',
-      !session
-    );
+        message(
+          'authMsg',
+          'Escribe primero tu correo electrónico.',
+          'error'
+        );
 
-    show(
-      'app',
-      !!session
-    );
+        return;
+      }
 
-    if(
-      session&&
-      (
-  
+      try{
+
+        const {
+          error
+        } =
+          await client.auth.resetPasswordForEmail(
+            email,
+            {
+              redirectTo:
+                window.location.origin +
+                window.location.pathname
+            }
+          );
+
+        if(error)
+          throw error;
+
+        message(
+          'authMsg',
+          'Si el correo existe, recibirás instrucciones para recuperar la contraseña.',
+          'ok'
+        );
+
+      }catch(e){
+
+        message(
+          'authMsg',
+          e?.message || String(e),
+          'error'
+        );
+      }
+    };
+
+  $('logoutBtn').onclick =
+    async () => {
+
+      try{
+        await client.auth.signOut();
+      }finally{
+
+        $('password').value = '';
+
+        await showSession();
+      }
+    };
+
+  $('refreshBtn').onclick =
+    async () => {
+
+      const btn =
+        $('refreshBtn');
+
+      btn.disabled = true;
+
+      try{
+        await loadData();
+      }catch(e){
+
+        message(
+          'txMsg',
+          'No se pudo actualizar: ' +
+          (e?.message || String(e)),
+          'error'
+        );
+
+      }finally{
+
+        btn.disabled = false;
+      }
+    };
+
+  document
+    .querySelectorAll('[data-tab]')
+    .forEach(b => {
+
+      b.onclick =
+        () => {
+
+          const tab =
+            b.dataset.tab;
+
+          show(
+            'history',
+            tab === 'history'
+          );
+
+          show(
+            'operations',
+            tab === 'operations'
+          );
+        };
+    });
+
+  const transferErrorText =
+    e => {
+
+      const raw =
+        e?.message ||
+        String(e || 'Error');
+
+      const map = {
+
+        AUTH_REQUIRED:
+          'Sesión no válida.',
+
+        IDEMPOTENCY_REQUIRED:
+          'No se pudo generar
