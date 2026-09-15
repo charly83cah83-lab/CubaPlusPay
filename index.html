@@ -1,71 +1,727 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CUBA PLUS PAY V7.5.2</title>
+
 <style>
-:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#07111f;color:#eef4ff}*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#07111f,#0d1b2f);min-height:100vh}.wrap{max-width:720px;margin:auto;padding:20px}.brand{text-align:center;padding:22px 0}.brand h1{margin:0;font-size:28px}.brand p{opacity:.7;margin:6px 0}.card{background:#101f33;border:1px solid #263b55;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 12px 30px #0004}label{display:block;margin:12px 0 6px;font-size:14px;opacity:.8}input{width:100%;padding:14px;border-radius:12px;border:1px solid #36516f;background:#091625;color:#fff;font-size:16px}button{width:100%;padding:14px;border:0;border-radius:12px;background:#2f80ed;color:#fff;font-weight:700;font-size:16px;margin-top:14px}button.secondary{background:#20344d}button.danger{background:#8b3340}.msg{margin-top:12px;padding:10px;border-radius:10px;background:#0a1726;white-space:pre-wrap}.hidden{display:none}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.stat{background:#0a1726;border:1px solid #223a55;border-radius:14px;padding:15px}.stat small{display:block;opacity:.65}.stat strong{display:block;font-size:22px;margin-top:5px;word-break:break-word}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.pill{font-size:12px;padding:6px 9px;border-radius:99px;background:#1d3855}.muted{opacity:.7}.notice{font-size:13px;line-height:1.5;opacity:.8}.footer{text-align:center;opacity:.45;font-size:12px;padding:20px 0}.loading{text-align:center;padding:20px}@media(max-width:480px){.grid{grid-template-columns:1fr}.wrap{padding:14px}}
+:root{
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:#07111f;
+  color:#eef4ff
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:linear-gradient(160deg,#07111f,#0d1b2f);
+  min-height:100vh
+}
+.wrap{
+  max-width:720px;
+  margin:auto;
+  padding:20px
+}
+.brand{
+  text-align:center;
+  padding:22px 0
+}
+.brand h1{
+  margin:0;
+  font-size:28px
+}
+.brand p{
+  opacity:.7;
+  margin:6px 0
+}
+.card{
+  background:#101f33;
+  border:1px solid #263b55;
+  border-radius:18px;
+  padding:20px;
+  margin:14px 0;
+  box-shadow:0 12px 30px #0004
+}
+label{
+  display:block;
+  margin:12px 0 6px;
+  font-size:14px;
+  opacity:.8
+}
+input{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #36516f;
+  background:#091625;
+  color:#fff;
+  font-size:16px
+}
+button{
+  width:100%;
+  padding:14px;
+  border:0;
+  border-radius:12px;
+  background:#2f80ed;
+  color:#fff;
+  font-weight:700;
+  font-size:16px;
+  margin-top:14px
+}
+button.secondary{
+  background:#20344d
+}
+button.danger{
+  background:#8b3340
+}
+button:disabled{
+  opacity:.6
+}
+.msg{
+  margin-top:12px;
+  padding:10px;
+  border-radius:10px;
+  background:#0a1726;
+  white-space:pre-wrap
+}
+.hidden{
+  display:none
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px
+}
+.stat{
+  background:#0a1726;
+  border:1px solid #223a55;
+  border-radius:14px;
+  padding:15px
+}
+.stat small{
+  display:block;
+  opacity:.65
+}
+.stat strong{
+  display:block;
+  font-size:22px;
+  margin-top:5px;
+  word-break:break-word
+}
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center
+}
+.pill{
+  font-size:12px;
+  padding:6px 9px;
+  border-radius:99px;
+  background:#1d3855
+}
+.muted{
+  opacity:.7
+}
+.notice{
+  font-size:13px;
+  line-height:1.5;
+  opacity:.8
+}
+.footer{
+  text-align:center;
+  opacity:.45;
+  font-size:12px;
+  padding:20px 0
+}
+.loading{
+  text-align:center;
+  padding:20px
+}
+@media(max-width:480px){
+  .grid{
+    grid-template-columns:1fr
+  }
+  .wrap{
+    padding:14px
+  }
+}
 </style>
 </head>
+
 <body>
+
 <div class="wrap">
-<header class="brand"><h1>CUBA PLUS PAY</h1><p>V7.5.2 · Tu dinero. Tus pagos. Tu plataforma.</p></header>
+
+<header class="brand">
+  <h1>CUBA PLUS PAY</h1>
+  <p>V7.5.2 · Tu dinero. Tus pagos. Tu plataforma.</p>
+</header>
+
 <section id="loginView" class="card">
-<h2>Iniciar sesión</h2>
-<p class="muted">Accede con tu cuenta de Supabase.</p>
-<label for="email">Correo electrónico</label><input id="email" type="email" autocomplete="email" placeholder="tu@email.com">
-<label for="password">Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
-<button id="loginBtn">Entrar</button><button id="resetBtn" class="secondary">Recuperar contraseña</button>
-<div id="loginMsg" class="msg hidden"></div>
+
+  <h2>Iniciar sesión</h2>
+
+  <p class="muted">
+    Accede con tu cuenta de Supabase.
+  </p>
+
+  <label for="email">Correo electrónico</label>
+  <input
+    id="email"
+    type="email"
+    autocomplete="email"
+    placeholder="tu@email.com"
+  >
+
+  <label for="password">Contraseña</label>
+  <input
+    id="password"
+    type="password"
+    autocomplete="current-password"
+    placeholder="••••••••"
+  >
+
+  <button id="loginBtn">
+    Entrar
+  </button>
+
+  <button id="resetBtn" class="secondary">
+    Recuperar contraseña
+  </button>
+
+  <div id="loginMsg" class="msg hidden"></div>
+
 </section>
+
+
 <section id="appView" class="hidden">
-<div class="card"><div class="row"><div><div class="muted">Sesión activa</div><strong id="userEmail">—</strong></div><span id="role" class="pill">—</span></div></div>
-<div class="card"><h2>Dashboard</h2><div class="grid"><div class="stat"><small>Saldo disponible</small><strong id="available">—</strong></div><div class="stat"><small>Bloqueado</small><strong id="locked">—</strong></div><div class="stat"><small>Saldo total</small><strong id="balance">—</strong></div><div class="stat"><small>Moneda</small><strong id="currency">—</strong></div></div></div>
-<div class="card"><h2>Perfil</h2><div id="profileInfo" class="notice">Cargando perfil…</div></div>
-<div class="card"><h2>Estado</h2><div id="status" class="notice">Conectado a Supabase.</div><button id="logoutBtn" class="danger">Cerrar sesión</button></div>
+
+  <div class="card">
+
+    <div class="row">
+
+      <div>
+        <div class="muted">
+          Sesión activa
+        </div>
+
+        <strong id="userEmail">
+          —
+        </strong>
+      </div>
+
+      <span id="role" class="pill">
+        —
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>Dashboard</h2>
+
+    <div class="grid">
+
+      <div class="stat">
+        <small>
+          Saldo disponible
+        </small>
+
+        <strong id="available">
+          —
+        </strong>
+      </div>
+
+
+      <div class="stat">
+        <small>
+          Bloqueado
+        </small>
+
+        <strong id="locked">
+          —
+        </strong>
+      </div>
+
+
+      <div class="stat">
+        <small>
+          Saldo total
+        </small>
+
+        <strong id="balance">
+          —
+        </strong>
+      </div>
+
+
+      <div class="stat">
+        <small>
+          Moneda
+        </small>
+
+        <strong id="currency">
+          —
+        </strong>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>Perfil</h2>
+
+    <div id="profileInfo" class="notice">
+      Cargando perfil…
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>Estado</h2>
+
+    <div id="status" class="notice">
+      Conectado a Supabase.
+    </div>
+
+    <button id="logoutBtn" class="danger">
+      Cerrar sesión
+    </button>
+
+  </div>
+
 </section>
-<div class="footer">CUBA PLUS PAY V7.5.2 · Sin saldos ficticios · Operaciones financieras protegidas por backend</div>
+
+
+<div class="footer">
+  CUBA PLUS PAY V7.5.2 · Sin saldos ficticios ·
+  Operaciones financieras protegidas por backend
 </div>
+
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-const SUPABASE_URL='https://lqwxkevalagdhckhuelx.supabase.co';
-// Pega aquí SOLO tu Publishable key de Supabase. Nunca uses service_role.
-const SUPABASE_PUBLISHABLE_KEY='PEGA_AQUI_TU_PUBLISHABLE_KEY';
-const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-const $=id=>document.getElementById(id);
-function msg(text){$('loginMsg').textContent=text;$('loginMsg').classList.remove('hidden')}
-function clearMsg(){$('loginMsg').classList.add('hidden');$('loginMsg').textContent=''}
-function showLogin(){ $('loginView').classList.remove('hidden');$('appView').classList.add('hidden') }
-function showApp(){ $('loginView').classList.add('hidden');$('appView').classList.remove('hidden') }
+
+/* =========================================================
+   CUBA PLUS PAY V7.5.2
+   CONEXIÓN SUPABASE
+   ========================================================= */
+
+const SUPABASE_URL =
+  'https://lqwxkevalagdhckhuelx.supabase.co';
+
+const SUPABASE_PUBLISHABLE_KEY =
+  'sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
+
+const client =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+
+const $ = id =>
+  document.getElementById(id);
+
+
+function msg(text){
+
+  $('loginMsg').textContent = text;
+
+  $('loginMsg').classList.remove('hidden');
+
+}
+
+
+function clearMsg(){
+
+  $('loginMsg').classList.add('hidden');
+
+  $('loginMsg').textContent = '';
+
+}
+
+
+function showLogin(){
+
+  $('loginView').classList.remove('hidden');
+
+  $('appView').classList.add('hidden');
+
+}
+
+
+function showApp(){
+
+  $('loginView').classList.add('hidden');
+
+  $('appView').classList.remove('hidden');
+
+}
+
+
+/* =========================================================
+   CARGAR DASHBOARD
+   ========================================================= */
+
 async function loadDashboard(user){
- $('userEmail').textContent=user.email||'—';
- const [{data:profile,error:pe},{data:wallets,error:we}]=await Promise.all([
-  client.from('profiles').select('display_name,role,country,kyc_status,mfa_required,risk_tier').eq('id',user.id).maybeSingle(),
-  client.from('wallets').select('currency,balance,locked').eq('user_id',user.id).order('currency')
- ]);
- if(pe) throw new Error('No se pudo cargar el perfil: '+pe.message);
- if(we) throw new Error('No se pudo cargar la wallet: '+we.message);
- $('role').textContent=profile?.role||'USER';
- $('profileInfo').textContent=`Nombre: ${profile?.display_name||'No definido'}\nPaís: ${profile?.country||'No definido'}\nKYC: ${profile?.kyc_status||'NOT_STARTED'}\nMFA: ${profile?.mfa_required?'Requerido':'No requerido'}\nRiesgo: ${profile?.risk_tier||'—'}`;
- const w=(wallets||[])[0];
- if(!w){$('available').textContent='0';$('locked').textContent='0';$('balance').textContent='0';$('currency').textContent='—';$('status').textContent='Sesión activa. No existe todavía una wallet para este usuario.';return}
- const balance=Number(w.balance)||0,locked=Number(w.locked)||0,available=Math.max(0,balance-locked);
- $('available').textContent=available.toLocaleString('es-ES',{maximumFractionDigits:8})+' '+w.currency;
- $('locked').textContent=locked.toLocaleString('es-ES',{maximumFractionDigits:8})+' '+w.currency;
- $('balance').textContent=balance.toLocaleString('es-ES',{maximumFractionDigits:8})+' '+w.currency;
- $('currency').textContent=w.currency;
- $('status').textContent='Sesión y datos de wallet cargados desde Supabase.';
+
+  $('userEmail').textContent =
+    user.email || '—';
+
+
+  const [
+    {data:profile,error:pe},
+    {data:wallets,error:we}
+  ] = await Promise.all([
+
+    client
+      .from('profiles')
+      .select(
+        'display_name,role,country,kyc_status,mfa_required,risk_tier'
+      )
+      .eq('id',user.id)
+      .maybeSingle(),
+
+    client
+      .from('wallets')
+      .select(
+        'currency,balance,locked'
+      )
+      .eq('user_id',user.id)
+      .order('currency')
+
+  ]);
+
+
+  if(pe){
+
+    throw new Error(
+      'No se pudo cargar el perfil: ' +
+      pe.message
+    );
+
+  }
+
+
+  if(we){
+
+    throw new Error(
+      'No se pudo cargar la wallet: ' +
+      we.message
+    );
+
+  }
+
+
+  $('role').textContent =
+    profile?.role || 'USER';
+
+
+  $('profileInfo').textContent =
+`Nombre: ${profile?.display_name || 'No definido'}
+País: ${profile?.country || 'No definido'}
+KYC: ${profile?.kyc_status || 'NOT_STARTED'}
+MFA: ${profile?.mfa_required ? 'Requerido' : 'No requerido'}
+Riesgo: ${profile?.risk_tier || '—'}`;
+
+
+  const w =
+    (wallets || [])[0];
+
+
+  if(!w){
+
+    $('available').textContent = '0';
+
+    $('locked').textContent = '0';
+
+    $('balance').textContent = '0';
+
+    $('currency').textContent = '—';
+
+    $('status').textContent =
+      'Sesión activa. No existe todavía una wallet para este usuario.';
+
+    return;
+
+  }
+
+
+  const balance =
+    Number(w.balance) || 0;
+
+  const locked =
+    Number(w.locked) || 0;
+
+  const available =
+    Math.max(0,balance - locked);
+
+
+  $('available').textContent =
+    available.toLocaleString(
+      'es-ES',
+      {maximumFractionDigits:8}
+    ) +
+    ' ' +
+    w.currency;
+
+
+  $('locked').textContent =
+    locked.toLocaleString(
+      'es-ES',
+      {maximumFractionDigits:8}
+    ) +
+    ' ' +
+    w.currency;
+
+
+  $('balance').textContent =
+    balance.toLocaleString(
+      'es-ES',
+      {maximumFractionDigits:8}
+    ) +
+    ' ' +
+    w.currency;
+
+
+  $('currency').textContent =
+    w.currency;
+
+
+  $('status').textContent =
+    'Sesión y datos de wallet cargados desde Supabase.';
+
 }
+
+
+/* =========================================================
+   INICIO
+   ========================================================= */
+
 async function start(){
- if(SUPABASE_PUBLISHABLE_KEY==='PEGA_AQUI_TU_PUBLISHABLE_KEY'){msg('Falta configurar la Publishable key de Supabase en este archivo.');return}
- const {data:{session}}=await client.auth.getSession();
- if(session){showApp();try{await loadDashboard(session.user)}catch(e){$('status').textContent=e.message}}
- else showLogin();
- client.auth.onAuthStateChange(async(event,session)=>{if(session){showApp();try{await loadDashboard(session.user)}catch(e){$('status').textContent=e.message}}else showLogin()});
+
+  const {
+    data:{session}
+  } =
+    await client.auth.getSession();
+
+
+  if(session){
+
+    showApp();
+
+    try{
+
+      await loadDashboard(
+        session.user
+      );
+
+    }catch(e){
+
+      $('status').textContent =
+        e.message;
+
+    }
+
+  }else{
+
+    showLogin();
+
+  }
+
+
+  client.auth.onAuthStateChange(
+    async(event,session)=>{
+
+      if(session){
+
+        showApp();
+
+        try{
+
+          await loadDashboard(
+            session.user
+          );
+
+        }catch(e){
+
+          $('status').textContent =
+            e.message;
+
+        }
+
+      }else{
+
+        showLogin();
+
+      }
+
+    }
+  );
+
 }
-$('loginBtn').onclick=async()=>{clearMsg();const email=$('email').value.trim(),password=$('password').value;if(!email||!password){msg('Escribe correo y contraseña.');return}$('loginBtn').disabled=true;try{const {error}=await client.auth.signInWithPassword({email,password});if(error)throw error}catch(e){msg('No se pudo iniciar sesión: '+e.message)}finally{$('loginBtn').disabled=false}};
-$('resetBtn').onclick=async()=>{clearMsg();const email=$('email').value.trim();if(!email){msg('Escribe primero tu correo electrónico.');return}try{const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});if(error)throw error;msg('Solicitud enviada. Revisa tu correo para restablecer la contraseña.')}catch(e){msg('No se pudo enviar la recuperación: '+e.message)}};
-$('logoutBtn').onclick=async()=>{await client.auth.signOut()};
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+$('loginBtn').onclick =
+async()=>{
+
+  clearMsg();
+
+  const email =
+    $('email').value.trim();
+
+  const password =
+    $('password').value;
+
+
+  if(!email || !password){
+
+    msg(
+      'Escribe correo y contraseña.'
+    );
+
+    return;
+
+  }
+
+
+  $('loginBtn').disabled = true;
+
+
+  try{
+
+    const {error} =
+      await client.auth.signInWithPassword({
+
+        email,
+        password
+
+      });
+
+
+    if(error){
+
+      throw error;
+
+    }
+
+
+  }catch(e){
+
+    msg(
+      'No se pudo iniciar sesión: ' +
+      e.message
+    );
+
+  }finally{
+
+    $('loginBtn').disabled = false;
+
+  }
+
+};
+
+
+/* =========================================================
+   RECUPERAR CONTRASEÑA
+   ========================================================= */
+
+$('resetBtn').onclick =
+async()=>{
+
+  clearMsg();
+
+  const email =
+    $('email').value.trim();
+
+
+  if(!email){
+
+    msg(
+      'Escribe primero tu correo electrónico.'
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    const {error} =
+      await client.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo:
+            window.location.origin
+        }
+      );
+
+
+    if(error){
+
+      throw error;
+
+    }
+
+
+    msg(
+      'Solicitud enviada. Revisa tu correo para restablecer la contraseña.'
+    );
+
+
+  }catch(e){
+
+    msg(
+      'No se pudo enviar la recuperación: ' +
+      e.message
+    );
+
+  }
+
+};
+
+
+/* =========================================================
+   CERRAR SESIÓN
+   ========================================================= */
+
+$('logoutBtn').onclick =
+async()=>{
+
+  await client.auth.signOut();
+
+};
+
+
+/* =========================================================
+   ARRANCAR APLICACIÓN
+   ========================================================= */
+
 start();
+
 </script>
-</body></html>
+
+</body>
+</html>
