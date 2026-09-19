@@ -205,6 +205,72 @@ async function securityPanel(){
       '<br>Usuario reconocido por el servidor: '+e(test?.user?.email||'—')+
       '<br>Auth mode: '+e(test?.auth_mode||'—')+
       '<br>JWT presente: '+(test?.jwt_claims_present?'true':'false')+
+      '</div>'+
+      '<button class="btn primary" id="runFinancialE2E">'+
+      'Ejecutar auditoría financiera E2E</button>'+
+      '<div id="financialE2EResult"></div>'
+    );
+
+    document.getElementById('runFinancialE2E').onclick=async()=>{
+      const btn=document.getElementById('runFinancialE2E');
+      const out=document.getElementById('financialE2EResult');
+
+      btn.disabled=true;
+      btn.textContent='Ejecutando auditoría...';
+      out.innerHTML='<div class="notice">Ejecutando pruebas aisladas. No cierres la aplicación.</div>';
+
+      try{
+        const {data:result,error}=await CP.functions.invoke(
+          'auth-financial-e2e',
+          {body:{}}
+        );
+
+        if(error)throw error;
+
+        const recon=result?.reconciliation;
+
+        out.innerHTML=
+          '<div class="msg ok">'+
+          '<b>Auditoría financiera E2E completada</b><br>'+
+          'JWT del llamador: '+(result?.auth_proof?.caller_jwt_valid?'válido':'no válido')+
+          '<br>Usuarios sintéticos: '+(result?.auth_proof?.synthetic_users_signed_in?'creados y autenticados':'fallo')+
+          '<br>Conservación de wallets: '+(recon?.all_wallets_conserved?'OK':'REVISAR')+
+          '<br>Diferencia de conciliación: '+e(String(recon?.total_delta??'—'))+
+          '</div>';
+
+        console.log('AUTH-FINANCIAL-E2E',result);
+
+      }catch(x){
+        out.innerHTML=
+          '<div class="msg error">'+
+          '<b>Error en auditoría E2E</b><br>'+
+          e(x?.message||x)+
+          '</div>';
+      }finally{
+        btn.disabled=false;
+        btn.textContent='Ejecutar auditoría financiera E2E';
+      }
+    };
+
+  }catch(x){
+    modalM('Seguridad de cuenta',
+      '<div class="msg error">Error: '+e(x?.message||x)+'</div>'
+    );
+  }
+  }
+
+    if(fe)throw fe;
+
+    modalM('Seguridad de cuenta',
+      '<div class="card"><b>Sesión</b><p class="notice">'+
+      'Usuario: '+e(user?.email||'—')+
+      '<br>Sesión activa: '+(!!s?.session)+
+      '</p></div>'+
+      '<div class="msg ok">'+
+      'JWT validado correctamente por Edge Function.'+
+      '<br>Usuario reconocido por el servidor: '+e(test?.user?.email||'—')+
+      '<br>Auth mode: '+e(test?.auth_mode||'—')+
+      '<br>JWT presente: '+(test?.jwt_claims_present?'true':'false')+
       '</div>'
     );
   }catch(x){
