@@ -181,7 +181,39 @@ async function providerPanel(){modalM('QvaPay · estado real','<div id="provBox"
 async function cryptoPanel(){modalM('Criptomonedas · capacidades reales','<div id="cryptoBox">Consultando catálogo…</div>');try{const {data,error}=await CP.from('asset_catalog').select('code,name,kind,network,provider,enabled_wallet,enabled_deposit,enabled_withdraw,enabled_transfer,fee_in,fee_out,min_in,max_in,min_out,max_out').order('code');if(error)throw error;const rows=(data||[]).map(a=>'<div class="mini-row"><div><b>'+e(a.code)+'</b><br><small>'+e(a.name||'')+' · '+e(a.network||'')+' · '+e(a.provider||'')+'</small></div><div style="text-align:right"><span class="'+(a.enabled_deposit?'ok-text':'danger-text')+'">IN '+(a.enabled_deposit?'✓':'—')+'</span> · <span class="'+(a.enabled_withdraw?'ok-text':'danger-text')+'">OUT '+(a.enabled_withdraw?'✓':'—')+'</span><br><small>Transfer '+(a.enabled_transfer?'✓':'—')+'</small></div></div>').join('')||'<div class="empty">Sin activos configurados.</div>';q('cryptoBox').innerHTML='<div class="mini-list">'+rows+'</div><p class="notice">Las capacidades se leen de asset_catalog. La interfaz no habilita operaciones por su cuenta.</p>'}catch(x){q('cryptoBox').innerHTML='<div class="msg error">'+e(x.message||x)+'</div>'}}
 async function p2pPanel(){modalM('P2P / Escrow','<div id="p2pBox">Cargando ofertas activas…</div>');try{const {data,error}=await CP.from('cp_p2p_offers').select('id,side,asset,payment_method_id,price,min_amount,max_amount,available_amount,status,terms,created_at').eq('status','active').order('created_at',{ascending:false}).limit(50);if(error)throw error;const rows=(data||[]).map(o=>'<div class="mini-row"><div><b>'+e(o.side)+' · '+e(o.asset)+'</b><br><small>Precio '+e(o.price)+' · rango '+e(o.min_amount)+'–'+e(o.max_amount)+' · disponible '+e(o.available_amount)+'</small></div><button class="btn secondary" data-p2p="'+e(o.id)+'">Abrir</button></div>').join('')||'<div class="empty">No hay ofertas activas reales.</div>';q('p2pBox').innerHTML='<div class="mini-list">'+rows+'</div><div id="p2pMsg" class="msg hidden"></div>';q('p2pBox').querySelectorAll('[data-p2p]').forEach(b=>b.onclick=async()=>{const amount=Number(prompt('Monto del activo para esta orden:'));if(!Number.isFinite(amount)||amount<=0)return;say('p2pMsg','Creando orden…','wait');try{const r=await CP.rpc('cp_create_p2p_order',{p_offer_id:b.dataset.p2p,p_amount:amount});if(r.error)throw r.error;say('p2pMsg','Orden creada. ID: '+(r.data?.order_id||'—')+'. El estado lo controla el backend.','ok')}catch(x){say('p2pMsg',x.message||String(x),'error')}})}catch(x){q('p2pBox').innerHTML='<div class="msg error">'+e(x.message||x)+'</div>'}}
 async function crmPanel(){modalM('CRM interno','<div id="crmBox">Verificando rol…</div>');try{const p=await getRole();if(!p||!['admin','owner','super_admin'].includes(String(p.role).toLowerCase())){q('crmBox').innerHTML='<div class="msg error">Acceso restringido. El CRM requiere rol administrativo.</div>';return}const [u,t,o,s,r]=await Promise.all([CP.from('profiles').select('id,display_name,role,kyc_status,risk_tier,mfa_required,country').order('created_at',{ascending:false}).limit(50),CP.from('transactions').select('id,user_id,type,status,amount,currency,rail,reference,created_at,reconciliation_state').order('created_at',{ascending:false}).limit(50),CP.from('cp_orders').select('id,buyer_id,seller_id,status,total,currency,created_at').order('created_at',{ascending:false}).limit(50),CP.from('cp_support_tickets').select('id,subject,status,priority,created_at').order('created_at',{ascending:false}).limit(50),CP.from('risk_assessments').select('id,user_id,transaction_id,score,decision,created_at').order('created_at',{ascending:false}).limit(50)]);for(const z of [u,t,o,s,r])if(z.error)throw z.error;const users=u.data||[],tx=t.data||[],orders=o.data||[],tickets=s.data||[],risk=r.data||[];q('crmBox').innerHTML='<div class="module-grid"><div class="card"><b>Clientes</b><div class="mini-list">'+(users.map(x=>'<div class="mini-row"><div><b>'+e(x.display_name||x.id)+'</b><br><small>'+e(x.role)+' · KYC '+e(x.kyc_status)+' · riesgo '+e(x.risk_tier)+'</small></div><small>'+e(x.country||'—')+'</small></div>').join('')||'<div class="empty">—</div>')+'</div></div><div class="card"><b>Operaciones</b><div class="mini-list">'+(tx.map(x=>'<div class="mini-row"><div><b>'+e(x.type)+' · '+e(x.status)+'</b><br><small>'+e(x.reference||'')+' · '+e(x.rail||'')+'</small></div><span>'+e(x.amount)+' '+e(x.currency)+'</span></div>').join('')||'<div class="empty">—</div>')+'</div></div><div class="card"><b>Marketplace</b><div class="mini-list">'+(orders.map(x=>'<div class="mini-row"><span>'+e(x.id)+'</span><span>'+e(x.status)+' · '+e(x.total)+' '+e(x.currency)+'</span></div>').join('')||'<div class="empty">—</div>')+'</div></div><div class="card"><b>Soporte</b><div class="mini-list">'+(tickets.map(x=>'<div class="mini-row"><div><b>'+e(x.subject||'Ticket')+'</b><br><small>'+e(x.status||'')+'</small></div><small>'+e(x.priority||'')+'</small></div>').join('')||'<div class="empty">—</div>')+'</div></div></div><p class="notice">Evaluaciones de riesgo cargadas: '+risk.length+'. Las acciones financieras sensibles permanecen en backend.</p>'}catch(x){q('crmBox').innerHTML='<div class="msg error">CRM: '+e(x.message||x)+'</div>'}}
-async function securityPanel(){try{const {data:{user},error}=await CP.auth.getUser();if(error)throw error;const {data:s,error:se}=await CP.auth.getSession();if(se)throw se;modalM('Seguridad de cuenta','<div class="card"><b>Sesión</b><p class="notice">Usuario: '+e(user?.email||'—')+'<br>Sesión activa: '+(!!s?.session)+'</p></div><div class="msg ok">Sesión de Supabase detectada correctamente. El JWT permanece protegido y no se muestra.</div>')}catch(x){modalM('Seguridad de cuenta','<div class="msg error">No se pudo comprobar la sesión: '+e(x.message||x)+'</div>')}}
+async function securityPanel(){
+  try{
+    const {data:{user},error}=await CP.auth.getUser();
+    if(error)throw error;
+
+    const {data:s,error:se}=await CP.auth.getSession();
+    if(se)throw se;
+
+    const {data:test,error:fe}=await CP.functions.invoke('auth-context-test',{
+      body:{}
+    });
+
+    if(fe)throw fe;
+
+    modalM('Seguridad de cuenta',
+      '<div class="card"><b>Sesión</b><p class="notice">'+
+      'Usuario: '+e(user?.email||'—')+
+      '<br>Sesión activa: '+(!!s?.session)+
+      '</p></div>'+
+      '<div class="msg ok">'+
+      'JWT validado correctamente por Edge Function.'+
+      '<br>Usuario reconocido por el servidor: '+e(test?.user?.email||'—')+
+      '<br>Auth mode: '+e(test?.auth_mode||'—')+
+      '<br>JWT presente: '+(test?.jwt_claims_present?'true':'false')+
+      '</div>'
+    );
+  }catch(x){
+    modalM('Seguridad de cuenta',
+      '<div class="msg error">Error en la prueba JWT: '+
+      e(x?.message||x)+'</div>'
+    );
+  }
+  }
 function aiPanel(){modalM('CUBA PLUS AI','<b>Conector seguro preparado.</b><p class="notice">No se expone ninguna API key en el navegador. No hay un proveedor IA identificado en este HTML, por lo que no se simulan respuestas.</p><div class="msg warn-text">Estado: proveedor IA no conectado.</div>')}
 function rechargePanel(){modalM('Recarga móvil','<div class="msg warn-text">No se encontró una Edge Function de proveedor de recargas en este proyecto. No se crea una recarga falsa ni se descuenta saldo.</div><p class="notice">La conexión futura debe usar reserva backend → proveedor → webhook/estado → conciliación.</p>')}
 let TD={session:null,running:false,wave:1,lives:20,score:0,towers:new Set(),enemies:[],timer:null,spawn:0};
