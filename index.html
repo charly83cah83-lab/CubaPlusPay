@@ -120,7 +120,109 @@ function modal(title,html){$('modalTitle').textContent=title;$('modalBody').inne
 function closeModal(){show('modal',false);$('modalBody').innerHTML=''}
 function receive(){const e=currentUser?.email||'',id=currentUser?.id||'';modal('Recibir dinero','<p style="color:#9dc4e8">Comparte estos datos para recibir CRX.</p><div class="field"><label>Correo</label><input readonly value="'+esc(e)+'"></div><button id="copyE" class="btn secondary full">Copiar correo</button><div class="field"><label>UUID</label><input readonly value="'+esc(id)+'"></div><button id="copyI" class="btn secondary full">Copiar UUID</button><div id="copyMsg" class="msg hidden"></div>');$('copyE').onclick=async()=>{try{await navigator.clipboard.writeText(e);msg('copyMsg','Correo copiado.','ok')}catch{msg('copyMsg','No se pudo copiar automáticamente.','error')}};$('copyI').onclick=async()=>{try{await navigator.clipboard.writeText(id);msg('copyMsg','UUID copiado.','ok')}catch{msg('copyMsg','No se pudo copiar automáticamente.','error')}}}
 async function doTransfer(){const to=$('to').value.trim(),a=Number($('amt').value),ref=$('ref').value.trim()||null;if(!to||!Number.isFinite(a)||a<=0)return msg('transferMsg','Indica destinatario y un monto válido.','error');const b=$('sendTransfer');b.disabled=true;b.textContent='Procesando…';try{const {data,error}=await db.rpc('transfer_crx_secure',{p_recipient:to,p_amount:a,p_reference:ref,p_idempotency:safeUUID(),p_metadata:{source:'web',version:'7.5.2',ui:'mobile-reference'}});if(error)throw error;msg('transferMsg','Transferencia procesada.\nReferencia: '+(data?.reference||'—')+'\nEnviado: '+fmt(data?.amount)+' CRX\nComisión: '+fmt(data?.fee)+' CRX\nRecibido: '+fmt(data?.net)+' CRX','ok');await loadData()}catch(e){msg('transferMsg','No se realizó la transferencia.\n'+(e?.message||e),'error')}finally{b.disabled=false;b.textContent='Continuar'}}
-async function deposit(){modal('Depositar con QvaPay','<p style="color:#9dc4e8">La factura se crea mediante la Edge Function real <b>qvapay-gateway</b>. El saldo no cambia hasta que el webhook confirma el pago.</p><div class="field"><label>Monto USD</label><input id="depAmt" type="number" min="1" max="100000" step="0.01" placeholder="0.00"></div><div class="field"><label>Descripción</label><input id="depDesc" maxlength="255" value="Depósito CUBA PLUS PAY"></div><button id="createInvoice" class="btn full">Crear factura QvaPay</button><div id="depMsg" class="msg hidden"></div>');$('createInvoice').onclick=async()=>{const a=Number($('depAmt').value),d=$('depDesc').value.trim()||'Depósito CUBA PLUS PAY';if(!Number.isFinite(a)||a<1||a>100000)return msg('depMsg','Monto válido: 1 a 100000 USD.','error');const b=$('createInvoice');b.disabled=true;b.textContent='Creando…';try{const {data,error}=await db.functions.invoke('qvapay-gateway',{body:{operation:'invoice',amount:a,description:d}});if(error)throw error;const r=data?.result||{},url=r.url||r.payment_url||r.checkout_url||r.invoice_url||r.link||r.payment?.url||r.data?.url;if(!data?.ok||!url)throw new Error(data?.message||'QvaPay no devolvió una URL de pago.');msg('depMsg','Factura real creada. Abriendo QvaPay…','ok');setTimeout(()=>location.href=url,500)}catch(e){msg('depMsg','No se pudo crear la factura QvaPay.\n'+(e?.message||e),'error')}finally{b.disabled=false;b.textContent='Crear factura QvaPay'}}}
+async function deposit(){
+  modal(
+    'Depositar con QvaPay',
+    '<p style="color:#9dc4e8">La factura se crea mediante la Edge Function real <b>qvapay-gateway</b>. El saldo no cambia hasta que el webhook confirma el pago.</p>'+
+    '<div class="field"><label>Monto USD</label><input id="depAmt" type="number" min="1" max="100000" step="0.01" placeholder="0.00"></div>'+
+    '<div class="field"><label>Descripción</label><input id="depDesc" maxlength="255" value="Depósito CUBA PLUS PAY"></div>'+
+    '<button id="createInvoice" class="btn full">Crear factura QvaPay</button>'+
+    '<div id="depMsg" class="msg hidden"></div>'
+  );
+
+  $('createInvoice').onclick=async()=>{
+    const a=Number($('depAmt').value);
+    const d=$('depDesc').value.trim()||'Depósito CUBA PLUS PAY';
+    const b=$('createInvoice');
+
+    if(!Number.isFinite(a)||a<1||a>100000){
+      return msg('depMsg','Monto válido: 1 a 100000 USD.','error');
+    }
+
+    b.disabled=true;
+    b.textContent='Creando…';
+
+    try{
+      const {data:{session},error:sessionError}=await db.auth.getSession();
+
+      if(sessionError) throw sessionError;
+
+      if(!session?.access_token){
+        throw new Error('No hay una sesión autenticada. Cierra sesión, vuelve a entrar y prueba nuevamente.');
+      }
+
+      const {data,error}=await db.functions.invoke(
+        'qvapay-gateway',
+        {
+          body:{
+            operation:'invoice',
+            amount:a,
+            description:d
+          }
+        }
+      );
+
+      if(error){
+        throw new Error(
+          'Error de Edge Function: '+
+          (error.message||JSON.stringify(error))
+        );
+      }
+
+      if(!data){
+        throw new Error('La Edge Function no devolvió ninguna respuesta.');
+      }
+
+      if(!data.ok){
+        throw new Error(
+          data.message||
+          data.error||
+          'La Edge Function rechazó la creación de la factura.'
+        );
+      }
+
+      const r=data.result||{};
+      const url=
+        r.url||
+        r.payment_url||
+        r.checkout_url||
+        r.invoice_url||
+        r.link||
+        r.payment?.url||
+        r.data?.url;
+
+      if(!url){
+        throw new Error(
+          'QvaPay respondió correctamente, pero no devolvió la URL de pago.'
+        );
+      }
+
+      msg(
+        'depMsg',
+        'Factura real creada correctamente. Abriendo QvaPay…',
+        'ok'
+      );
+
+      setTimeout(()=>{
+        location.href=url;
+      },500);
+
+    }catch(e){
+      console.error('QvaPay invoice error:',e);
+
+      msg(
+        'depMsg',
+        'No se pudo crear la factura QvaPay.\n'+
+        (e?.message||String(e)),
+        'error'
+      );
+
+    }finally{
+      b.disabled=false;
+      b.textContent='Crear factura QvaPay';
+    }
+  };
+  }
 function assetForCurrency(c){return (window.assetCatalog||[]).find(x=>x.code===c)}
 function qvaPayMethod(c){return ({USDT_TRC20:'tron_usdt',USDT_ERC20:'usdt',TRX:'trx',BTC:'btc',LTC:'ltc',ETH:'eth'})[c]||c}
 function paymentMethodsHtml(){const rows=window.paymentMethods||[];return rows.length?rows.map(x=>'<div class="tx"><div class="tx-icon">◆</div><div><b>'+esc(x.name)+'</b><small>'+esc(x.method_type)+' · '+esc(x.asset_code||'—')+' · '+(x.verified?'Verificado':'No verificado')+'</small></div><div class="amount"><button class="btn secondary" data-delete-pm="'+esc(x.id)+'">Eliminar</button></div></div>').join(''):'<div class="empty">No tienes métodos de pago guardados.</div>'}
