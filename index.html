@@ -259,27 +259,7 @@ async function securityPanel(){
   }
   }
 
-    if(fe)throw fe;
-
-    modalM('Seguridad de cuenta',
-      '<div class="card"><b>Sesión</b><p class="notice">'+
-      'Usuario: '+e(user?.email||'—')+
-      '<br>Sesión activa: '+(!!s?.session)+
-      '</p></div>'+
-      '<div class="msg ok">'+
-      'JWT validado correctamente por Edge Function.'+
-      '<br>Usuario reconocido por el servidor: '+e(test?.user?.email||'—')+
-      '<br>Auth mode: '+e(test?.auth_mode||'—')+
-      '<br>JWT presente: '+(test?.jwt_claims_present?'true':'false')+
-      '</div>'
-    );
-  }catch(x){
-    modalM('Seguridad de cuenta',
-      '<div class="msg error">Error en la prueba JWT: '+
-      e(x?.message||x)+'</div>'
-    );
-  }
-  }
+    
 function aiPanel(){modalM('CUBA PLUS AI','<b>Conector seguro preparado.</b><p class="notice">No se expone ninguna API key en el navegador. No hay un proveedor IA identificado en este HTML, por lo que no se simulan respuestas.</p><div class="msg warn-text">Estado: proveedor IA no conectado.</div>')}
 function rechargePanel(){modalM('Recarga móvil','<div class="msg warn-text">No se encontró una Edge Function de proveedor de recargas en este proyecto. No se crea una recarga falsa ni se descuenta saldo.</div><p class="notice">La conexión futura debe usar reserva backend → proveedor → webhook/estado → conciliación.</p>')}
 let TD={session:null,running:false,wave:1,lives:20,score:0,towers:new Set(),enemies:[],timer:null,spawn:0};
