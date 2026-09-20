@@ -360,18 +360,761 @@ async function securityPanel(){
     );
   }
   }
+/* =========================================================
+   CUBA PLUS PAY — CRX DEFENSE V1
+   MOTOR FRONTEND CONECTADO AL BACKEND SUPABASE
+   ========================================================= */
 
+let TD={
+  session:null,
+  running:false,
+  wave:1,
+  lives:20,
+  score:0,
+  combo:0,
+  gold:300,
+  phase:1,
+  towers:[],
+  enemies:[],
+  effects:[],
+  timer:null,
+  busy:false,
+  selectedTower:'tower-cannon',
+  engine:null
+};
+
+const TD_TOWERS=[
+  'tower-cannon',
+  'tower-tesla',
+  'tower-cryo',
+  'tower-artillery',
+  'tower-sniper',
+  'tower-plasma'
+];
+
+function tdMsg(txt,type='ok'){
+  if(q('gameMsg'))say('gameMsg',txt,type);
+}
+
+function tdHUD(){
+  if(q('tdWave'))q('tdWave').textContent=TD.wave;
+  if(q('tdLives'))q('tdLives').textContent=TD.lives;
+  if(q('tdCoins'))q('tdCoins').textContent=TD.gold;
+  if(q('tdScore'))q('tdScore').textContent=TD.score;
+}
+
+function tdTowerAvailable(id){
+  const c=(TD.engine?.towers||[]).find(x=>x.id===id);
+  return c && c.phase_min<=TD.phase;
+}
+
+function tdNextTower(){
+  const available=TD_TOWERS.filter(tdTowerAvailable);
+  if(!available.length)return;
+
+  let i=available.indexOf(TD.selectedTower);
+  i=(i+1)%available.length;
+  TD.selectedTower=available[i];
+
+  const c=available[i];
+  tdMsg(
+    'Torre seleccionada: '+(c?.name||c.id)+
+    ' · Coste '+(c?.cost??'—')+' oro',
+    'ok'
+  );
+
+  tdRender();
+}
+
+function tdPathCell(i){
+  /*
+    Mapa visual 10x6.
+    El servidor sigue siendo quien valida las acciones.
+  */
+  const path=[
+    0,1,2,3,4,5,6,7,8,9,
+    19,29,39,49,59,
+    58,57,56,55,54,53,52,51,50,
+    40,30,20,10
+  ];
+  return path.includes(i);
+}
+
+function tdEnemyAt(i){
+  return TD.enemies.find(e=>{
+    const p=Number(e.progress??e.pos??-1);
+    return Math.round(p*59)===i || Number(e.cell)===i;
+  });
+}
+
+function tdRender(){
+  const b=q('tdBoard');
+  if(!b)return;
+
+  b.innerHTML='';
+
+  /*
+    El backend utiliza una cuadrícula 10x6 = 60 celdas.
+  */
+  for(let i=0;i<60;i++){
+
+    const c=document.createElement('button');
+    c.className='td-cell';
+    c.type='button';
+    c.dataset.i=i;
+
+    if(tdPathCell(i))c.classList.add('path');
+
+    const tower=TD.towers[i];
+    const enemy=tdEnemyAt(i);
+
+    if(tower){
+      c.classList.add('tower');
+
+      const towerId=tower.tower_id||tower.id||TD.selectedTower;
+
+      const icons={
+        'tower-cannon':'🔫',
+        'tower-tesla':'⚡',
+        'tower-cryo':'❄️',
+        'tower-artillery':'💣',
+        'tower-sniper':'🎯',
+        'tower-plasma':'☄️'
+      };
+
+      c.textContent=icons[towerId]||'🛡️';
+
+      if(tower.level)c.title='Nivel '+tower.level;
+    }
+    else if(enemy){
+      c.classList.add('enemy');
+
+      const special=enemy.special||{};
+      if(special.boss||enemy.boss)c.textContent='👑';
+      else if(special.regenerative)c.textContent='🧬';
+      else if(special.explosive)c.textContent='💥';
+      else if(special.stealth)c.textContent='👻';
+      else if(special.armored)c.textContent='🛡️';
+      else c.textContent='👾';
+
+      if(enemy.hp!=null){
+        c.title='HP: '+Math.max(0,Math.round(Number(enemy.hp)));
+      }
+    }
+    else if(tdPathCell(i)){
+      c.textContent='·';
+    }
+    else{
+      c.textContent='+';
+    }
+
+    c.onclick=()=>tdCellClick(i,c);
+
+    b.appendChild(c);
+  }
+}
+
+async function tdCellClick(index,cell){
+
+  if(!TD.running||TD.busy)return;
+
+  /*
+    Si hay una torre: intentar mejorarla.
+    Si está vacío: colocar torre.
+  */
+  try{
+    TD.busy=true;
+
+    const existing=TD.towers[index];
+
+    if(existing){
+
+      const nextLevel=(Number(existing.level)||1)+1;
+
+      const {data,error}=await CP.rpc(
+        'crx_defense_tower_action',
+        {
+          p_nonce:TD.session.nonce,
+          p_action:'upgrade',
+          p_tower_index:index,
+          p_tower_id:existing.tower_id||existing.id||TD.selectedTower,
+          p_target_enemy_id:null
+        }
+      );
+
+      if(error)throw error;
+
+      tdMsg(
+        'Torre mejorada al nivel '+nextLevel+'.',
+        'ok'
+      );
+
+    }else{
+
+      if(tdPathCell(index)){
+        tdMsg('No puedes construir sobre el camino.','wait');
+        return;
+      }
+
+      const tower=TD.engine?.towers?.find(
+        x=>x.id===TD.selectedTower
+      );
+
+      if(!tower){
+        tdMsg('Esa torre todavía no está desbloqueada.','wait');
+        return;
+      }
+
+      if(TD.gold<Number(tower.cost||0)){
+        tdMsg(
+          'Oro insuficiente. Necesitas '+tower.cost+' oro.',
+          'error'
+        );
+        return;
+      }
+
+      const {data,error}=await CP.rpc(
+        'crx_defense_tower_action',
+        {
+          p_nonce:TD.session.nonce,
+          p_action:'place',
+          p_tower_index:index,
+          p_tower_id:TD.selectedTower,
+          p_target_enemy_id:null
+        }
+      );
+
+      if(error)throw error;
+
+      tdMsg(
+        'Torre '+(tower.name||TD.selectedTower)+' construida.',
+        'ok'
+      );
+    }
+
+    await tdSync();
+
+  }catch(x){
+
+    tdMsg(
+      'No se pudo realizar la acción: '+
+      (x.message||String(x)),
+      'error'
+    );
+
+  }finally{
+    TD.busy=false;
+  }
+}
+
+async function tdSync(){
+
+  if(!TD.session?.nonce)return;
+
+  const {data,error}=await CP
+    .from('game_defense_match_state')
+    .select('*')
+    .eq('nonce',TD.session.nonce)
+    .maybeSingle();
+
+  if(error)throw error;
+  if(!data)return;
+
+  TD.wave=Number(data.wave||1);
+  TD.lives=Number(data.lives??20);
+  TD.score=Number(data.score||0);
+  TD.combo=Number(data.combo||0);
+  TD.gold=Number(data.gold||0);
+  TD.phase=Number(data.phase||1);
+  TD.towers=Array.isArray(data.towers)?data.towers:[];
+  TD.enemies=Array.isArray(data.enemies)?data.enemies:[];
+  TD.effects=Array.isArray(data.effects)?data.effects:[];
+
+  tdHUD();
+  tdRender();
+
+  if(data.status==='victory'){
+    await tdFinish('victory');
+  }
+  else if(data.status==='defeat'){
+    await tdFinish('defeat');
+  }
+}
+
+async function tdStart(){
+
+  const b=q('tdStart');
+  if(b)b.disabled=true;
+
+  try{
+
+    const nonce=safeUUID();
+
+    /*
+      1. Crear sesión segura.
+    */
+    const {data,error}=await CP.rpc(
+      'start_game_session',
+      {
+        p_mode:'crx_defense_v1',
+        p_nonce:nonce
+      }
+    );
+
+    if(error)throw error;
+
+    const realNonce=
+      data?.nonce||
+      data?.session_nonce||
+      nonce;
+
+    TD={
+      session:{
+        ...(data||{}),
+        nonce:realNonce
+      },
+      running:true,
+      wave:1,
+      lives:20,
+      score:0,
+      combo:0,
+      gold:300,
+      phase:Number(data?.phase||1),
+      towers:[],
+      enemies:[],
+      effects:[],
+      timer:null,
+      busy:false,
+      selectedTower:'tower-cannon',
+      engine:null
+    };
+
+    /*
+      2. Obtener configuración oficial del motor.
+    */
+    const cfg=await CP.rpc(
+      'get_crx_defense_engine_config',
+      {
+        p_phase:TD.phase
+      }
+    );
+
+    if(cfg.error)throw cfg.error;
+
+    TD.engine=cfg.data||{};
+
+    /*
+      3. Crear la partida real.
+    */
+    const match=await CP.rpc(
+      'start_crx_defense_match',
+      {
+        p_nonce:TD.session.nonce
+      }
+    );
+
+    if(match.error)throw match.error;
+
+    /*
+      4. Sincronizar estado.
+    */
+    await tdSync();
+
+    /*
+      5. Primera oleada.
+    */
+    const wave=await CP.rpc(
+      'crx_defense_start_next_wave',
+      {
+        p_nonce:TD.session.nonce
+      }
+    );
+
+    if(wave.error)throw wave.error;
+
+    await tdSync();
+
+    if(q('tdClaim'))q('tdClaim').disabled=true;
+
+    tdMsg(
+      'CRX Defense iniciado · Fase '+
+      TD.phase+
+      ' · Torre seleccionada: '+
+      (TD.engine?.towers?.find(
+        x=>x.id===TD.selectedTower
+      )?.name||'Cañón'),
+      'ok'
+    );
+
+    /*
+      Ciclo servidor:
+      tick → combate → sincronización.
+    */
+    TD.timer=setInterval(tdServerLoop,700);
+
+  }catch(x){
+
+    TD.running=false;
+
+    tdMsg(
+      'No se pudo iniciar CRX Defense: '+
+      (x.message||String(x)),
+      'error'
+    );
+
+  }finally{
+
+    if(b)b.disabled=false;
+  }
+}
+
+async function tdServerLoop(){
+
+  if(!TD.running||TD.busy)return;
+
+  try{
+
+    TD.busy=true;
+
+    /*
+      Movimiento, regeneración, efectos y escapes.
+    */
+    const tick=await CP.rpc(
+      'crx_defense_tick',
+      {
+        p_nonce:TD.session.nonce,
+        p_delta_ms:700
+      }
+    );
+
+    if(tick.error)throw tick.error;
+
+    /*
+      Combate completo servidor.
+    */
+    const combat=await CP.rpc(
+      'crx_defense_combat_step',
+      {
+        p_nonce:TD.session.nonce,
+        p_delta_ms:700
+      }
+    );
+
+    if(combat.error)throw combat.error;
+
+    await tdSync();
+
+    /*
+      Si no quedan enemigos, intentar pasar
+      a la siguiente oleada.
+    */
+    if(TD.running && TD.enemies.length===0){
+
+      const next=await CP.rpc(
+        'crx_defense_start_next_wave',
+        {
+          p_nonce:TD.session.nonce
+        }
+      );
+
+      if(next.error){
+
+        /*
+          No es necesariamente un error:
+          puede significar que la partida terminó.
+        */
+
+        const msg=String(
+          next.error.message||next.error
+        );
+
+        if(
+          !/victory|complete|finished|active/i.test(msg)
+        ){
+          tdMsg(msg,'wait');
+        }
+
+      }else{
+
+        await tdSync();
+
+        tdMsg(
+          '🌊 Oleada '+TD.wave+
+          ' iniciada.',
+          'ok'
+        );
+      }
+    }
+
+  }catch(x){
+
+    console.error('CRX Defense loop',x);
+
+    tdMsg(
+      'Error del motor: '+(x.message||String(x)),
+      'error'
+    );
+
+  }finally{
+
+    TD.busy=false;
+  }
+}
+
+async function tdFinish(status){
+
+  if(!TD.session?.nonce)return;
+
+  if(TD.timer){
+    clearInterval(TD.timer);
+    TD.timer=null;
+  }
+
+  TD.running=false;
+
+  try{
+
+    /*
+      Obtener el estado definitivo del servidor.
+    */
+    const {data:state,error:se}=await CP
+      .from('game_defense_match_state')
+      .select('*')
+      .eq('nonce',TD.session.nonce)
+      .maybeSingle();
+
+    if(se)throw se;
+
+    if(state){
+
+      TD.wave=Number(state.wave||TD.wave);
+      TD.lives=Number(state.lives??TD.lives);
+      TD.score=Number(state.score||TD.score);
+      TD.combo=Number(state.combo||TD.combo);
+      TD.gold=Number(state.gold||TD.gold);
+    }
+
+    tdHUD();
+    tdRender();
+
+    /*
+      Registrar resultado validado.
+      El backend aplica sus propios límites.
+    */
+    const waves=Math.max(0,TD.wave-1);
+
+    const result=await CP.rpc(
+      'record_game_result',
+      {
+        p_nonce:TD.session.nonce,
+        p_score:TD.score,
+        p_lives:TD.lives,
+        p_combo:TD.combo,
+        p_waves:waves
+      }
+    );
+
+    if(result.error)throw result.error;
+
+    /*
+      Liquidación CRX real.
+    */
+    const settle=await CP.rpc(
+      'settle_game_reward_v75',
+      {
+        p_nonce:TD.session.nonce,
+        p_score:TD.score,
+        p_metadata:{
+          source:'web',
+          version:'7.5.2',
+          game:'crx_defense',
+          engine:'crx-defense-engine-v1',
+          status
+        }
+      }
+    );
+
+    if(settle.error)throw settle.error;
+
+    /*
+      Actualizar XP, nivel, récord y fases.
+    */
+    const progression=await CP.rpc(
+      'crx_defense_progression_sync',
+      {
+        p_nonce:TD.session.nonce
+      }
+    );
+
+    if(progression.error)throw progression.error;
+
+    const p=progression.data||{};
+    const reward=settle.data?.reward??0;
+
+    tdMsg(
+      status==='victory'
+        ? '🏆 Victoria. '
+        : '💥 Partida terminada. '+
+        'Puntuación: '+TD.score+
+        ' · XP +'+(p.xp_gained??0)+
+        ' · Nivel '+(p.level??'—')+
+        ' · Fase '+(p.current_phase??TD.phase)+
+        ' · CRX: '+reward,
+      status==='victory'?'ok':'wait'
+    );
+
+    if(q('tdClaim'))q('tdClaim').disabled=true;
+
+  }catch(x){
+
+    console.error('CRX Defense finish',x);
+
+    tdMsg(
+      'La partida terminó, pero no se pudo cerrar '+
+      'correctamente: '+(x.message||String(x)),
+      'error'
+    );
+
+    if(q('tdClaim'))q('tdClaim').disabled=false;
+  }
+}
+
+async function tdClaim(){
+
+  /*
+    Compatibilidad con el botón existente.
+    La liquidación principal se realiza al terminar
+    la partida mediante tdFinish().
+  */
+  if(!TD.session?.nonce){
+    tdMsg('No hay una partida activa.','wait');
+    return;
+  }
+
+  if(TD.running){
+    tdMsg(
+      'Termina primero la partida para validar el resultado.',
+      'wait'
+    );
+    return;
+  }
+
+  try{
+
+    const result=await CP.rpc(
+      'settle_game_reward_v75',
+      {
+        p_nonce:TD.session.nonce,
+        p_score:TD.score,
+        p_metadata:{
+          source:'web',
+          version:'7.5.2',
+          game:'crx_defense'
+        }
+      }
+    );
+
+    if(result.error)throw result.error;
+
+    const progression=await CP.rpc(
+      'crx_defense_progression_sync',
+      {
+        p_nonce:TD.session.nonce
+      }
+    );
+
+    if(progression.error)throw progression.error;
+
+    tdMsg(
+      'Resultado validado por el servidor. '+
+      'CRX: '+(result.data?.reward??0)+
+      ' · Nivel: '+(progression.data?.level??'—'),
+      'ok'
+    );
+
+    if(q('tdClaim'))q('tdClaim').disabled=true;
+
+  }catch(x){
+
+    tdMsg(
+      'No se liquidó la recompensa: '+
+      (x.message||String(x)),
+      'error'
+    );
+  }
+}
+
+async function tdLoadProfile(){
+
+  try{
+
+    const {data,error}=await CP.rpc(
+      'crx_defense_progression_profile'
+    );
+
+    if(error)throw error;
+
+    window.__CP_GAME_PROFILE=data||null;
+
+  }catch(x){
+
+    console.warn(
+      'No se pudo cargar el perfil del juego:',
+      x.message||x
+    );
+  }
+}
+
+function tdBind(){
+
+  q('tdStart')?.addEventListener(
+    'click',
+    tdStart
+  );
+
+  q('tdClaim')?.addEventListener(
+    'click',
+    tdClaim
+  );
+
+  q('tdTower')?.addEventListener(
+    'click',
+    tdNextTower
+  );
+
+  tdHUD();
+  tdRender();
+  tdLoadProfile();
+
+  document
+    .querySelectorAll('[data-op]')
+    .forEach(b=>{
+
+      if(b.dataset.moduleBound)return;
+
+      b.dataset.moduleBound='1';
+
+      b.addEventListener(
+        'click',
+        ()=>{
+          const o=b.dataset.op;
+
+          if(o==='p2p')p2pPanel();
+          else if(o==='crypto')cryptoPanel();
+          else if(o==='crm')crmPanel();
+          else if(o==='provider')providerPanel();
+          else if(o==='security')securityPanel();
+          else if(o==='ai')aiPanel();
+        }
+      );
+    });
+}
+
+setTimeout(tdBind,50);
     
 function aiPanel(){modalM('CUBA PLUS AI','<b>Conector seguro preparado.</b><p class="notice">No se expone ninguna API key en el navegador. No hay un proveedor IA identificado en este HTML, por lo que no se simulan respuestas.</p><div class="msg warn-text">Estado: proveedor IA no conectado.</div>')}
 function rechargePanel(){modalM('Recarga móvil','<div class="msg warn-text">No se encontró una Edge Function de proveedor de recargas en este proyecto. No se crea una recarga falsa ni se descuenta saldo.</div><p class="notice">La conexión futura debe usar reserva backend → proveedor → webhook/estado → conciliación.</p>')}
-let TD={session:null,running:false,wave:1,lives:20,score:0,towers:new Set(),enemies:[],timer:null,spawn:0};
-function tdHUD(){if(q('tdWave'))q('tdWave').textContent=TD.wave;if(q('tdLives'))q('tdLives').textContent=TD.lives;if(q('tdCoins'))q('tdCoins').textContent='—';if(q('tdScore'))q('tdScore').textContent=TD.score}
-function tdRender(){const b=q('tdBoard');if(!b)return;b.innerHTML='';const path=[8,9,10,11,12,13,14,15,23,22,21,20,19,18,17,16,24,25,26,27,28,29,30,31];for(let i=0;i<40;i++){const c=document.createElement('button');c.className='td-cell';c.type='button';c.dataset.i=i;if(path.includes(i))c.classList.add('path');if(i===0||i===39)c.classList.add('core');if(TD.towers.has(i)){c.classList.add('tower');c.textContent='⚡'}else if(TD.enemies.some(x=>x.pos===i)){c.classList.add('enemy');c.textContent='👾'}else if(i===0)c.textContent='🏰';else if(i===39)c.textContent='🎯';c.onclick=()=>{if(TD.running&&!TD.towers.has(i)&&!c.classList.contains('path')){TD.towers.add(i);tdRender()}};b.appendChild(c)}}
-function tdTick(){if(!TD.running)return;TD.spawn++;if(TD.spawn%18===0)TD.enemies.push({pos:0,hp:2});TD.enemies.forEach(x=>{if(x.hp>0){if(Array.from(TD.towers).some(t=>Math.abs(t-x.pos)<=3)){x.hp--;TD.score+=10}else x.pos++}});TD.enemies=TD.enemies.filter(x=>{if(x.pos>=39){TD.lives--;return false}return x.hp>0&&x.pos<40});if(TD.lives<=0){TD.running=false;clearInterval(TD.timer);if(q('tdClaim'))q('tdClaim').disabled=false;say('gameMsg','Sesión terminada. Puedes enviar el resultado al backend para validación.','wait')}tdHUD();tdRender()}
-async function tdStart(){const b=q('tdStart');b.disabled=true;try{const {data,error}=await CP.rpc('start_game_session',{p_mode:'click_rush_v1',p_nonce:safeUUID()});if(error)throw error;TD={session:{...(data||{}),nonce:(data?.nonce||data?.session_nonce||null)},running:true,wave:1,lives:20,score:0,towers:new Set(),enemies:[],timer:null,spawn:0};if(!TD.session.nonce)throw new Error('El backend no devolvió un nonce de sesión válido.');if(q('tdClaim'))q('tdClaim').disabled=true;if(q('tdTower'))q('tdTower').disabled=false;say('gameMsg','Sesión real iniciada. La recompensa final será validada por backend.','ok');tdHUD();tdRender();TD.timer=setInterval(tdTick,350)}catch(x){say('gameMsg',x.message||String(x),'error')}finally{b.disabled=false}}
-async function tdClaim(){if(!TD.session?.nonce)return;try{const {data,error}=await CP.rpc('settle_game_reward_v75',{p_nonce:TD.session.nonce,p_score:TD.score,p_metadata:{source:'web',version:'7.5.2',game:'crx_defense'}});if(error)throw error;say('gameMsg','Resultado enviado y procesado por backend.\n'+JSON.stringify(data??{},null,2),'ok');q('tdClaim').disabled=true;window.__CPP_DB&&window.__CPP_DB.auth.getUser().then(()=>location.reload())}catch(x){say('gameMsg','No se liquidó la recompensa: '+(x.message||x),'error')}}
-function bindModules(){q('tdStart')?.addEventListener('click',tdStart);q('tdClaim')?.addEventListener('click',tdClaim);tdHUD();tdRender();document.querySelectorAll('[data-op]').forEach(b=>{if(b.dataset.moduleBound)return;b.dataset.moduleBound='1';b.addEventListener('click',()=>{const o=b.dataset.op;if(o==='p2p')p2pPanel();else if(o==='crypto')cryptoPanel();else if(o==='crm')crmPanel();else if(o==='provider')providerPanel();else if(o==='security')securityPanel();else if(o==='ai')aiPanel()})})}
-setTimeout(bindModules,50);window.CP_FINAL_AUDIT={providerPanel,cryptoPanel,p2pPanel,crmPanel,securityPanel,aiPanel,rechargePanel};
+window.CP_FINAL_AUDIT={providerPanel,cryptoPanel,p2pPanel,crmPanel,securityPanel,aiPanel,rechargePanel};
 })();
 </script>
 </body>
