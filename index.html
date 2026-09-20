@@ -403,8 +403,8 @@ function tdHUD(){
   if(q('tdScore'))q('tdScore').textContent=TD.score;
 }
 
-function tdTowerAvailable(id){
-  const c=(TD.engine?.towers||[]).find(x=>x.id===id);
+function tdTowerAvailable(tower){
+  const c=(TD.engine?.towers||[]).find(x=>x.id===tower.id);
   return c && c.phase_min<=TD.phase;
 }
 
