@@ -404,10 +404,9 @@ function tdHUD(){
 }
 
 function tdTowerAvailable(tower){
-  const c=(TD.engine?.towers||[]).find(x=>x.id===tower.id);
-  return c && c.phase_min<=TD.phase;
-}
-
+  const c=(TD.engine?.catalog||[]).find(x=>x.id===tower.id);
+  return !!c && Number(c.phase_min||1)<=Number(TD.phase||1);
+  }
 function tdNextTower(){
   const available=TD_TOWERS.filter(tdTowerAvailable);
   if(!available.length)return;
