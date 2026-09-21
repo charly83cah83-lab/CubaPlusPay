@@ -714,6 +714,12 @@ async function tdStart(){
 
     TD.engine=cfg.data||{};
 
+const towerBtn=q('tdTower');
+if(towerBtn) towerBtn.disabled=false;
+
+const claimBtn=q('tdClaim');
+if(claimBtn) claimBtn.disabled=true;
+
     /*
       3. Crear la partida real.
     */
