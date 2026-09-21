@@ -404,9 +404,15 @@ function tdHUD(){
 }
 
 function tdTowerAvailable(tower){
-  const c=(TD.engine?.catalog||[]).find(x=>x.id===tower.id);
-  return !!c && Number(c.phase_min||1)<=Number(TD.phase||1);
-  }
+  const id = typeof tower === 'string' ? tower : tower?.id;
+  const c = (TD.engine?.catalog || []).find(x => x.id === id);
+  return !!c && Number(c.phase_min || 1) <= Number(TD.phase || 1);
+	}
+function tdTowerAvailable(tower){
+  const id = typeof tower === 'string' ? tower : tower?.id;
+  const c = (TD.engine?.catalog || []).find(x => x.id === id);
+  return !!c && Number(c.phase_min || 1) <= Number(TD.phase || 1);
+}
 function tdNextTower(){
   const available=TD_TOWERS.filter(tdTowerAvailable);
   if(!available.length)return;
