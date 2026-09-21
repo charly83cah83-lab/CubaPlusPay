@@ -421,15 +421,21 @@ function tdNextTower(){
   i=(i+1)%available.length;
   TD.selectedTower=available[i];
 
-  const c=available[i];
+  const c=(TD.engine?.catalog||[]).find(
+    x=>x.id===TD.selectedTower
+  );
+
   tdMsg(
-    'Torre seleccionada: '+(c?.name||c.id)+
-    ' · Coste '+(c?.cost??'—')+' oro',
+    'Torre seleccionada: '+
+    (c?.name||TD.selectedTower)+
+    ' · Coste '+
+    (c?.cost??'—')+
+    ' oro',
     'ok'
   );
 
   tdRender();
-}
+	}
 
 function tdPathCell(i){
   /*
