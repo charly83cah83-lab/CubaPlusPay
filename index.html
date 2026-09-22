@@ -519,7 +519,43 @@ function tdRender(){
       c.textContent='+';
     }
 
-    c.onclick=()=>tdCellClick(i,c);
+c.onclick=async ()=>{
+  if(!TD.running || TD.busy)return;
+  if(TD.towers[i])return;
+  if(tdPathCell(i))return;
+
+  TD.busy=true;
+
+  try{
+    const {data,error}=await CP.rpc(
+      'crx_defense_action',
+      {
+        p_nonce:TD.session?.nonce,
+        p_action:'place_tower',
+        p_payload:{
+          tower_id:TD.selectedTower,
+          cell:i
+        }
+      }
+    );
+
+    if(error)throw error;
+
+    TD.towers=data?.towers||TD.towers;
+    TD.gold=Number(data?.gold??TD.gold);
+
+    tdHUD();
+    tdRender();
+
+  }catch(e){
+    tdMsg(
+      e?.message||String(e),
+      'err'
+    );
+  }finally{
+    TD.busy=false;
+  }
+};
 
     b.appendChild(c);
   }
