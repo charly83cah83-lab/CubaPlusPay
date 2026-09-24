@@ -312,7 +312,60 @@ async function securityPanel(){
       'Ejecutar auditoría financiera E2E</button>'+
       '<div id="financialE2EResult"></div>'
     );
+    const reconcileBtn = document.createElement('button');
+    reconcileBtn.className = 'btn primary';
+    reconcileBtn.id = 'reconcileQVP43b55463';
+    reconcileBtn.textContent = 'Reconciliar QVP-43b55463';
 
+    const resultBox = document.getElementById('financialE2EResult');
+    if(resultBox){
+      resultBox.appendChild(reconcileBtn);
+    }
+
+    reconcileBtn.onclick = async function(){
+      reconcileBtn.disabled = true;
+      reconcileBtn.textContent = 'Comprobando QvaPay...';
+
+      try{
+        const {data:{session},error:sessionError}=await CP.auth.getSession();
+        if(sessionError)throw sessionError;
+        if(!session?.access_token){
+          throw new Error('No existe un JWT válido en la sesión actual.');
+        }
+
+        const {data:result,error:invokeError}=await CP.functions.invoke(
+          'qvapay-gateway',
+          {
+            body:{
+              operation:'reconcile_invoice',
+              uuid:'80e58b5f-09f9-4717-8eb5-fa80d1c68ecc'
+            },
+            headers:{
+              Authorization:'Bearer '+session.access_token
+            }
+          }
+        );
+
+        if(invokeError)throw invokeError;
+
+        resultBox.innerHTML +=
+          '<div class="msg ok" style="margin-top:12px">'+
+          '<b>Resultado de reconciliación QvaPay</b><br>'+
+          '<pre style="white-space:pre-wrap">'+
+          e(JSON.stringify(result,null,2))+
+          '</pre></div>';
+
+      }catch(err){
+        resultBox.innerHTML +=
+          '<div class="msg error" style="margin-top:12px">'+
+          '<b>Error en la reconciliación</b><br>'+
+          e(err?.message||String(err))+
+          '</div>';
+      }finally{
+        reconcileBtn.disabled = false;
+        reconcileBtn.textContent = 'Reconciliar QVP-43b55463';
+      }
+    };
     document.getElementById('runFinancialE2E').onclick=async()=>{
       const btn=document.getElementById('runFinancialE2E');
       const out=document.getElementById('financialE2EResult');
