@@ -588,7 +588,7 @@ async function islandClaim(){
     if(!data?.ok)throw new Error(data?.error||'El servidor rechazó la liquidación.');
     const reward=Number(data?.reward||0);const decision=String(data?.decision||'').toLowerCase();
     if(decision==='block')islandSay('Sesión bloqueada por seguridad. No se acreditó CRX.','error');
-    else islandSay(reward>0?'¡Resultado validado! '+score+' clics → '+reward+' CRX acreditados en la billetera real.':'Resultado validado. No se acreditó CRX en esta partida.','ok');
+    else islandSay('RESPUESTA SERVIDOR: '+JSON.stringify(data),'ok');
     islandState.session=null;islandState.clicks=0;islandUpdate();
     if(typeof loadData==='function')await loadData();
   }catch(e){islandSay('La recompensa no fue liquidada. '+(e?.message||e),'error');b.disabled=false}
