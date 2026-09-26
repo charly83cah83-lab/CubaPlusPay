@@ -583,7 +583,7 @@ async function islandClaim(){
   const b=qi('islandClaim');b.disabled=true;
   const score=Math.max(0,Math.floor(islandState.clicks));
   try{
-    const {data,error}=await CP.functions.invoke('click-rush',{body:{nonce:islandState.session.nonce,clicks:score,duration_seconds:Math.floor(elapsed),game:'click_crx_island_v1'}});
+    const {data,error}=await CP.functions.invoke('click-crx-island',{body:{nonce:islandState.session.nonce,clicks:score,duration_seconds:Math.floor(elapsed),game:'click_crx_island_v1'}});
     if(error)throw error;
     if(!data?.ok)throw new Error(data?.error||'El servidor rechazó la liquidación.');
     const reward=Number(data?.reward||0);const decision=String(data?.decision||'').toLowerCase();
