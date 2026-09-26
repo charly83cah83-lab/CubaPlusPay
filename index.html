@@ -359,11 +359,278 @@ async function loadInvoices(){const {data,error}=await db.from('cp_invoices').se
 function loadPaymentLinks(){modal('Enlaces de pago','<p style="color:#9dc4e8">Crea un enlace de pago real.</p><div class="field"><label>Nombre</label><input id="linkName" maxlength="160" placeholder="Ej. Pago de servicio"></div><div class="field"><label>Monto</label><input id="linkAmount" type="number" min="0.01" step="0.01"></div><div class="field"><label>Moneda</label><select id="linkCurrency" style="width:100%;padding:12px;background:#031638;color:#fff"><option>CRX</option><option>USD</option><option>CUP</option><option>USDT_TRC20</option></select></div><button id="createLink" class="btn full">Crear enlace</button><div id="linkMsg" class="msg hidden"></div>');$('createLink').onclick=async()=>{const name=$('linkName').value.trim(),amount=Number($('linkAmount').value),currency=$('linkCurrency').value;if(name.length<2||!Number.isFinite(amount)||amount<=0)return msg('linkMsg','Datos inválidos.','error');const {data,error}=await db.rpc('cp_create_payment_link',{p_name:name,p_amount:amount,p_currency:currency,p_product_id:null});if(error)return msg('linkMsg',error.message,'error');const token=data?.checkout_token||data?.token||data?.checkoutToken||data?.id||'';if(!token)return msg('linkMsg','El backend creó el enlace pero no devolvió un identificador de checkout válido.','error');const url=location.origin+location.pathname+'?checkout='+encodeURIComponent(token);msg('linkMsg','Enlace de pago creado.\n'+url,'ok')}}
 function payInvoice(){modal('Pagar factura','<p style="color:#9dc4e8">Introduce el token de checkout de una factura que puedas pagar.</p><div class="field"><label>Token</label><input id="checkoutToken"></div><button id="payCheckout" class="btn full">Pagar con CRX</button><div id="payMsg" class="msg hidden"></div>');$('payCheckout').onclick=async()=>{const token=$('checkoutToken').value.trim();if(!token)return msg('payMsg','Token requerido.','error');const {data,error}=await db.rpc('cp_pay_checkout',{p_checkout_token:token,p_idempotency_key:safeUUID()});if(error)return msg('payMsg',error.message,'error');msg('payMsg','Pago realizado correctamente.','ok');await loadData()}}
 async function adminPanel(){modal('Administración','<p style="color:#9dc4e8">Panel protegido. Solo las funciones permitidas por el rol pueden ejecutarse.</p><div id="adminInfo">Consultando rol…</div>');try{if(!currentUser)throw new Error('Sesión no disponible.');const {data:p,error}=await db.from('profiles').select('role').eq('id',currentUser.id).maybeSingle();if(error)throw error;const ok=p&&['admin','owner','super_admin'].includes(String(p.role||'').toLowerCase());$('adminInfo').innerHTML=ok?'<div class="msg ok">Rol autorizado. Las operaciones administrativas sensibles permanecen en backend.</div>':'<div class="msg error">Tu cuenta no tiene rol administrativo.</div>'}catch(e){$('adminInfo').innerHTML='<div class="msg error">No se pudo verificar el rol: '+esc(e.message||e)+'</div>'}}
-function support(){modal('Soporte','<p style="color:#9dc4e8">Crea un ticket real en CUBA PLUS PAY.</p><div class="field"><label>Asunto</label><input id="supSubject" maxlength="160" placeholder="Describe el problema"></div><div class="field"><label>Mensaje</label><textarea id="supMessage" maxlength="5000" style="width:100%;min-height:120px;padding:12px;border-radius:13px;border:1px solid #0d65bb;background:#031638;color:#fff"></textarea></div><div class="field"><label>Prioridad</label><select id="supPriority" style="width:100%;padding:12px;border-radius:13px;background:#031638;color:#fff"><option value="normal">Normal</option><option value="high">Alta</option><option value="low">Baja</option></select></div><button id="createSupport" class="btn full">Enviar ticket</button><div id="supMsg" class="msg hidden"></div>');$('createSupport').onclick=async()=>{const subject=$('supSubject').value.trim(),message=$('supMessage').value.trim();if(subject.length<3||message.length<3)return msg('supMsg','Completa asunto y mensaje.','error');const {error}=await db.from('cp_support_tickets').insert({user_id:currentUser.id,subject,message,priority:$('supPriority').value});if(error)return msg('supMsg',error.message,'error');msg('supMsg','Ticket enviado correctamente.','ok')}}
-function wire(){document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));document.querySelectorAll('[data-action="support"]').forEach(b=>b.addEventListener('click',support));document.querySelectorAll('[data-op]').forEach(b=>b.addEventListener('click',()=>{const o=b.dataset.op;if(o==='transfer')nav('transfer');else if(o==='receive')receive();else if(o==='deposit')deposit();else if(o==='withdraw')withdrawFor('CRX');else if(o==='exchange')nav('exchange');else if(o==='recharge')unavailable('Recargar móvil','El proveedor de recargas todavía no está conectado.');else if(o==='orders')loadOrders();
-else if(o==='invoices')loadInvoices();
-else if(o==='links')loadPaymentLinks();
-else if(o==='pay')payInvoice();else if(o==='admin')adminPanel();else if(o==='payment_methods')paymentMethods()}));$('openSide').onclick=()=>$('side').classList.add('open');$('refresh').onclick=async()=>{const b=$('refresh');b.disabled=true;try{await loadData()}catch(e){msg('accountState','Error al actualizar: '+(e?.message||e),'error')}finally{b.disabled=false}};$('closeModal').onclick=closeModal;$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{$('amt').value=(Number($('amt').value)||0)+Number(b.dataset.add)});$('sendTransfer').onclick=doTransfer;$('executeExchange')?.addEventListener('click',executeExchange);document.addEventListener('click',e=>{const b=e.target.closest('[data-wallet-action]');if(!b)return;const c=b.dataset.currency;if(b.dataset.walletAction==='deposit')depositFor(c);else if(b.dataset.walletAction==='withdraw')withdrawFor(c)});$('logout').onclick=async()=>{await db.auth.signOut();currentUser=null;gameSession=null;await session()};$('modeBtn').onclick=()=>{signup=!signup;setAuth()};$('authBtn').onclick=async()=>{if(recovery){const p=$('newPassword').value;if(p.length<8)return msg('authMsg','La contraseña debe tener al menos 8 caracteres.','error');const {error}=await db.auth.updateUser({password:p});if(error)return msg('authMsg',error.message,'error');recovery=false;setAuth();msg('authMsg','Contraseña actualizada.','ok');return}const email=$('email').value.trim(),pass=$('password').value;if(!email||!pass)return msg('authMsg','Escribe correo y contraseña.','error');if(pass.length<6)return msg('authMsg','La contraseña debe tener al menos 6 caracteres.','error');const b=$('authBtn');b.disabled=true;b.textContent=signup?'Creando…':'Entrando…';const r=signup?await db.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin+location.pathname}}):await db.auth.signInWithPassword({email,password:pass});b.disabled=false;if(r.error)return msg('authMsg',r.error.message,'error');if(signup&&!r.data.session)return msg('authMsg','Cuenta creada. Revisa el correo de confirmación y después inicia sesión.','ok');await session()};$('resetBtn').onclick=async()=>{const email=$('email').value.trim();if(!email)return msg('authMsg','Escribe primero tu correo.','error');const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});msg('authMsg',error?'No se pudo enviar la recuperación: '+error.message:'Si el correo está registrado, recibirás instrucciones para recuperar la contraseña.',error?'error':'ok')};$('email').onkeydown=e=>{if(e.key==='Enter')$('password').focus()};$('password').onkeydown=e=>{if(e.key==='Enter')$('authBtn').click()};$('marketRefresh').onclick=loadMarketplace;$('marketSearch').addEventListener('input',()=>loadMarketplace());document.addEventListener('click',e=>{const b=e.target.closest('[data-buy-product]');if(b)buyProduct(b.dataset.buyProduct)});db.auth.onAuthStateChange((event,s)=>{if(event==='PASSWORD_RECOVERY'){recovery=true;show('auth',true);show('shell',false);$('authTitle').textContent='Nueva contraseña';$('authHint').textContent='Escribe tu nueva contraseña.';show('newPassWrap',true);show('modeBtn',false);show('resetBtn',false);$('authBtn').textContent='Guardar contraseña'}else{show('auth',!s);show('shell',!!s);if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setTimeout(()=>loadData().catch(()=>{}),0)}})}
+function support(){modal('Soporte','<p style="color:#9dc4e8">Crea un ticket real en CUBA PLUS PAY.</p><div class="field"><label>Asunto</label><input id="supSubject" maxlength="160" placeholder="Describe el problema"></div><div class="field"><label>Mensaje</label><textarea id="supMessage" maxlength="5000" style="width:100%;min-height:120px;padding:12px;border-radius:13px;border:1px solid #0d65bb;background:#031638;color:#fff"></textarea></div><div class="field"><label>Prioridad</label><select id="supPriority" style="width:100%;padding:12px;border-radius:13px;background:#031638;color:#fff"><option value="normal">Normal</option><option value="high">Alta</option><option value="low">Baja</option></select></div><button id="createSupport" class="btn full">Enviar ticket</button><div id="supMsg" class="msg hidden"></div>');$('createSupport').onclick=async()=>{const subject=$('supSubject').value.trim(),message=$('supMessage').value.trim();if(subject.length<3||message.length<3)return msg('supMsg','Completa asunto y mensaje.','error');const {error}=await db.from('cp_support_tickets').insert({user_id:currentUser.id,subject,message,priority:$('supPriority').value});if(error)return msg('supMsg',error.message,'error');msg('supMsg','Ticket enviado coaset.add)});$('sendTransfer').onclick=doTransfer;$('executeExchange')?.addEventListener('click',executeExchange);document.addEventListener('click',e=>{const b=e.target.closest('[data-wallet-action]');if(!b)return;const c=b.dataset.currency;if(b.dataset.walletAction==='deposit')depositFor(c);else if(b.dataset.walletAction==='withdraw')withdrawFor(c)});$('logout').onclick=async()=>{await db.auth.signOut();currentUser=null;gameSession=null;await session()};$('modeBtn').onclick=()=>{signup=!signup;setAuth()};$('authBtn').onclick=async()=>{if(recovery){const p=$('newPassword').value;if(p.length<8)return msg('authMsg','La contraseña debe tener al menos 8 caracteres.','error');const {error}=await db.auth.updateUser({password:p});if(error)return msg('authMsg',error.message,'error');recovery=false;setAuth();msg('authMsg','Contraseña actualizada.','ok');return}const email=$('email').value.trim(),pass=$('password').value;if(!email||!pass)return msg('authMsg','Escribe correo y contraseña.','error');if(pass.length<6)return msg('authMsg','La contraseña debe tener al menos 6 caracteres.','error');const b=$('authBtn');b.disabled=true;b.textContent=signup?'Creando…':'Entrando…';const r=signup?await db.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin+location.pathname}}):await db.auth.signInWithPassword({email,password:pass});b.disabled=false;if(r.error)return msg('authMsg',r.error.message,'error');if(signup&&!r.data.session)return msg('authMsg','Cuenta creada. Revisa el correo de confirmación y después inicia sesión.','ok');await session()};$('resetBtn').onclick=async()=>{const email=$('email').value.trim();if(!email)return msg('authMsg','Escribe primero tu correo.','error');const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});msg('authMsg',error?'No se pudo enviar la recuperación: '+error.message:'Si el correo está registrado, recibirás instrucciones para recuperar la contraseña.',error?'error':'ok')};$('email').onkeydown=e=>{if(e.key==='Enter')$('password').focus()};$('password').onkeydown=e=>{if(e.key==='Enter')$('authBtn').click()};$('marketRefresh').onclick=loadMarketplace;$('marketSearch').addEventListener('input',()=>loadMarketplace());document.addEventListener('click',e=>{const b=e.target.closest('[data-buy-product]');if(b)buyProduct(b.dataset.buyProduct)});db.auth.onAuthStateChange((event,s)=>{if(event==='PASSWORD_RECOVERY'){recovery=true;show('auth',true);show('shell',false);$('authTitle').textContent='Nueva contraseña';$('authHint').textContent='Escribe tu nueva contraseña.';show('newPassWrap',true);show('modeBtn',false);show('resetBtn',false);$('authBtn').textContent='Guardar contraseña'}else{show('auth',!s);show('shell',!!s);if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setTimeout(()=>loadData().catch(()=>{}),0)}})}
+function wire(){
+  const on=(id,event,fn)=>{
+    const e=$(id);
+    if(e)e.addEventListener(event,fn);
+  };
+  const click=(id,fn)=>on(id,'click',fn);
+
+  // AUTENTICACIÓN — primero para garantizar que "Entrar" siempre quede conectado
+  click('authBtn',async()=>{
+    if(recovery){
+      const p=$('newPassword')?.value||'';
+      if(p.length<8){
+        return msg('authMsg','La contraseña debe tener al menos 8 caracteres.','error');
+      }
+
+      const {error}=await db.auth.updateUser({password:p});
+      if(error)return msg('authMsg',error.message,'error');
+
+      recovery=false;
+      setAuth();
+      msg('authMsg','Contraseña actualizada.','ok');
+      return;
+    }
+
+    const email=($('email')?.value||'').trim();
+    const pass=$('password')?.value||'';
+
+    if(!email||!pass){
+      return msg('authMsg','Escribe correo y contraseña.','error');
+    }
+
+    if(pass.length<6){
+      return msg('authMsg','La contraseña debe tener al menos 6 caracteres.','error');
+    }
+
+    const b=$('authBtn');
+    if(!b)return;
+
+    b.disabled=true;
+    b.textContent=signup?'Creando…':'Entrando…';
+
+    try{
+      const r=signup
+        ?await db.auth.signUp({
+            email,
+            password:pass,
+            options:{
+              emailRedirectTo:location.origin+location.pathname
+            }
+          })
+        :await db.auth.signInWithPassword({
+            email,
+            password:pass
+          });
+
+      if(r.error){
+        msg('authMsg',r.error.message,'error');
+        return;
+      }
+
+      if(signup&&!r.data.session){
+        msg(
+          'authMsg',
+          'Cuenta creada. Revisa el correo de confirmación y después inicia sesión.',
+          'ok'
+        );
+        return;
+      }
+
+      await session();
+
+    }catch(e){
+      console.error('Auth error:',e);
+      msg(
+        'authMsg',
+        'No se pudo iniciar sesión.\n'+(e?.message||String(e)),
+        'error'
+      );
+    }finally{
+      b.disabled=false;
+      b.textContent=signup?'Crear cuenta':'Entrar';
+    }
+  });
+
+  click('modeBtn',()=>{
+    signup=!signup;
+    setAuth();
+  });
+
+  click('resetBtn',async()=>{
+    const email=($('email')?.value||'').trim();
+
+    if(!email){
+      return msg('authMsg','Escribe primero tu correo.','error');
+    }
+
+    try{
+      const {error}=await db.auth.resetPasswordForEmail(email,{
+        redirectTo:location.origin+location.pathname
+      });
+
+      msg(
+        'authMsg',
+        error
+          ?'No se pudo enviar la recuperación: '+error.message
+          :'Si el correo está registrado, recibirás instrucciones para recuperar la contraseña.',
+        error?'error':'ok'
+      );
+
+    }catch(e){
+      msg(
+        'authMsg',
+        'No se pudo enviar la recuperación: '+(e?.message||e),
+        'error'
+      );
+    }
+  });
+
+  on('email','keydown',e=>{
+    if(e.key==='Enter')$('password')?.focus();
+  });
+
+  on('password','keydown',e=>{
+    if(e.key==='Enter')$('authBtn')?.click();
+  });
+
+  // ESTADO DE AUTENTICACIÓN
+  db.auth.onAuthStateChange((event,s)=>{
+    if(event==='PASSWORD_RECOVERY'){
+      recovery=true;
+      show('auth',true);
+      show('shell',false);
+
+      if($('authTitle')){
+        $('authTitle').textContent='Nueva contraseña';
+      }
+
+      if($('authHint')){
+        $('authHint').textContent='Escribe tu nueva contraseña.';
+      }
+
+      show('newPassWrap',true);
+      show('modeBtn',false);
+      show('resetBtn',false);
+
+      if($('authBtn')){
+        $('authBtn').textContent='Guardar contraseña';
+      }
+
+    }else{
+      show('auth',!s);
+      show('shell',!!s);
+
+      if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION')){
+        setTimeout(()=>{
+          loadData().catch(e=>console.error('loadData:',e));
+        },0);
+      }
+    }
+  });
+
+  // NAVEGACIÓN
+  document.querySelectorAll('[data-page]').forEach(b=>{
+    b.addEventListener('click',()=>nav(b.dataset.page));
+  });
+
+  document.querySelectorAll('[data-action="support"]').forEach(b=>{
+    b.addEventListener('click',support);
+  });
+
+  // OPERACIONES
+  document.querySelectorAll('[data-op]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const o=b.dataset.op;
+
+      if(o==='transfer')nav('transfer');
+      else if(o==='receive')receive();
+      else if(o==='deposit')deposit();
+      else if(o==='withdraw')withdrawFor('CRX');
+      else if(o==='exchange')nav('exchange');
+      else if(o==='recharge'){
+        unavailable(
+          'Recargar móvil',
+          'El proveedor de recargas todavía no está conectado.'
+        );
+      }
+      else if(o==='orders')loadOrders();
+      else if(o==='invoices')loadInvoices();
+      else if(o==='links')loadPaymentLinks();
+      else if(o==='pay')payInvoice();
+      else if(o==='admin')adminPanel();
+      else if(o==='payment_methods')paymentMethods();
+    });
+  });
+
+  // ELEMENTOS OPCIONALES DE LA INTERFAZ
+  click('openSide',()=>{
+    $('side')?.classList.add('open');
+  });
+
+  click('refresh',async()=>{
+    const b=$('refresh');
+    if(!b)return;
+
+    b.disabled=true;
+
+    try{
+      await loadData();
+    }catch(e){
+      msg(
+        'accountState',
+        'Error al actualizar: '+(e?.message||e),
+        'error'
+      );
+    }finally{
+      b.disabled=false;
+    }
+  });
+
+  click('closeModal',closeModal);
+
+  on('modal','click',e=>{
+    if(e.target===$('modal'))closeModal();
+  });
+
+  document.querySelectorAll('[data-add]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const amt=$('amt');
+      if(!amt)return;
+
+      amt.value=
+        (Number(amt.value)||0)+Number(b.dataset.add);
+    });
+  });
+
+  click('sendTransfer',doTransfer);
+
+  click('executeExchange',executeExchange);
+
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-wallet-action]');
+    if(!b)return;
+
+    const c=b.dataset.currency;
+
+    if(b.dataset.walletAction==='deposit'){
+      depositFor(c);
+    }else if(b.dataset.walletAction==='withdraw'){
+      withdrawFor(c);
+    }
+  });
+
+  click('logout',async()=>{
+    await db.auth.signOut();
+    currentUser=null;
+    gameSession=null;
+    await session();
+  });
+
+  // MARKETPLACE
+  click('marketRefresh',loadMarketplace);
+
+  on('marketSearch','input',()=>{
+    loadMarketplace();
+  });
+
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-buy-product]');
+    if(b)buyProduct(b.dataset.buyProduct);
+  });
+  }      
 setAuth();wire();
 const params=new URLSearchParams(location.search);
 if(params.get('checkout')){setTimeout(async()=>{const token=params.get('checkout')||'';try{const {data,error}=await db.rpc('cp_get_checkout',{p_checkout_token:token});if(error)throw error;show('auth',!currentUser);show('shell',!!currentUser);if(currentUser)nav('more');modal('Checkout','<p style="color:#9dc4e8">Factura de pago real.</p><div id="checkoutInfo" class="notice"></div><div id="checkoutAction"></div>');$('checkoutInfo').innerHTML='<b>'+esc(fmt(data?.amount)+' '+(data?.currency||''))+'</b><br>'+esc(data?.description||'Pago CUBA PLUS PAY')+'<br><small>Estado: '+esc(statusText(data?.status))+'</small>';if(data?.status!=='pending'){ $('checkoutAction').innerHTML='<div class="msg wait">Este checkout no está pendiente de pago.</div>';return }if(!currentUser){$('checkoutAction').innerHTML='<div class="msg wait">Inicia sesión para pagar con CRX. El checkout público solo muestra la factura.</div>';return}$('checkoutAction').innerHTML='<button id="payCheckoutAuto" class="btn full">Pagar con CRX</button><div id="autoPayMsg" class="msg hidden"></div>';$('payCheckoutAuto').onclick=async()=>{const {data:r,error:e}=await db.rpc('cp_pay_checkout',{p_checkout_token:token,p_idempotency_key:safeUUID()});if(e)return msg('autoPayMsg',e.message,'error');msg('autoPayMsg','Pago realizado correctamente.','ok');history.replaceState({},document.title,location.pathname);await loadData()}}catch(e){show('auth',true);show('shell',false);modal('Checkout','<div class="msg error">No se pudo consultar el checkout: '+esc(e.message||e)+'</div>')}},300)}
