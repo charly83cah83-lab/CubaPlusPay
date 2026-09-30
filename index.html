@@ -157,9 +157,9 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 <section id="page-wallet" class="page"><div class="hero"><div class="eyebrow">BILLETERA</div><h1>Mis billeteras</h1><p>Solo aparecen monedas existentes en la cuenta autenticada.</p></div><div id="wallets" class="grid wallet-grid"></div></section>
 <section id="page-transfer" class="page"><div class="hero"><div class="eyebrow">TRANSFERIR CRX</div><h1>Envía CRX de forma segura</h1><p>La operación se ejecuta en el backend mediante <b>transfer_crx_secure</b>; el navegador nunca modifica balances directamente.</p></div><div class="card transfer-card"><div class="step-row"><div class="step active">1 · Destino</div><div class="step">2 · Monto</div><div class="step">3 · Revisión</div><div class="step">4 · Resultado</div></div><div class="field"><label>Destinatario · correo o UUID</label><input id="to" placeholder="usuario@email.com"></div><div class="field"><label>Monto CRX</label><input id="amt" type="number" min="0.00000001" step="0.00000001" placeholder="0.00"></div><div class="chips"><button class="chip" data-add="100">+100</button><button class="chip" data-add="500">+500</button><button class="chip" data-add="1000">+1,000</button><button class="chip" data-add="5000">+5,000</button></div><div class="field"><label>Referencia opcional</label><input id="ref" maxlength="120" placeholder="Pago, envío, etc."></div><div style="display:flex;justify-content:space-between;margin:14px 0;color:#88add4"><span>Comisión</span><b id="feePreview">—</b></div><button id="sendTransfer" class="btn full">Continuar</button><div id="transferMsg" class="msg hidden"></div></div></section>
 <section id="page-market" class="page"><div class="hero"><div class="eyebrow">MARKETPLACE</div><h1>Compra, vende y paga con CRX</h1><p>El catálogo se mostrará desde servicios reales conectados. No se crean productos ficticios.</p></div><div class="card" style="margin-top:12px"><div class="market-search"><input id="marketSearch" placeholder="Buscar productos, servicios…"><button id="marketRefresh" class="btn secondary">Actualizar</button></div><div id="marketStatus" class="msg hidden"></div></div><div id="products" class="grid product-grid"></div></section>
-<section class="page" id="page-game"><div class="hero"><div class="eyebrow">JUEGO CRX</div><h1>CRX Island</h1><p>Juego CRX por fases. Los clics son un resultado provisional: el servidor valida sesión, duración, velocidad, fase y límites antes de acreditar CRX.</p></div><div class="card game click-island-card"><div class="click-island-hud"><div><small>Tiempo</small><b id="islandTime">60 s</b></div><div><small>Clics</small><b id="islandClicks">0</b></div><div><small>Fase</small><b id="islandPhase">1</b></div><div><small>Meta</small><b id="islandTarget">100</b></div><div><small>Nivel</small><b id="islandLevel">1</b></div><div><small>Mejor</small><b id="islandBest">—</b></div></div><div aria-label="Isla CRX interactiva" class="island-stage" id="islandStage"><div class="island-burst" id="islandBurst"></div><div class="island-ring"><button class="island-click-button" disabled="" id="islandClickButton"><span>CRX ISLAND</span><strong>CLICK</strong><small>⚡ +1 punto</small></button></div></div><div class="island-progress"><div id="islandProgress"></div></div><div class="island-next" id="islandNext">Inicia una sesión real para comenzar.</div><div class="game-actions"><button class="btn" id="islandStart">Iniciar partida real</button><button class="btn secondary" disabled="" id="islandStop">Terminar partida</button><button class="btn secondary" disabled="" id="islandClaim">Liquidar resultado</button></div><div class="msg hidden" id="islandMsg"></div><div class="card" style="margin-top:10px"><b>Recompensa real por fase</b><div id="islandRewardTable" class="notice" style="margin-top:8px">Consultando configuración real de fases…</div><div id="islandRewardStatus" class="msg hidden"></div></div><div class="card" style="margin-top:10px"><b>Exchange CRX ↔ Activo</b><p id="crxExchangeInfo" style="color:#8eb5dc;font-size:12px">Consultando tasas publicadas y habilitadas en Supabase…</p><div class="notice" style="margin:8px 0"><b>Ruta USDT:</b> CRX → <span id="crxExchangeNetwork">USDT TRC20 · TRON</span>. La conversión acredita la wallet interna; no envía fondos a una blockchain. El retiro on-chain se habilitará solo cuando exista un rail de custodia/proveedor real.</div><div class="field"><label>Dirección</label><select id="crxExchangeDirection" style="width:100%;padding:12px;border-radius:13px;border:1px solid #0d65bb;background:#031638;color:#fff"><option value="crx_to_asset">CRX → Activo</option><option value="asset_to_crx">Activo → CRX</option></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="crxExchangeAmount" min="0.00000001" placeholder="Cantidad" step="0.00000001" type="number" value="6"/><select id="crxExchangeAsset"><option value="">Cargando activos…</option></select></div><div id="crxExchangeQuote" class="notice" style="margin-top:8px">Introduce una cantidad para consultar una cotización de solo lectura.</div><div class="notice" style="margin-top:8px"><b>Exchange CRX:</b> 6 CRX → TRX como ruta principal. La tasa TRX se publica en Supabase y se valida en backend antes de ejecutar. La comisión se muestra antes de confirmar; no se inventan saldos ni se envían fondos on-chain durante el intercambio interno.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn secondary" id="crxExchangeQuoteBtn" type="button">Cotizar ahora</button><button class="btn secondary" disabled="" id="crxExchangeBtn" type="button">Convertir</button></div><div class="msg hidden" id="crxExchangeMsg"></div></div><div class="card island-rules"><b>Reglas de CRX Island</b><ul><li>La partida usa <code>start_game_session</code> con modo <code>crx_island_v1</code>.</li><li>La duración y la tasa máxima de clics se validan en el servidor.</li><li>La meta, fase y recompensa se determinan por la configuración real de <code>game_phase_config</code>. Cada fase completada puede acreditar su recompensa CRX real mediante el ledger; nunca se acredita desde el navegador.</li><li>El navegador nunca acredita CRX directamente.</li><li>Una sesión rechazada o duplicada no genera saldo adicional.</li></ul></div></div></section>
+<section class="page" id="page-game"><div class="hero"><div class="eyebrow">JUEGO CRX</div><h1>CRX Island</h1><p>Juego CRX por fases. Los clics son un resultado provisional: el servidor valida sesión, duración, velocidad, fase y límites antes de acreditar CRX.</p></div><div class="card game click-island-card"><div class="click-island-hud"><div><small>Tiempo</small><b id="islandTime">60 s</b></div><div><small>Clics</small><b id="islandClicks">0</b></div><div><small>Fase</small><b id="islandPhase">1</b></div><div><small>Meta</small><b id="islandTarget">100</b></div><div><small>Nivel</small><b id="islandLevel">1</b></div><div><small>Mejor</small><b id="islandBest">—</b></div></div><div aria-label="Isla CRX interactiva" class="island-stage" id="islandStage"><div class="island-burst" id="islandBurst"></div><div class="island-ring"><button class="island-click-button" disabled="" id="islandClickButton"><span>CRX ISLAND</span><strong>CLICK</strong><small>⚡ +1 punto</small></button></div></div><div class="island-progress"><div id="islandProgress"></div></div><div class="island-next" id="islandNext">Inicia una sesión real para comenzar.</div><div class="game-actions"><button class="btn" id="islandStart">Iniciar partida real</button><button class="btn secondary" disabled="" id="islandStop">Terminar partida</button><button class="btn secondary" disabled="" id="islandClaim">Liquidar resultado</button></div><div class="msg hidden" id="islandMsg"></div><div class="card" style="margin-top:10px"><b>Exchange CRX ↔ Activo</b><p id="crxExchangeInfo" style="color:#8eb5dc;font-size:12px">Consultando tasas publicadas y habilitadas en Supabase…</p><div class="notice" style="margin:8px 0"><b>Ruta USDT:</b> CRX → <span id="crxExchangeNetwork">USDT TRC20 · TRON</span>. La conversión acredita la wallet interna; no envía fondos a una blockchain. El retiro on-chain se habilitará solo cuando exista un rail de custodia/proveedor real.</div><div class="field"><label>Dirección</label><select id="crxExchangeDirection" style="width:100%;padding:12px;border-radius:13px;border:1px solid #0d65bb;background:#031638;color:#fff"><option value="crx_to_asset">CRX → Activo</option><option value="asset_to_crx">Activo → CRX</option></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="crxExchangeAmount" min="0.00000001" placeholder="Cantidad" step="0.00000001" type="number" value="6"/><select id="crxExchangeAsset"><option value="">Cargando activos…</option></select></div><div id="crxExchangeQuote" class="notice" style="margin-top:8px">Introduce una cantidad para consultar una cotización de solo lectura.</div><div class="notice" style="margin-top:8px"><b>Exchange CRX:</b> 6 CRX → TRX como ruta principal. La tasa TRX se publica en Supabase y se valida en backend antes de ejecutar. La comisión se muestra antes de confirmar; no se inventan saldos ni se envían fondos on-chain durante el intercambio interno.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn secondary" id="crxExchangeQuoteBtn" type="button">Cotizar ahora</button><button class="btn secondary" disabled="" id="crxExchangeBtn" type="button">Convertir</button></div><div class="msg hidden" id="crxExchangeMsg"></div></div><div class="card island-rules"><b>Reglas de CRX Island</b><ul><li>La partida usa <code>start_game_session</code> con modo <code>crx_island_v1</code>.</li><li>La duración y la tasa máxima de clics se validan en el servidor.</li><li>La meta, fase y recompensa se determinan por la configuración real de <code>game_phase_config</code>.</li><li>El navegador nunca acredita CRX directamente.</li><li>Una sesión rechazada o duplicada no genera saldo adicional.</li></ul></div></div></section>
 <section id="page-profile" class="page"><div class="hero"><div class="eyebrow">MI PERFIL</div><h1 id="profileName">Perfil</h1><p>Información real de la cuenta autenticada.</p></div><div class="card profile-card"><div class="profile-head"><div id="profileAvatar" class="profile-avatar">CP</div><div><b id="profileDisplay">—</b><div id="profileVerified" class="verified" style="font-size:10px">● Cuenta autenticada</div></div></div><div class="profile-list"><div class="profile-item"><small>Correo</small><b id="profileEmail">—</b></div><div class="profile-item"><small>País</small><b id="profileCountry">—</b></div><div class="profile-item"><small>Rol</small><b id="profileRole">—</b></div><div class="profile-item"><small>KYC</small><b id="profileKyc">—</b></div><div class="profile-item"><small>2FA / MFA</small><b id="profileMfa">—</b></div><div class="profile-item"><small>Nivel de riesgo</small><b id="profileRisk">—</b></div></div></div></section>
-<section class="page" id="page-more"><div class="hero"><div class="eyebrow">MÁS</div><h1>Servicios de CUBA PLUS PAY</h1><p>Estos módulos solo se activan cuando existe un proveedor o endpoint real.</p></div><div class="grid op-grid"><button class="op" data-op="orders"><div class="big">▤</div><b>Órdenes</b><small>Marketplace</small></button><button class="op" data-op="invoices"><div class="big">▧</div><b>Facturas</b><small>Checkout</small></button><button class="op" data-op="links"><div class="big">🔗</div><b>Enlaces de pago</b><small>Checkout</small></button><button class="op" data-op="recharge"><div class="big">▣</div><b>Recargar móvil</b><small>QvaPay Store / saldo real</small></button><button class="op" data-op="pay"><div class="big">◆</div><b>Pagar</b><small>Checkout</small></button><button class="op" data-op="admin"><div class="big">⚙</div><b>Administración</b><small>Solo rol autorizado</small></button><button class="op" data-op="payment_methods"><div class="big">◆</div><b>Métodos de pago</b><small>Banco · tarjeta · wallet</small></button><button class="op" data-op="exchange"><div class="big">⇄</div><b>Intercambio de monedas</b><small>CRX ↔ USDT · activos habilitados</small></button><button class="op" data-op="p2p"><div class="big">⇄</div><b>P2P / Escrow</b><small>Ofertas reales</small></button><button class="op" data-op="crypto"><div class="big">₿</div><b>Cripto</b><small>Capacidades reales</small></button><button class="op" data-op="crm"><div class="big">◎</div><b>CRM interno</b><small>Rol autorizado</small></button><button class="op" data-op="provider"><div class="big">⚡</div><b>Estado QvaPay</b><small>Conexión real</small></button><button class="op" data-op="security"><div class="big">🛡</div><b>Seguridad</b><small>Sesión y cuenta</small></button><button class="op" data-op="financial_audit"><div class="big">✓</div><b>Auditoría financiera</b><small>Conciliación · riesgo · trazabilidad</small></button><button class="op" data-op="sync_rates"><div class="big">↻</div><b>Sincronizar tasas</b><small>QvaPay · JWT de sesión</small></button><button class="op" data-op="diagnostics"><div class="big">⌁</div><b>Diagnóstico</b><small>Aplicación · Supabase · gateways</small></button><button class="op" data-op="system_audit"><div class="big">🧪</div><b>Auditoría integral</b><small>Botones · módulos · finanzas · seguridad</small></button><button class="op" data-op="integrity"><div class="big">🔎</div><b>Integridad financiera</b><small>Wallet · Exchange · Ledger · tasas</small></button><button class="op" data-op="withdrawal_audit"><div class="big">↙</div><b>Auditoría de retiros</b><small>Reserva · QvaPay · webhook · ledger</small></button><button class="op" data-op="reconciliation"><div class="big">⟲</div><b>Reconciliación financiera</b><small>Wallet · ledger · proveedor · estados</small></button><button class="op" data-op="incidents"><div class="big">⚠</div><b>Incidentes financieros</b><small>Detección · bloqueo · recuperación segura</small></button><button class="op" data-op="ai"><div class="big">✦</div><b>CUBA PLUS AI</b><small>Conector seguro</small></button><button class="op" data-op="usdt_gateway"><div class="big">₮</div><b>USDT On-Chain</b><small>TRC20 · preparación segura</small></button><button class="op" data-op="performance"><div class="big">⚙</div><b>Rendimiento DB</b><small>Índices · RLS · diagnóstico</small></button><button class="op" data-op="preflight"><div class="big">🚦</div><b>Preflight financiero</b><small>GO/NO-GO · solo lectura</small></button><button class="op" data-op="financial_lab"><div class="big">🧪</div><b>Laboratorio financiero</b><small>Quote · idempotencia · circuito seguro</small></button><button class="op" data-op="transaction_verify"><div class="big">🧬</div><b>Verificación E2E</b><small>Transaction · Ledger · Journal · Idempotencia</small></button><button class="op" data-op="state_machine"><div class="big">⛓</div><b>State Machine</b><small>Ciclo financiero · siguiente acción segura</small></button><button class="op" data-op="orchestrator"><div class="big">🧠</div><b>Financial Orchestrator</b><small>Control central · readiness · bloqueadores</small></button><button class="op" data-op="execution_kernel"><div class="big">⚡</div><b>Execution Kernel</b><small>Intent · idempotencia · preflight · sin movimiento automático</small></button><button class="op" data-op="e2e_full_test"><div class="big">🧪</div><b>Prueba E2E completa</b><small>Login · datos reales · juego · exchange · transferencias · proveedores</small></button><button class="op" data-op="financial_center"><div class="big">🏦</div><b>Centro financiero real</b><small>Wallets · depósitos · retiros · exchange · QvaPay · recargas</small></button><button class="op" data-op="cup_funding"><div class="big">🇨🇺</div><b>Fondos CUP</b><small>Transfermóvil · BANMET · tarjetas bancarias</small></button></div><div class="msg hidden" id="moreMsg"></div></section>
+<section class="page" id="page-more"><div class="hero"><div class="eyebrow">MÁS</div><h1>Servicios de CUBA PLUS PAY</h1><p>Estos módulos solo se activan cuando existe un proveedor o endpoint real.</p></div><div class="grid op-grid"><button class="op" data-op="orders"><div class="big">▤</div><b>Órdenes</b><small>Marketplace</small></button><button class="op" data-op="invoices"><div class="big">▧</div><b>Facturas</b><small>Checkout</small></button><button class="op" data-op="links"><div class="big">🔗</div><b>Enlaces de pago</b><small>Checkout</small></button><button class="op" data-op="recharge"><div class="big">▣</div><b>Recargar móvil</b><small>QvaPay Store / saldo real</small></button><button class="op" data-op="pay"><div class="big">◆</div><b>Pagar</b><small>Checkout</small></button><button class="op" data-op="admin"><div class="big">⚙</div><b>Administración</b><small>Solo rol autorizado</small></button><button class="op" data-op="payment_methods"><div class="big">◆</div><b>Métodos de pago</b><small>Banco · tarjeta · wallet</small></button><button class="op" data-op="referrals"><div class="big">👥</div><b>Referidos</b><small>Código · comisiones · historial</small></button><button class="op" data-op="exchange"><div class="big">⇄</div><b>Intercambio de monedas</b><small>CRX ↔ USDT · activos habilitados</small></button><button class="op" data-op="p2p"><div class="big">⇄</div><b>P2P / Escrow</b><small>Ofertas reales</small></button><button class="op" data-op="crypto"><div class="big">₿</div><b>Cripto</b><small>Capacidades reales</small></button><button class="op" data-op="crm"><div class="big">◎</div><b>CRM interno</b><small>Rol autorizado</small></button><button class="op" data-op="provider"><div class="big">⚡</div><b>Estado QvaPay</b><small>Conexión real</small></button><button class="op" data-op="security"><div class="big">🛡</div><b>Seguridad</b><small>Sesión y cuenta</small></button><button class="op" data-op="financial_audit"><div class="big">✓</div><b>Auditoría financiera</b><small>Conciliación · riesgo · trazabilidad</small></button><button class="op" data-op="sync_rates"><div class="big">↻</div><b>Sincronizar tasas</b><small>QvaPay · JWT de sesión</small></button><button class="op" data-op="diagnostics"><div class="big">⌁</div><b>Diagnóstico</b><small>Aplicación · Supabase · gateways</small></button><button class="op" data-op="system_audit"><div class="big">🧪</div><b>Auditoría integral</b><small>Botones · módulos · finanzas · seguridad</small></button><button class="op" data-op="integrity"><div class="big">🔎</div><b>Integridad financiera</b><small>Wallet · Exchange · Ledger · tasas</small></button><button class="op" data-op="withdrawal_audit"><div class="big">↙</div><b>Auditoría de retiros</b><small>Reserva · QvaPay · webhook · ledger</small></button><button class="op" data-op="reconciliation"><div class="big">⟲</div><b>Reconciliación financiera</b><small>Wallet · ledger · proveedor · estados</small></button><button class="op" data-op="incidents"><div class="big">⚠</div><b>Incidentes financieros</b><small>Detección · bloqueo · recuperación segura</small></button><button class="op" data-op="ai"><div class="big">✦</div><b>CUBA PLUS AI</b><small>Conector seguro</small></button><button class="op" data-op="usdt_gateway"><div class="big">₮</div><b>USDT On-Chain</b><small>TRC20 · preparación segura</small></button><button class="op" data-op="performance"><div class="big">⚙</div><b>Rendimiento DB</b><small>Índices · RLS · diagnóstico</small></button><button class="op" data-op="preflight"><div class="big">🚦</div><b>Preflight financiero</b><small>GO/NO-GO · solo lectura</small></button><button class="op" data-op="financial_lab"><div class="big">🧪</div><b>Laboratorio financiero</b><small>Quote · idempotencia · circuito seguro</small></button><button class="op" data-op="transaction_verify"><div class="big">🧬</div><b>Verificación E2E</b><small>Transaction · Ledger · Journal · Idempotencia</small></button><button class="op" data-op="state_machine"><div class="big">⛓</div><b>State Machine</b><small>Ciclo financiero · siguiente acción segura</small></button><button class="op" data-op="orchestrator"><div class="big">🧠</div><b>Financial Orchestrator</b><small>Control central · readiness · bloqueadores</small></button><button class="op" data-op="execution_kernel"><div class="big">⚡</div><b>Execution Kernel</b><small>Intent · idempotencia · preflight · sin movimiento automático</small></button><button class="op" data-op="e2e_full_test"><div class="big">🧪</div><b>Prueba E2E completa</b><small>Login · datos reales · juego · exchange · transferencias · proveedores</small></button><button class="op" data-op="financial_center"><div class="big">🏦</div><b>Centro financiero real</b><small>Wallets · depósitos · retiros · exchange · QvaPay · recargas</small></button><button class="op" data-op="cup_funding"><div class="big">🇨🇺</div><b>Fondos CUP</b><small>Transfermóvil · BANMET · tarjetas bancarias</small></button></div><div class="msg hidden" id="moreMsg"></div></section>
 <section id="page-history" class="page"><div class="hero"><div class="eyebrow">HISTORIAL</div><h1>Movimientos</h1><p>Últimas 50 operaciones de la cuenta autenticada.</p></div><div class="card" style="margin-top:12px"><div id="transactions"><div class="empty">Consultando…</div></div></div></section>
 <div class="footer">CUBA PLUS PAY V27 · Motor financiero · Sin saldos ficticios · Sin pagos simulados · Supabase + proveedores autorizados</div><div id="cppBootStatus" class="notice" style="margin:0 0 16px;text-align:center">Inicializando CUBA PLUS PAY V7.5.2…</div>
 </main>
@@ -222,6 +222,7 @@ async function session(){
  if(session){
   try{
    await loadData();
+   await claimPendingReferral();
    if(typeof loadExchangeOptions==='function')await loadExchangeOptions();
    if(typeof loadHomeOperationalSummary==='function')await loadHomeOperationalSummary();
    if(typeof islandLoadProgress==='function')await islandLoadProgress();
@@ -235,111 +236,119 @@ function closeModal(){show('modal',false);$('modalBody').innerHTML=''}
 function receive(){const e=currentUser?.email||'',id=currentUser?.id||'';modal('Recibir dinero','<p style="color:#9dc4e8">Comparte estos datos para recibir CRX.</p><div class="field"><label>Correo</label><input readonly value="'+esc(e)+'"></div><button id="copyE" class="btn secondary full">Copiar correo</button><div class="field"><label>UUID</label><input readonly value="'+esc(id)+'"></div><button id="copyI" class="btn secondary full">Copiar UUID</button><div id="copyMsg" class="msg hidden"></div>');$('copyE').onclick=async()=>{try{await navigator.clipboard.writeText(e);msg('copyMsg','Correo copiado.','ok')}catch{msg('copyMsg','No se pudo copiar automáticamente.','error')}};$('copyI').onclick=async()=>{try{await navigator.clipboard.writeText(id);msg('copyMsg','UUID copiado.','ok')}catch{msg('copyMsg','No se pudo copiar automáticamente.','error')}}}
 async function doTransfer(){const to=$('to').value.trim(),a=Number($('amt').value),ref=$('ref').value.trim()||null;if(!to||!Number.isFinite(a)||a<=0)return msg('transferMsg','Indica destinatario y un monto válido.','error');const b=$('sendTransfer');b.disabled=true;b.textContent='Procesando…';try{const {data,error}=await db.rpc('transfer_crx_secure',{p_recipient:to,p_amount:a,p_reference:ref,p_idempotency:safeUUID(),p_metadata:{source:'web',version:'V19',ui:'mobile-reference'}});if(error)throw error;msg('transferMsg','Transferencia procesada.\nReferencia: '+(data?.reference||'—')+'\nEnviado: '+fmt(data?.amount)+' CRX\nComisión: '+fmt(data?.fee)+' CRX\nRecibido: '+fmt(data?.net)+' CRX','ok');await loadData()}catch(e){msg('transferMsg','No se realizó la transferencia.\n'+(e?.message||e),'error')}finally{b.disabled=false;b.textContent='Continuar'}}
 async function deposit(){
-  modal(
-    'Depositar con QvaPay',
-    '<p style="color:#9dc4e8">La factura se crea mediante la Edge Function real <b>qvapay-gateway</b>. El saldo no cambia hasta que el webhook confirma el pago.</p>'+
-    '<div class="field"><label>Monto USD</label><input id="depAmt" type="number" min="1" max="100000" step="0.01" placeholder="0.00"></div>'+
-    '<div class="field"><label>Descripción</label><input id="depDesc" maxlength="255" value="Depósito CUBA PLUS PAY"></div>'+
-    '<button id="createInvoice" class="btn full">Crear factura QvaPay</button>'+
-    '<div id="depMsg" class="msg hidden"></div>'
+  modal('Depositar dinero · CUBA PLUS PAY',
+    '<div class="notice">Selecciona un método real. El saldo de tu wallet solo cambia después de que el proveedor confirme y el backend concilie el pago. No se acredita dinero por crear una solicitud.</div>'+ 
+    '<div id="depositMethods" class="module-grid" style="margin-top:10px"><div class="notice">Consultando métodos de pago disponibles…</div></div>'+ 
+    '<div id="depositFlow" style="margin-top:10px"></div>'
   );
 
-  $('createInvoice').onclick=async()=>{
-    const a=Number($('depAmt').value);
-    const d=$('depDesc').value.trim()||'Depósito CUBA PLUS PAY';
-    const b=$('createInvoice');
+  const box=$('depositMethods'),flow=$('depositFlow');
+  const escLocal=window.__CPP_CORE?.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+  const showFlow=(html)=>{flow.innerHTML=html;flow.scrollIntoView({behavior:'smooth',block:'nearest'});};
+  const call=async(fn,body)=>{const r=await db.functions.invoke(fn,{body});if(r.error)throw r.error;if(!r.data)throw new Error('Respuesta vacía de '+fn);return r.data};
+  const button=(id,title,sub,cls='secondary')=>'<button id="'+id+'" class="btn '+cls+'" style="width:100%;text-align:left"><b>'+title+'</b><br><small>'+sub+'</small></button>';
 
-    if(!Number.isFinite(a)||a<1||a>100000){
-      return msg('depMsg','Monto válido: 1 a 100000 USD.','error');
+  try{
+    const [qva,tm,enz,cubo]=await Promise.all([
+      call('qvapay-gateway',{operation:'financial_bridge_status'}).catch(e=>({ok:false,code:'QVA_UNAVAILABLE',message:e?.message||String(e)})),
+      call('cup-funding-gateway',{operation:'config_status'}).catch(e=>({ok:false,code:'TM_UNAVAILABLE',message:e?.message||String(e)})),
+      call('enzona-cup-gateway',{operation:'config_status'}).catch(e=>({ok:false,code:'ENZONA_UNAVAILABLE',message:e?.message||String(e)})),
+      call('cup-funding-gateway',{operation:'config_status'}).catch(e=>({ok:false,code:'CUBO_UNAVAILABLE',message:e?.message||String(e)}))
+    ]);
+    const caps=tm?.capabilities||{};
+    const methods=[];
+    if(qva?.ok&&qva?.provider==='qvapay')methods.push(button('depQva','QvaPay','USD, facturas y activos admitidos por el catálogo del proveedor'));
+    if(caps.transfermovil?.enabled)methods.push(button('depTM','Transfermóvil','Depósito CUP · directo o manual según configuración'));
+    if(enz?.configured===true||enz?.ok===true)methods.push(button('depEnzona','EnZona','Depósito CUP mediante comercio EnZona'));
+    if(caps.cubopago?.api_credentials&&String(caps.cubopago?.configured_currency||'').toUpperCase()==='CUP')methods.push(button('depCubo','Tarjeta · CuboPago','CUP · enlace de pago del proveedor'));
+    methods.push(button('depCrypto','Wallet / cripto','Consultar rieles de entrada reales disponibles','secondary'));
+    box.innerHTML=methods.length?methods.join('<div style="height:8px"></div>'):'<div class="msg error">No hay ningún riel de depósito habilitado. No se simulará ninguno.</div>';
+
+    $('depQva')?.addEventListener('click',()=>qvaDeposit());
+    $('depTM')?.addEventListener('click',()=>tmDeposit());
+    $('depEnzona')?.addEventListener('click',()=>enzonaDeposit());
+    $('depCubo')?.addEventListener('click',()=>cuboDeposit());
+    $('depCrypto')?.addEventListener('click',()=>cryptoDeposit());
+
+    async function qvaDeposit(){
+      showFlow('<div class="card"><h3>Depósito QvaPay</h3><div class="field"><label>Tipo</label><select id="qvaDepType"><option value="invoice">USD · factura QvaPay</option><option value="topup">Activo · pago mediante QvaPay</option></select></div><div class="field"><label>Monto</label><input id="qvaDepAmt" type="number" min="0.01" step="0.01" placeholder="0.00"></div><div id="qvaMethodWrap" class="field hidden"><label>Método del proveedor</label><select id="qvaDepMethod"><option value="">Cargando catálogo real…</option></select></div><button id="qvaDepGo" class="btn full">Crear depósito real</button><div id="qvaDepMsg" class="msg hidden"></div></div>');
+      const type=$('qvaDepType'),wrap=$('qvaMethodWrap'),sel=$('qvaDepMethod');
+      async function loadCoins(){try{const r=await call('qvapay-gateway',{operation:'coins'});const groups=Array.isArray(r.result)?r.result:[];const coins=groups.flatMap(g=>Array.isArray(g?.Coins)?g.Coins:[]).filter(c=>c?.enabled_in===true);const unique=[];const seen=new Set();for(const c of coins){const tick=String(c.tick||'').toUpperCase(),net=String(c.network||'').toUpperCase(),key=tick+'|'+net;if(!tick||seen.has(key))continue;seen.add(key);unique.push(c)}sel.innerHTML=unique.length?unique.map(c=>'<option value="'+escLocal(c.tick)+'">'+escLocal(c.tick)+(c.network?' · '+escLocal(c.network):'')+'</option>').join(''):'<option value="">Sin métodos de entrada confirmados por QvaPay</option>';}catch(e){sel.innerHTML='<option value="">No disponible</option>';msg('qvaDepMsg','No se pudo cargar el catálogo real de QvaPay: '+(e?.message||e),'error')}}
+      type.onchange=async()=>{wrap.classList.toggle('hidden',type.value!=='topup');if(type.value==='topup')await loadCoins()};
+      $('qvaDepGo').onclick=async()=>{const amount=Number($('qvaDepAmt').value),b=$('qvaDepGo');if(!Number.isFinite(amount)||amount<=0)return msg('qvaDepMsg','Monto inválido.','error');b.disabled=true;try{let r;if(type.value==='invoice'){if(amount>100000)throw new Error('Máximo 100000 USD por factura.');r=await call('qvapay-gateway',{operation:'invoice',amount,description:'Depósito CUBA PLUS PAY'});}else{const pay_method=$('qvaDepMethod').value.trim();if(!pay_method)throw new Error('QvaPay no ha confirmado un método de entrada disponible.');r=await call('qvapay-gateway',{operation:'topup',amount,pay_method,currency:pay_method});}const d=r.result||{};const url=r.payment_url||d.url||d.payment_url||d.checkout_url||d.invoice_url||d.link||d.payment?.url||d.data?.url;if(!r.ok)throw new Error(r.message||r.code||'QvaPay rechazó el depósito');msg('qvaDepMsg',url?'Solicitud creada. Abriendo QvaPay para completar el pago…':'Solicitud creada y pendiente de confirmación.','ok');if(url)setTimeout(()=>location.href=url,600);}catch(e){msg('qvaDepMsg','No se creó el depósito: '+(e?.message||e),'error')}finally{b.disabled=false}};
     }
 
-    b.disabled=true;
-    b.textContent='Creando…';
-
-    try{
-      const {data:{session},error:sessionError}=await db.auth.getSession();
-
-      if(sessionError) throw sessionError;
-
-      if(!session?.access_token){
-        throw new Error('No hay una sesión autenticada. Cierra sesión, vuelve a entrar y prueba nuevamente.');
-      }
-
-      const {data,error}=await db.functions.invoke(
-        'qvapay-gateway',
-        {
-          body:{
-            operation:'invoice',
-            amount:a,
-            description:d
-          }
-        }
-      );
-
-      if(error){
-        throw new Error(
-          'Error de Edge Function: '+
-          (error.message||JSON.stringify(error))
-        );
-      }
-
-      if(!data){
-        throw new Error('La Edge Function no devolvió ninguna respuesta.');
-      }
-
-      if(!data.ok){
-        throw new Error(
-          data.message||
-          data.error||
-          'La Edge Function rechazó la creación de la factura.'
-        );
-      }
-
-      const r=data.result||{};
-      const url=
-        r.url||
-        r.payment_url||
-        r.checkout_url||
-        r.invoice_url||
-        r.link||
-        r.payment?.url||
-        r.data?.url;
-
-      if(!url){
-        throw new Error(
-          'QvaPay respondió correctamente, pero no devolvió la URL de pago.'
-        );
-      }
-
-      msg(
-        'depMsg',
-        'Factura real creada correctamente. Abriendo QvaPay…',
-        'ok'
-      );
-
-      setTimeout(()=>{
-        location.href=url;
-      },500);
-
-    }catch(e){
-      console.error('QvaPay invoice error:',e);
-
-      msg(
-        'depMsg',
-        'No se pudo crear la factura QvaPay.\n'+
-        (e?.message||String(e)),
-        'error'
-      );
-
-    }finally{
-      b.disabled=false;
-      b.textContent='Crear factura QvaPay';
+    async function tmDeposit(){
+      showFlow('<div class="card"><h3>Transfermóvil · depósito CUP</h3><div class="field"><label>Monto CUP</label><input id="tmAmt" type="number" min="1" step="1" placeholder="0"></div><button id="tmGo" class="btn full">Crear solicitud real</button><div id="tmMsg" class="msg hidden"></div></div>');
+      $('tmGo').onclick=async()=>{const amount=Number($('tmAmt').value),b=$('tmGo');if(!Number.isFinite(amount)||amount<=0)return msg('tmMsg','Monto CUP inválido.','error');b.disabled=true;try{const r=await call('cup-funding-gateway',{operation:'create_transfermovil_deposit',amount_cup:amount,idempotency_key:safeUUID()});if(!r.ok)throw new Error(r.message||r.code||'Transfermóvil rechazó la solicitud');const i=r.instructions||{};msg('tmMsg','Solicitud '+(r.reference||'creada')+' · estado '+(r.status||'pending')+(i.destination?'\nDestino: '+i.destination:'')+(i.description?'\nReferencia: '+i.description:'')+'\n\nEl CUP solo se acreditará después de la confirmación real.','ok');}catch(e){msg('tmMsg','No se creó el depósito: '+(e?.message||e),'error')}finally{b.disabled=false}};
     }
-  };
-  }
+
+    async function enzonaDeposit(){
+      showFlow('<div class="card"><h3>EnZona · depósito CUP</h3><div class="field"><label>Monto CUP</label><input id="enzAmt" type="number" min="1" step="1" placeholder="0"></div><button id="enzGo" class="btn full">Crear pago EnZona</button><div id="enzMsg" class="msg hidden"></div></div>');
+      $('enzGo').onclick=async()=>{const amount=Number($('enzAmt').value),b=$('enzGo');if(!Number.isFinite(amount)||amount<=0)return msg('enzMsg','Monto CUP inválido.','error');b.disabled=true;try{const r=await call('enzona-cup-gateway',{operation:'create_deposit',amount_cup:amount,idempotency_key:safeUUID()});if(!r.ok)throw new Error(r.message||r.code||'EnZona rechazó la solicitud');msg('enzMsg','Pago EnZona creado · estado '+(r.status||'processing')+' · referencia '+(r.reference||'—'),'ok');const url=r.checkout_url;if(url)setTimeout(()=>location.href=url,600);}catch(e){msg('enzMsg','No se creó el pago EnZona: '+(e?.message||e),'error')}finally{b.disabled=false}};
+    }
+
+    async function cuboDeposit(){
+      showFlow('<div class="card"><h3>Tarjeta · CuboPago</h3><div class="notice">Este riel solo aparece cuando el backend confirma credenciales y moneda CUP.</div><div class="field"><label>Monto CUP</label><input id="cuboAmt" type="number" min="1" step="1" placeholder="0"></div><button id="cuboGo" class="btn full">Crear enlace de pago</button><div id="cuboMsg" class="msg hidden"></div></div>');
+      $('cuboGo').onclick=async()=>{const amount=Number($('cuboAmt').value),b=$('cuboGo');if(!Number.isFinite(amount)||amount<=0)return msg('cuboMsg','Monto CUP inválido.','error');b.disabled=true;try{const r=await call('cup-funding-gateway',{operation:'create_cubo_card_link',amount,currency:'CUP',idempotency_key:safeUUID()});if(!r.ok)throw new Error(r.message||r.code||'CuboPago rechazó la solicitud');msg('cuboMsg','Enlace de pago creado · estado '+(r.status||'processing'),'ok');if(r.checkout_url)setTimeout(()=>location.href=r.checkout_url,600);}catch(e){msg('cuboMsg','No se creó el enlace: '+(e?.message||e),'error')}finally{b.disabled=false}};
+    }
+
+    async function cryptoDeposit(){
+      showFlow('<div class="card"><h3>Depósito por wallet / cripto</h3><div id="cryptoDepBox" class="notice">Consultando direcciones reales y rieles habilitados…</div></div>');
+      try{const {data,error}=await db.from('deposit_addresses').select('currency,network,address,provider,tag_or_memo,metadata').eq('user_id',currentUser.id).eq('enabled',true).order('currency');if(error)throw error;const rows=data||[];if(!rows.length){$('cryptoDepBox').innerHTML='<div class="notice">No hay direcciones de depósito asignadas a esta cuenta. No se mostrará ninguna dirección inventada. Usa QvaPay para los activos que su catálogo permita o configura una dirección real del proveedor.</div>';return} $('cryptoDepBox').innerHTML=rows.map(x=>'<div class="mini-row"><div><b>'+escLocal(x.currency)+' · '+escLocal(x.network||'')+'</b><br><small>'+escLocal(x.address)+(x.tag_or_memo?' · Memo '+escLocal(x.tag_or_memo):'')+' · '+escLocal(x.provider||'')+'</small></div><button class="btn secondary" data-copy-dep="'+escLocal(x.address)+'">Copiar</button></div>').join('');document.querySelectorAll('[data-copy-dep]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copyDep);b.textContent='Copiado';setTimeout(()=>b.textContent='Copiar',1200)}catch{alert(b.dataset.copyDep)}})}catch(e){$('cryptoDepBox').innerHTML='<div class="msg error">No se pudieron consultar las direcciones reales: '+escLocal(e?.message||e)+'</div>'}
+    }
+  }catch(e){box.innerHTML='<div class="msg error">No se pudieron consultar los métodos de depósito: '+escLocal(e?.message||e)+'</div>'}
+}
 function assetForCurrency(c){return (window.assetCatalog||[]).find(x=>x.code===c)}
 function qvaPayMethod(c){return ({USDT_TRC20:'USDT',USDT_ERC20:'USDTERC20',TRX:'TRX',BTC:'BTC',LTC:'LTC',ETH:'ETH'})[c]||c}
 function paymentMethodsHtml(){const rows=window.paymentMethods||[];return rows.length?rows.map(x=>'<div class="tx"><div class="tx-icon">◆</div><div><b>'+esc(x.name)+'</b><small>'+esc(x.method_type)+' · '+esc(x.asset_code||'—')+' · '+(x.verified?'Verificado':'No verificado')+'</small></div><div class="amount"><button class="btn secondary" data-delete-pm="'+esc(x.id)+'">Eliminar</button></div></div>').join(''):'<div class="empty">No tienes métodos de pago guardados.</div>'}
+async function referralsPanel(){
+  if(!currentUser)return unavailable('Referidos','Debes iniciar sesión.');
+  modal('Programa de referidos · CUBA PLUS PAY','<div id="refPanel" class="module-grid"><div class="notice">Consultando tu cuenta de referidos…</div></div>');
+  const box=$('refPanel');
+  const pageUrl=location.href.split('?')[0].split('#')[0];
+  try{
+    const {data,error}=await db.rpc('referral_snapshot');
+    if(error)throw error;
+    const r=data||{};
+    const code=String(r.referral_code||'');
+    if(!code)throw new Error('REFERRAL_ACCOUNT_NOT_FOUND');
+    const share=Number(r.referrer_fee_share_pct||0), ownerShare=Number(r.owner_fee_share_pct||0);
+    const link=pageUrl+'?ref='+encodeURIComponent(code);
+    box.innerHTML='<div class="card"><h3>Tu código</h3><div class="field"><input id="refCodeOut" readonly value="'+esc(code)+'"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="refCopyCode" class="btn secondary">Copiar código</button><button id="refCopyLink" class="btn">Copiar enlace</button></div><div id="refCopyMsg" class="msg hidden"></div></div>'+
+      '<div class="card"><h3>Tu actividad</h3><div class="mini-list"><div class="mini-row"><span>Referidos registrados</span><b>'+fmt(r.referred_count||0)+'</b></div><div class="mini-row"><span>Comisiones ganadas</span><b>'+fmt(r.earned||0)+'</b></div><div class="mini-row"><span>Parte del referido sobre la comisión</span><b>'+fmt(share)+'%</b></div><div class="mini-row"><span>Parte neta del propietario</span><b>'+fmt(ownerShare)+'%</b></div></div><div class="notice">La comisión se calcula sobre la comisión real cobrada por una operación completada. No se crea dinero ficticio.</div></div>'+
+      '<div class="card"><h3>¿Tienes un código?</h3><div class="field"><input id="refClaimCode" maxlength="64" placeholder="CP-XXXXXXXX"></div><button id="refClaimBtn" class="btn full">Vincular código</button><div id="refClaimMsg" class="msg hidden"></div></div>'+
+      '<div class="card"><h3>Cómo funciona</h3><p style="color:#9dc4e8">Cuando una persona se vincula a tu código, las operaciones completadas que tengan una comisión real pueden generar una parte para el referente y el resto neto para el propietario. La relación es única y no permite autorreferidos.</p></div>';
+    $('refCopyCode').onclick=async()=>{try{await navigator.clipboard.writeText(code);msg('refCopyMsg','Código copiado.','ok')}catch(e){msg('refCopyMsg','No se pudo copiar automáticamente.','error')}};
+    $('refCopyLink').onclick=async()=>{try{await navigator.clipboard.writeText(link);msg('refCopyMsg','Enlace de referido copiado.','ok')}catch(e){msg('refCopyMsg','No se pudo copiar automáticamente.','error')}};
+    $('refClaimBtn').onclick=async()=>{
+      const c=$('refClaimCode').value.trim(); if(!c)return msg('refClaimMsg','Introduce un código válido.','error');
+      const b=$('refClaimBtn');b.disabled=true;
+      try{
+        const {data,error}=await db.rpc('claim_referral_code',{p_code:c});
+        if(error)throw error;
+        msg('refClaimMsg','Código vinculado correctamente. Referente: '+(data?.referrer_user_id||'confirmado')+'.','ok');
+        setTimeout(()=>referralsPanel(),500);
+      }catch(e){msg('refClaimMsg','No se pudo vincular el código: '+(e?.message||e),'error')}
+      finally{b.disabled=false}
+    };
+  }catch(e){box.innerHTML='<div class="msg error">No se pudo cargar el programa de referidos: '+esc(e?.message||e)+'</div>'}
+}
+
+async function claimPendingReferral(){
+  const code=new URLSearchParams(location.search).get('ref');
+  if(!code||!currentUser)return;
+  const key='cpp_referral_claimed_'+currentUser.id+'_'+code.toUpperCase();
+  if(sessionStorage.getItem(key))return;
+  try{
+    const {data,error}=await db.rpc('claim_referral_code',{p_code:code});
+    if(!error&&data?.ok)sessionStorage.setItem(key,'1');
+  }catch(e){
+    const m=String(e?.message||e);
+    if(/REFERRAL_ALREADY_SET|SELF_REFERRAL_NOT_ALLOWED/.test(m))sessionStorage.setItem(key,'1');
+  }
+}
+
 async function paymentMethods(){modal('Métodos de pago','<p style="color:#9dc4e8">Guarda cuentas bancarias, tarjetas compatibles, Transfermóvil o wallets externas. Los datos se almacenan en CUBA PLUS PAY; no se inventa ninguna conexión bancaria.</p><div id="pmList">'+paymentMethodsHtml()+'</div><hr style="border-color:#0b4381"><div class="field"><label>Tipo</label><select id="pmType"><option value="bank_account">Cuenta bancaria</option><option value="bank_card">Tarjeta bancaria</option><option value="mobile">Transfermóvil / móvil</option><option value="crypto_wallet">Wallet cripto</option><option value="cash">Efectivo</option><option value="other">Otro</option></select></div><div class="field"><label>Moneda</label><select id="pmAsset"><option value="USD">USD</option><option value="CUP">CUP</option><option value="USDT_TRC20">USDT TRC20</option><option value="USDT_ERC20">USDT ERC20</option><option value="TRX">TRX</option><option value="BTC">BTC</option></select></div><div class="field"><label>Nombre</label><input id="pmName" placeholder="Ej. Banco Metropolitano / Wallet TRC20"></div><div class="field"><label>Datos</label><input id="pmDetails" placeholder="Cuenta, tarjeta, teléfono o dirección"></div><button id="savePm" class="btn full">Guardar método</button><div id="pmMsg" class="msg hidden"></div>');document.querySelectorAll('[data-delete-pm]').forEach(b=>b.onclick=async()=>{const {error}=await db.from('payment_methods').delete().eq('id',b.dataset.deletePm);if(error)return msg('pmMsg',error.message,'error');await loadData();paymentMethods()});$('savePm').onclick=async()=>{const name=$('pmName').value.trim(),details=$('pmDetails').value.trim();if(!name||!details)return msg('pmMsg','Completa nombre y datos.','error');const pmType=$('pmType').value;if(pmType==='bank_card'){const digits=details.replace(/\D/g,'');if(digits.length>=12&&digits.length<=19)return msg('pmMsg','Por seguridad no se guarda el número completo de la tarjeta. Usa una referencia o los últimos 4 dígitos.','error');if(/\b(cvv|cvc|pin|telebanca|clave)\b/i.test(details))return msg('pmMsg','No guardes CVV, PIN ni claves bancarias.','error')}const {error}=await db.from('payment_methods').insert({user_id:currentUser.id,method_type:pmType,asset_code:$('pmAsset').value,name,details});if(error)return msg('pmMsg',error.message,'error');await loadData();paymentMethods()}}
 function depositFor(currency){const a=assetForCurrency(currency);if(!a){return unavailable('Depósito', 'La moneda no está registrada en el catálogo real.')};const can=a.enabled_deposit===true;if(currency==='USD'){deposit();return}if(!can){return unavailable('Depositar '+currency,'El proveedor real todavía no ha habilitado depósitos para '+currency+'. No se simulará ningún depósito.')};modal('Depositar '+currency,'<p style="color:#9dc4e8">Depósito mediante proveedor real. El saldo solo cambia después de confirmación y conciliación.</p><div class="field"><label>Método / ticker QvaPay</label><input id="depMethod" value="'+esc(qvaPayMethod(currency))+'"></div><div class="field"><label>Monto</label><input id="depAmt" type="number" min="0.00000001" step="0.00000001" placeholder="0.00"></div><button id="createTopup" class="btn full">Crear depósito</button><div id="depMsg" class="msg hidden"></div>');$('createTopup').onclick=async()=>{const amount=Number($('depAmt').value),pay_method=$('depMethod').value.trim();if(!Number.isFinite(amount)||amount<=0||!pay_method)return msg('depMsg','Monto y método válidos requeridos.','error');const b=$('createTopup');b.disabled=true;try{const {data,error}=await db.functions.invoke('qvapay-gateway',{body:{operation:'topup',amount,pay_method,currency}});if(error)throw error;const r=data?.result||{};const url=r.url||r.payment_url||r.checkout_url||r.invoice_url||r.link||r.payment?.url||r.data?.url;if(!data?.ok)throw new Error(data?.message||data?.code||'QvaPay rechazó el depósito');msg('depMsg',url?'Depósito creado. Abriendo proveedor…':'Depósito creado y pendiente de confirmación.','ok');if(url)setTimeout(()=>location.href=url,500)}catch(e){msg('depMsg','No se creó el depósito.\n'+(e?.message||e),'error')}finally{b.disabled=false}}}
 function withdrawFor(currency){
@@ -420,7 +429,7 @@ async function loadOrders(){const {data,error}=await db.from('cp_orders').select
 async function loadInvoices(){const {data,error}=await db.from('cp_invoices').select('id,amount,currency,description,status,checkout_token,created_at,expires_at').or('owner_id.eq.'+currentUser.id+',customer_id.eq.'+currentUser.id).order('created_at',{ascending:false}).limit(50);modal('Facturas','<div id="invoiceList">'+(error?'<div class="msg error">'+esc(error.message)+'</div>':(data?.length?data.map(x=>'<div class="tx"><div class="tx-icon">▧</div><div><b>'+esc(x.status)+'</b><small>'+esc(x.description||'Factura')+' · '+esc(new Date(x.created_at).toLocaleString('es-ES'))+'</small></div><div class="amount">'+fmt(x.amount)+' '+esc(x.currency)+'</div></div>').join(''):'<div class="empty">No hay facturas.</div>'))+'</div>')}
 function loadPaymentLinks(){modal('Enlaces de pago','<p style="color:#9dc4e8">Crea un enlace de pago real.</p><div class="field"><label>Nombre</label><input id="linkName" maxlength="160" placeholder="Ej. Pago de servicio"></div><div class="field"><label>Monto</label><input id="linkAmount" type="number" min="0.01" step="0.01"></div><div class="field"><label>Moneda</label><select id="linkCurrency" style="width:100%;padding:12px;background:#031638;color:#fff"><option>CRX</option><option>USD</option><option>CUP</option><option>USDT_TRC20</option></select></div><button id="createLink" class="btn full">Crear enlace</button><div id="linkMsg" class="msg hidden"></div>');$('createLink').onclick=async()=>{const name=$('linkName').value.trim(),amount=Number($('linkAmount').value),currency=$('linkCurrency').value;if(name.length<2||!Number.isFinite(amount)||amount<=0)return msg('linkMsg','Datos inválidos.','error');const {data,error}=await db.rpc('cp_create_payment_link',{p_name:name,p_amount:amount,p_currency:currency,p_product_id:null});if(error)return msg('linkMsg',error.message,'error');const token=data?.checkout_token||data?.token||data?.checkoutToken||data?.id||'';if(!token)return msg('linkMsg','El backend creó el enlace pero no devolvió un identificador de checkout válido.','error');const url=location.origin+location.pathname+'?checkout='+encodeURIComponent(token);msg('linkMsg','Enlace de pago creado.\n'+url,'ok')}}
 function payInvoice(){modal('Pagar factura','<p style="color:#9dc4e8">Introduce el token de checkout de una factura que puedas pagar.</p><div class="field"><label>Token</label><input id="checkoutToken"></div><button id="payCheckout" class="btn full">Pagar con CRX</button><div id="payMsg" class="msg hidden"></div>');$('payCheckout').onclick=async()=>{const token=$('checkoutToken').value.trim();if(!token)return msg('payMsg','Token requerido.','error');const {data,error}=await db.rpc('cp_pay_checkout',{p_checkout_token:token,p_idempotency_key:safeUUID()});if(error)return msg('payMsg',error.message,'error');msg('payMsg','Pago realizado correctamente.','ok');await loadData()}}
-async function adminPanel(){modal('Administración','<p style="color:#9dc4e8">Panel protegido. Solo las funciones permitidas por el rol pueden ejecutarse.</p><div id="adminInfo">Consultando rol…</div>');try{if(!currentUser)throw new Error('Sesión no disponible.');const {data:p,error}=await db.from('profiles').select('role').eq('id',currentUser.id).maybeSingle();if(error)throw error;const ok=p&&['admin','owner','super_admin'].includes(String(p.role||'').toLowerCase());$('adminInfo').innerHTML=ok?'<div class="msg ok">Rol autorizado. Las operaciones administrativas sensibles permanecen en backend.</div>':'<div class="msg error">Tu cuenta no tiene rol administrativo.</div>'}catch(e){$('adminInfo').innerHTML='<div class="msg error">No se pudo verificar el rol: '+esc(e.message||e)+'</div>'}}
+async function adminPanel(){modal('Administración','<p style="color:#9dc4e8">Panel protegido. Solo el propietario puede consultar las ganancias y comisiones.</p><div id="adminInfo">Consultando rol y libro de comisiones…</div>');try{if(!currentUser)throw new Error('Sesión no disponible.');const {data:p,error}=await db.from('profiles').select('role').eq('id',currentUser.id).maybeSingle();if(error)throw error;const ok=p&&['owner'].includes(String(p.role||'').toLowerCase());if(!ok){$('adminInfo').innerHTML='<div class="msg error">Acceso restringido. Este panel de ganancias es exclusivo del propietario.</div>';return}const {data:snapshot,error:se}=await db.rpc('owner_commission_snapshot');if(se)throw se;const r=snapshot||{};const rows=Array.isArray(r.by_operation)?r.by_operation:[];$('adminInfo').innerHTML='<div class="msg ok">Propietario autorizado. Datos calculados desde owner_commission_events.</div><div class="module-grid" style="margin-top:10px"><div class="card"><b>Ganancias/comisiones registradas</b><h2 style="margin:8px 0">'+fmt(r.total||0)+'</h2><small>Eventos: '+fmt(r.events||0)+'</small></div><div class="card"><b>Pagadas</b><h2 style="margin:8px 0">'+fmt(r.paid||0)+'</h2></div><div class="card"><b>Pendientes</b><h2 style="margin:8px 0">'+fmt(r.pending||0)+'</h2></div><div class="card"><b>Revertidas/canceladas</b><h2 style="margin:8px 0">'+fmt(r.reversed||0)+'</h2></div></div><div class="card" style="margin-top:10px"><b>Comisiones por operación</b><div class="mini-list">'+(rows.map(x=>'<div class="mini-row"><span>'+esc(x.operation)+' · '+esc(x.currency)+'</span><b>'+fmt(x.total)+'</b></div>').join('')||'<div class="empty">Todavía no existen comisiones reales registradas.</div>')+'</div></div><div class="notice" style="margin-top:10px">El programa de referidos está '+(r.referral_program?.enabled?'ACTIVO':'INACTIVO')+'. Participación del referente: '+fmt(r.referral_program?.referrer_fee_share_pct||0)+'%; parte del propietario: '+fmt(r.referral_program?.owner_fee_share_pct||0)+'% de la comisión real. Las operaciones sin comisión no generan ganancias.</div>'}catch(e){$('adminInfo').innerHTML='<div class="msg error">No se pudo cargar el libro de ganancias: '+esc(e.message||e)+'</div>'}}
 function support(){modal('Soporte','<p style="color:#9dc4e8">Crea un ticket real en CUBA PLUS PAY.</p><div class="field"><label>Asunto</label><input id="supSubject" maxlength="160" placeholder="Describe el problema"></div><div class="field"><label>Mensaje</label><textarea id="supMessage" maxlength="5000" style="width:100%;min-height:120px;padding:12px;border-radius:13px;border:1px solid #0d65bb;background:#031638;color:#fff"></textarea></div><div class="field"><label>Prioridad</label><select id="supPriority" style="width:100%;padding:12px;border-radius:13px;background:#031638;color:#fff"><option value="normal">Normal</option><option value="high">Alta</option><option value="low">Baja</option></select></div><button id="createSupport" class="btn full">Enviar ticket</button><div id="supMsg" class="msg hidden"></div>');$('createSupport').onclick=async()=>{const subject=$('supSubject').value.trim(),message=$('supMessage').value.trim();if(subject.length<3||message.length<3)return msg('supMsg','Completa asunto y mensaje.','error');const {error}=await db.from('cp_support_tickets').insert({user_id:currentUser.id,subject,message,priority:$('supPriority').value});if(error)return msg('supMsg',error.message,'error');msg('supMsg','Ticket enviado correctamente.','ok')}}
 function wire(){document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));document.querySelectorAll('[data-action="support"]').forEach(b=>b.addEventListener('click',support));document.querySelectorAll('[data-op]').forEach(b=>b.addEventListener('click',()=>{const o=b.dataset.op;if(o==='transfer')nav('transfer');else if(o==='receive')receive();else if(o==='deposit')deposit();else if(o==='withdraw')withdrawFor('CRX');else if(o==='recharge'){if(typeof rechargePanel==='function')rechargePanel();else unavailable('Recargar móvil','El módulo de recargas no está cargado.');}else if(o==='orders')loadOrders();
 else if(o==='invoices')loadInvoices();
@@ -775,14 +784,6 @@ function islandBind(){
 setTimeout(islandBind,80);
 })();
 </script>
-<script id="cpp-crx-real-rewards-ui">
-(()=>{'use strict';
-const DB=window.__CPP_DB;const q=id=>document.getElementById(id);
-const esc=v=>String(v??'').replace(/[&<>"\']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function loadRewards(){const box=q('islandRewardTable');if(!box||!DB)return;try{const {data,error}=await DB.from('game_phase_config').select('phase,name,target_score,max_reward,enabled').eq('enabled',true).order('phase');if(error)throw error;if(!data?.length){box.textContent='No hay fases habilitadas.';return;}box.innerHTML='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">'+data.map(x=>'<div style="padding:7px;border:1px solid #155fb7;border-radius:10px"><b>Fase '+Number(x.phase)+'</b> · '+esc(x.name||'')+'<br><small>Meta '+Number(x.target_score)+' · <b>'+Number(x.max_reward).toLocaleString('es-ES')+' CRX reales</b></small></div>').join('')+'</div>';}catch(e){box.textContent='No se pudo consultar las recompensas reales: '+(e?.message||e);}}
-window.__CPP_CRX_REAL_REWARDS={load:loadRewards};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadRewards);else loadRewards();
-})();
-</script>
 <script id="cpp-v27-functional-router">
 (()=>{
 'use strict';
@@ -839,7 +840,7 @@ async function preflight(){await diagnostics();}
 async function advanced(op){const a=audit();const map={p2p:'p2pPanel',crypto:'cryptoPanel',crm:'crmPanel',ai:'aiPanel',integrity:'integrityPanel',withdrawal_audit:'withdrawalAuditPanel',reconciliation:'reconciliationPanel',incidents:'financialIncidentsPanel',recharge:'rechargePanel'};if(map[op]&&typeof a[map[op]]==='function')return a[map[op]]();if(op==='provider')return providerPanel();if(op==='security')return securityPanel();if(op==='financial_audit')return financialAudit();if(op==='diagnostics'||op==='performance')return diagnostics();if(op==='system_audit')return financialAudit();if(op==='preflight')return preflight();if(op==='financial_lab')return exchangePanel();if(op==='transaction_verify'||op==='e2e_full_test')return e2e();if(op==='state_machine'||op==='orchestrator')return readiness();if(op==='execution_kernel')return executionKernel();if(op==='financial_center')return financialCenter();if(op==='cup_funding')return cupFunding();modal('Módulo', '<div class="notice">'+esc(op)+' conectado al router V27.</div>')}
 
 const routes={
- transfer:()=>CORE.nav?.('transfer'),receive:()=>CORE.receive?.(),deposit:()=>CORE.deposit?.(),withdraw:()=>CORE.withdrawFor?.('CRX'),recharge:()=>advanced('recharge'),orders:()=>CORE.loadOrders?.(),invoices:()=>CORE.loadInvoices?.(),links:()=>CORE.loadPaymentLinks?.(),pay:()=>CORE.payInvoice?.(),admin:()=>CORE.adminPanel?.(),payment_methods:()=>CORE.paymentMethods?.(),exchange:exchangePanel,
+ transfer:()=>CORE.nav?.('transfer'),receive:()=>CORE.receive?.(),deposit:()=>CORE.deposit?.(),withdraw:()=>CORE.withdrawFor?.('CRX'),recharge:()=>advanced('recharge'),orders:()=>CORE.loadOrders?.(),invoices:()=>CORE.loadInvoices?.(),links:()=>CORE.loadPaymentLinks?.(),pay:()=>CORE.payInvoice?.(),admin:()=>CORE.adminPanel?.(),payment_methods:()=>CORE.paymentMethods?.(),referrals:()=>referralsPanel(),exchange:exchangePanel,
  p2p:()=>advanced('p2p'),crypto:()=>advanced('crypto'),crm:()=>advanced('crm'),provider:()=>advanced('provider'),security:()=>advanced('security'),financial_audit:()=>advanced('financial_audit'),sync_rates:()=>invoke('financial-exchange-gateway',{operation:'rates'}).then(r=>modal('Tasas sincronizadas','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),diagnostics:()=>advanced('diagnostics'),system_audit:()=>advanced('system_audit'),integrity:()=>advanced('integrity'),withdrawal_audit:()=>advanced('withdrawal_audit'),reconciliation:()=>advanced('reconciliation'),incidents:()=>advanced('incidents'),ai:()=>advanced('ai'),usdt_gateway:()=>invoke('usdt-onchain-gateway',{operation:'capabilities'}).then(r=>modal('USDT On-Chain','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),performance:()=>advanced('performance'),preflight:()=>advanced('preflight'),financial_lab:()=>advanced('financial_lab'),transaction_verify:()=>advanced('transaction_verify'),state_machine:()=>advanced('state_machine'),orchestrator:()=>advanced('orchestrator'),execution_kernel:()=>advanced('execution_kernel'),e2e_full_test:()=>advanced('e2e_full_test'),financial_center:()=>advanced('financial_center'),cup_funding:()=>advanced('cup_funding')
 };
 document.addEventListener('click',ev=>{const b=ev.target?.closest?.('[data-op]');if(!b)return;const op=b.dataset.op,fn=routes[op];if(!fn)return;ev.preventDefault();ev.stopImmediatePropagation();b.disabled=true;Promise.resolve().then(fn).catch(e=>modal('Error del módulo '+op,'<div class="msg error">'+esc(err(e))+'</div>')).finally(()=>b.disabled=false)},true);
@@ -848,6 +849,73 @@ window.__CPP_V27={version:'V27',realFinancialRouter:true,noFakeMoney:true,routes
 const boot=$('cppBootStatus');if(boot)boot.textContent='CUBA PLUS PAY V27 listo · botones conectados · Supabase + proveedores reales · sin saldos ficticios';
 })();
 
+</script>
+<script id="cpp-final-button-audit">
+(()=>{
+'use strict';
+const CP=window.__CPP_DB, CORE=window.__CPP_CORE||{};
+const q=id=>document.getElementById(id);
+const esc=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+const fmt=CORE.fmt||((v)=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8}));
+const say=(t,c='')=>{const x=q('crxExchangeMsg');if(!x)return;x.textContent=t;x.className='msg '+c;x.classList.remove('hidden')};
+const invoke=async(body)=>{const r=await CP.functions.invoke('financial-exchange-gateway',{body});if(r.error)throw r.error;if(!r.data)throw new Error('Respuesta vacía del gateway de exchange');return r.data};
+async function loadGameAssets(){
+ const sel=q('crxExchangeAsset'); if(!sel||!CP)return;
+ try{
+  const {data,error}=await CP.from('asset_catalog').select('code,name,enabled_wallet').eq('enabled_wallet',true).order('code');
+  if(error)throw error;
+  const rows=(data||[]).filter(x=>String(x.code).toUpperCase()!=='CRX');
+  sel.innerHTML='<option value="">Selecciona activo</option>';
+  rows.forEach(x=>{const o=document.createElement('option');o.value=x.code;o.textContent=(x.name||x.code)+' · '+x.code;sel.appendChild(o)});
+  const preferred=rows.find(x=>['USDT','TRX','BTC','USD','CUP'].includes(String(x.code).toUpperCase()));
+  if(preferred)sel.value=preferred.code;
+  const info=q('crxExchangeInfo'); if(info)info.textContent=rows.length?'Activos disponibles cargados desde Supabase. La cotización y la conversión las valida el backend.':'No hay activos habilitados para exchange en este momento.';
+ }catch(e){
+  const info=q('crxExchangeInfo'); if(info)info.textContent='No se pudo cargar el catálogo real: '+(e?.message||e);
+  sel.innerHTML='<option value="">Sin activos disponibles</option>';
+ }
+}
+async function quote(){
+ const dir=q('crxExchangeDirection')?.value, amount=Number(q('crxExchangeAmount')?.value), asset=q('crxExchangeAsset')?.value;
+ if(!dir||!asset||!Number.isFinite(amount)||amount<=0)return say('Completa dirección, activo y una cantidad válida.','error');
+ const b=q('crxExchangeQuoteBtn'); if(b)b.disabled=true;
+ try{
+  const r=await invoke({operation:'quote_exchange',direction:dir,currency:asset,amount});
+  if(!r.ok)throw new Error(r.message||r.code||'Cotización rechazada');
+  const out=Number(r.quoted_output??r.output_amount??0);
+  q('crxExchangeQuote').innerHTML='<b>'+fmt(r.amount??amount)+' '+esc(r.from_currency||asset)+'</b> → <b>'+fmt(out)+' '+esc(r.to_currency||'')+'</b><br><small>Tasa '+fmt(r.rate??0)+' · comisión '+fmt(r.fee??0)+' '+esc(r.from_currency||asset)+'</small>';
+  q('crxExchangeBtn').disabled=false;
+  q('crxExchangeBtn').dataset.quote=JSON.stringify({direction,asset,amount,from_currency:r.from_currency,to_currency:r.to_currency,output:out,fee:r.fee});
+  say('Cotización obtenida. Revisa la comisión antes de convertir.','ok');
+ }catch(e){q('crxExchangeBtn').disabled=true;say('No se pudo cotizar: '+(e?.message||e),'error')}
+ finally{if(b)b.disabled=false}
+}
+async function convert(){
+ const b=q('crxExchangeBtn'), raw=b?.dataset?.quote; if(!raw)return say('Primero solicita una cotización.','error');
+ let z;try{z=JSON.parse(raw)}catch(_){return say('La cotización ya no es válida. Cotiza nuevamente.','error')}
+ if(!confirm('CONFIRMAR CONVERSIÓN REAL\n\n'+fmt(z.amount)+' '+z.from_currency+' → '+fmt(z.output)+' '+z.to_currency+'\n\nSe moverán fondos internos y se registrará el movimiento en ledger/journal.'))return;
+ b.disabled=true;
+ try{
+  const idem=crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+  const body=z.direction==='crx_to_asset'?{operation:'exchange_crx',to_currency:z.to_currency,amount:z.amount,p_idempotency:idem}:{operation:'exchange_asset_to_crx',from_currency:z.from_currency,amount:z.amount,p_idempotency:idem};
+  const r=await invoke(body); if(!r.ok)throw new Error(r.message||r.code||'Conversión rechazada');
+  say('Conversión realizada y registrada. ID: '+(r.result?.transaction_id||r.transaction_id||'—'),'ok');
+  b.dataset.quote='';
+  q('crxExchangeQuote').textContent='Cotización consumida. Solicita una nueva antes de otra conversión.';
+  if(typeof CORE.loadData==='function')await CORE.loadData();
+ }catch(e){say('No se realizó la conversión: '+(e?.message||e),'error');b.disabled=false}
+}
+function bind(){
+ q('crxExchangeQuoteBtn')?.addEventListener('click',quote);
+ q('crxExchangeBtn')?.addEventListener('click',convert);
+ q('crxExchangeDirection')?.addEventListener('change',()=>{const b=q('crxExchangeBtn');if(b)b.disabled=true});
+ q('crxExchangeAsset')?.addEventListener('change',()=>{const b=q('crxExchangeBtn');if(b)b.disabled=true});
+ q('crxExchangeAmount')?.addEventListener('input',()=>{const b=q('crxExchangeBtn');if(b)b.disabled=true});
+ loadGameAssets();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+window.__CPP_BUTTON_AUDIT={version:'V27.1',gameExchangeBound:true,realDataOnly:true};
+})();
 </script>
 </body>
 </html>
