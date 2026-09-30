@@ -145,7 +145,7 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 <div class="side-bottom"><button id="logout" class="btn danger full">Cerrar sesión</button></div>
 </aside>
 <div class="main">
-<header class="topbar"><div class="top-left"><button id="openSide" class="mobile-menu">☰</button><div><div id="pageTitle" class="page-title">Inicio</div><div class="page-sub">CUBA PLUS PAY · V27</div></div></div><div class="top-actions"><button id="refresh" class="icon-btn">↻</button><div id="avatar" class="avatar">CP</div></div></header>
+<header class="topbar"><div class="top-left"><button id="openSide" class="mobile-menu">☰</button><div><div id="pageTitle" class="page-title">Inicio</div><div class="page-sub">CUBA PLUS PAY · V22</div></div></div><div class="top-actions"><button id="refresh" class="icon-btn">↻</button><div id="avatar" class="avatar">CP</div></div></header>
 <main class="content">
 <section id="page-home" class="page active">
 <div class="hero"><div class="eyebrow">CUBA PLUS PAY</div><h1 id="hello">Hola</h1><p>Tu centro financiero. Los datos de saldo y movimientos se consultan desde Supabase y no se inventan.</p><div style="margin-top:10px"><span id="kyc" class="pill">KYC · Consultando</span> <span id="role" class="pill">USER</span></div></div>
@@ -775,1209 +775,131 @@ function islandBind(){
 setTimeout(islandBind,80);
 })();
 </script>
-<script id="cpp-final-integrations-js">(()=>{'use strict';const CP=window.__CPP_DB||window.db||null;const CORE=window.__CPP_CORE||{};const db=CORE.db||CP;const q=CORE.q||((id)=>document.getElementById(id));const e=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));const esc=e;const fmt=CORE.fmt||((v)=>String(v??'—'));const safeUUID=CORE.safeUUID||(()=>crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));const msg=CORE.msg||(()=>{});const loadData=CORE.loadData||(()=>Promise.resolve());const getCurrentUser=()=>CORE.currentUser||null;const modalM=(title,html)=>{const mt=q('modalTitle'),mb=q('modalBody'),m=q('modal');if(!mt||!mb||!m)return;mt.textContent=title;mb.innerHTML=html;m.classList.remove('hidden')};async function loadExchangeOptions(){
- const sel=q('crxExchangeAsset'),btn=q('crxExchangeBtn'),info=q('crxExchangeInfo');
- if(!sel)return;
- sel.innerHTML='<option value="">Consultando tasas…</option>'; if(btn)btn.disabled=true;
- try{
-  const currencies=['CUP','USD','USDT_TRC20','USDT_ERC20','BTC','ETH','TRX','LTC'];
-  const rows=[];
-  for(const currency of currencies){
-   const r=await CP.rpc('get_exchange_rate',{p_from:'CRX',p_to:currency});
-   if(!r.error && r.data?.ok && Number(r.data.rate)>0) rows.push(r.data);
-  }
-  const order=['CUP','USD','USDT_TRC20','USDT_ERC20','BTC','ETH','TRX','LTC'];
-  rows.sort((a,b)=>(order.indexOf(a.to_currency)<0?99:order.indexOf(a.to_currency))-(order.indexOf(b.to_currency)<0?99:order.indexOf(b.to_currency)));
-  sel.innerHTML='';
-  for(const r of rows){const o=document.createElement('option');o.value=r.to_currency;const label=r.to_currency==='USDT_TRC20'?'USDT TRC20 · TRON':r.to_currency==='USDT_ERC20'?'USDT ERC20 · Ethereum':r.to_currency;o.textContent=label+' · tasa '+r.rate;o.dataset.rate=r.rate;sel.appendChild(o)}
-  if(!rows.length){sel.innerHTML='<option value="">Sin conversiones habilitadas</option>';if(info)info.textContent='No hay tasas CRX publicadas y habilitadas.';return}
-  if(rows.some(r=>r.to_currency==='TRX'))sel.value='TRX';else sel.value=rows[0].to_currency;
-  if(info)info.textContent='Tasas publicadas en Supabase. Cotización y conversión se validan en backend con saldo real, comisión, idempotencia y ledger.';
-  updateExchangeNetwork();
-  await quoteExchange();
- }catch(err){sel.innerHTML='<option value="">No disponible</option>';if(info)info.textContent='No se pudieron cargar las tasas reales: '+(err?.message||err);if(btn)btn.disabled=true;}
-}
-
-function updateExchangeNetwork(){
- const a=q('crxExchangeAsset')?.value||'';const n=q('crxExchangeNetwork');
- if(!n)return;
- n.textContent=a==='USDT_TRC20'?'USDT TRC20 · TRON':a==='USDT_ERC20'?'USDT ERC20 · Ethereum':a||'activo seleccionado';
-}
-async function quoteExchange(){
- const amount=Number(q('crxExchangeAmount')?.value||0),asset=q('crxExchangeAsset')?.value||'',direction=q('crxExchangeDirection')?.value||'crx_to_asset',box=q('crxExchangeQuote');
- updateExchangeNetwork();
- if(!box)return;
- if(!Number.isFinite(amount)||amount<=0||!asset){box.textContent='Introduce una cantidad para consultar una cotización de solo lectura.';return}
- box.textContent='Consultando cotización segura…';
- try{
-  if(direction!=='crx_to_asset') throw new Error('ASSET_TO_CRX_QUOTE_NOT_AVAILABLE');
-  const {data,error}=await CP.rpc('quote_exchange',{p_to_currency:asset,p_amount:amount});
-  if(error)throw error;if(!data?.ok)throw new Error(data?.message||data?.code||'Cotización no disponible.');
-  const fee=Number(data.fee||0),out=Number(data.quoted_output||0),available=data.balance?.available;
-  const from=data.from_currency,to=data.to_currency;
-  box.innerHTML='<b>Cotización actual</b><br>'+fmt(data.amount)+' '+esc(from)+' → <b>'+fmt(out)+' '+esc(to)+'</b><br><small>Tasa: '+fmt(data.rate)+' · Comisión: '+fmt(fee)+' '+esc(from)+' · Neto de entrada: '+fmt(data.net_input)+' '+esc(from)+(available!==undefined?' · Disponible: '+fmt(available)+' '+esc(from):'')+'</small>';
- }catch(err){box.textContent='No se pudo obtener la cotización: '+(err?.message||err);}
-}
-async function syncExchangeRates(){
- const {data,error}=await CP.functions.invoke('financial-exchange-gateway',{body:{operation:'rates'}});
- if(error)throw error;if(!data?.ok)throw new Error(data?.message||data?.code||'No se pudieron actualizar las tasas reales.');
- return data.rates||null;
-}
-async function exchangeCRX(){
- const amount=Number(q('crxExchangeAmount')?.value||0),asset=q('crxExchangeAsset')?.value||'',direction=q('crxExchangeDirection')?.value||'crx_to_asset',b=q('crxExchangeBtn');
- if(!Number.isFinite(amount)||amount<=0)return msg('crxExchangeMsg','Introduce una cantidad válida.','error');
- if(!asset)return msg('crxExchangeMsg','Selecciona un activo habilitado.','error');
- b.disabled=true;
- try{
-  if(direction!=='crx_to_asset')return msg('crxExchangeMsg','La conversión de activo → CRX se habilitará con su cotización inversa segura.','error');
-  const qr=await CP.rpc('quote_exchange',{p_to_currency:asset,p_amount:amount});
-  if(qr.error)throw qr.error;if(!qr.data?.ok)throw new Error(qr.data?.message||qr.data?.code||'La cotización fue rechazada.');
-  const qd=qr.data;
-  if(qd.balance&&Number(qd.balance.available)<amount)return msg('crxExchangeMsg','Fondos disponibles insuficientes para esta conversión.','error');
-  const label=fmt(qd.amount)+' '+qd.from_currency+' → '+fmt(qd.quoted_output)+' '+qd.to_currency+' · comisión '+fmt(qd.fee)+' '+qd.from_currency;
-  if(!confirm('Confirmar conversión real en el ledger:\n\n'+label+'\n\nLa conversión será ejecutada por el backend. No se enviará USDT a una blockchain en esta operación.'))return;
-  if(!(await requireMfaForSensitive('crxExchangeMsg')))return;
-  const id=safeUUID();
-  const result=direction==='crx_to_asset'
-    ? await CP.rpc('exchange_crx',{p_to_currency:asset,p_amount:amount,p_idempotency:id})
-    : await CP.rpc('exchange_asset_to_crx',{p_from_currency:asset,p_amount:amount,p_idempotency:id});
-  if(result.error)throw result.error;
-  if(!result.data?.ok)throw new Error(result.data?.message||result.data?.code||'La conversión fue rechazada por el backend.');
-  const d=result.data?.result||{};
-  msg('crxExchangeMsg','Conversión realizada y registrada en ledger: '+(d.from_amount??amount)+' '+(d.from_currency||(direction==='crx_to_asset'?'CRX':asset))+' → '+(d.to_amount??'—')+' '+(d.to_currency||(direction==='crx_to_asset'?asset:'CRX'))+'. ID: '+(d.transaction_id||'registrada')+'.','ok');
-  await loadData();await loadExchangeOptions();
- }catch(err){msg('crxExchangeMsg',err?.message||String(err),'error')}finally{b.disabled=false}
-}
-function bindExchangeQuote(){
- q('crxExchangeAmount')?.addEventListener('input',quoteExchange);
- q('crxExchangeAsset')?.addEventListener('change',quoteExchange);
- q('crxExchangeDirection')?.addEventListener('change',quoteExchange);
- q('crxExchangeBtn')?.addEventListener('click',exchangeCRX);
- q('crxExchangeQuoteBtn')?.addEventListener('click',async()=>{await quoteExchange();msg('crxExchangeMsg','Cotización consultada en modo solo lectura. No se movieron fondos.','ok');});
-}
-bindExchangeQuote();
-function openExchangePanel(){
- const go=()=>{
-  try{
-   if(typeof window.__CPP_CORE?.nav==='function') window.__CPP_CORE.nav('game');
-   const card=q('crxExchangeAmount')?.closest('.card');
-   if(card){card.scrollIntoView({behavior:'smooth',block:'start'});q('crxExchangeAmount')?.focus();}
-   loadExchangeOptions();
-  }catch(err){
-   if(typeof window.__CPP_CORE?.modal==='function') window.__CPP_CORE.modal('Intercambio de monedas','<div class="msg error">'+e(err?.message||err)+'</div>');
-  }
- };
- go();
-}
-window.__CPP_EXCHANGE={open:openExchangePanel,quote:quoteExchange,execute:exchangeCRX,loadOptions:loadExchangeOptions};
-async function financialAuditPanel(){
- modalM('Auditoría financiera · solo lectura','<div id="finAuditBox" class="notice">Consultando…</div>');
- try{
-  const u=await me(); if(!u)throw new Error('Sesión no disponible.');
-  const [tx,risk]=await Promise.all([
-   CP.from('transactions').select('id,type,status,amount,currency,fee_amount,net_amount,reconciliation_state,reconciled_at,created_at,reference').eq('user_id',u.id).order('created_at',{ascending:false}).limit(20),
-   CP.from('risk_assessments').select('transaction_id,score,decision,created_at').eq('user_id',u.id).order('created_at',{ascending:false}).limit(20)
-  ]);
-  if(tx.error)throw tx.error;if(risk.error)throw risk.error;
-  const rows=tx.data||[], rr=risk.data||[];
-  const pending=rows.filter(x=>['pending','processing','created'].includes(String(x.status||'').toLowerCase()));
-  const reconState=x=>String(x.reconciliation_state||'').trim().toLowerCase();
-  const ambiguous=rows.filter(x=>reconState(x)==='ambiguous');
-  const mismatched=rows.filter(x=>['mismatch','ambiguous'].includes(reconState(x)));
-  const notReconciled=rows.filter(x=>{const s=reconState(x);return s && !['matched','resolved','not_applicable'].includes(s)});
-  const flagged=rr.filter(x=>String(x.decision||'').toLowerCase()!=='allow');
-  const list=rows.slice(0,10).map(x=>'<div class="mini-row"><div><b>'+e(x.type||'operación')+' · '+e(x.status||'—')+'</b><br><small>'+e(x.currency||'')+' · bruto '+e(x.amount??'—')+' · fee '+e(x.fee_amount??'—')+' · neto '+e(x.net_amount??'—')+'</small></div><div style="text-align:right"><small>'+e(x.reconciliation_state||'sin conciliación')+'</small></div></div>').join('')||'<div class="empty">Sin operaciones.</div>';
-  q('finAuditBox').innerHTML='<div class="module-grid"><div class="card"><b>Flujo financiero</b><p class="notice">Wallet → transferencia/comisión → CRX → juego/recompensa → conversión → retiro → conciliación.</p><small>Revisadas: '+rows.length+' · Pendientes: '+pending.length+' · Ambiguas: '+ambiguous.length+' · Desajustes/ambiguas: '+mismatched.length+' · No conciliadas: '+notReconciled.length+'</small></div><div class="card"><b>Antifraude</b><p class="notice">Evaluaciones revisadas: '+rr.length+' · Decisiones distintas de allow: '+flagged.length+'</p></div></div><div class="card" style="margin-top:10px"><b>Últimas operaciones</b><div class="mini-list">'+list+'</div></div><div class="notice warn" style="margin-top:10px"><b>No certificado:</b> esta pantalla solo lee datos visibles. RLS, funciones RPC, grants, triggers, Edge Functions, secretos y permisos reales deben verificarse directamente en Supabase.</div>';
- }catch(x){q('finAuditBox').innerHTML='<div class="msg error">Auditoría no disponible: '+e(x.message||x)+'</div><div class="notice warn">No se emite certificación de seguridad ni de permisos backend.</div>'}
-}
-async function requireMfaForSensitive(targetId=''){if(!currentUser)throw new Error('Sesión no disponible.');const {data:p,error:pe}=await db.from('profiles').select('mfa_required').eq('id',getCurrentUser()?.id).maybeSingle();if(pe)throw pe;if(!p?.mfa_required)return true;const {data:aal,error:ae}=await db.auth.mfa.getAuthenticatorAssuranceLevel();if(ae)throw ae;if(aal?.currentLevel==='aal2')return true;const where=targetId?$(targetId):$('transferMsg');if(where){where.textContent='Esta operación requiere MFA (2FA). Completa la verificación en Seguridad antes de continuar.';where.className='msg error';where.classList.remove('hidden')}return false}
-async function runFinancialAudit(target='financialAudit'){
- const box=$(target); if(!box||!currentUser)return;
- box.className='notice'; box.textContent='Consultando transacciones, conciliación y riesgo…';
- try{
-  const [tx,risk]=await Promise.all([
-   db.from('transactions').select('id,type,status,amount,currency,fee_amount,net_amount,reconciliation_state,reconciled_at,created_at,reference').eq('user_id',getCurrentUser()?.id).order('created_at',{ascending:false}).limit(10),
-   db.from('risk_assessments').select('transaction_id,score,decision,created_at').eq('user_id',getCurrentUser()?.id).order('created_at',{ascending:false}).limit(10)
-  ]);
-  if(tx.error)throw tx.error;
-  if(risk.error)throw risk.error;
-  const rows=tx.data||[], rr=risk.data||[];
-  const unreconciled=rows.filter(x=>!['completed','failed','cancelled','reversed'].includes(String(x.status||'').toLowerCase()) || (x.reconciliation_state&&x.reconciliation_state!=='reconciled'));
-  const risky=rr.filter(x=>String(x.decision||'').toLowerCase()!=='allow');
-  const last=rows[0];
-  const lastState=last?((last.reconciliation_state||'sin estado')+' · '+(last.status||'sin estado')):'sin operaciones';
-  box.innerHTML='<b>Estado observado (solo lectura)</b><br>Última operación: '+esc(lastState)+
-   '<br>Operaciones revisadas: '+rows.length+
-   '<br>Evaluaciones de riesgo revisadas: '+rr.length+
-   '<br>Pendientes/ambiguas detectadas: '+unreconciled.length+
-   '<br>Decisiones de riesgo distintas de allow: '+risky.length+
-   '<br><small>Esto no certifica RLS, RPC, grants, triggers ni permisos reales; esos controles deben verificarse directamente en Supabase.</small>';
-  box.className='notice'+((unreconciled.length||risky.length)?' warn':'');
- }catch(e){
-  box.className='notice warn';
-  box.textContent='No se pudo completar la auditoría de lectura: '+(e?.message||e)+'. Esto no implica que el flujo sea inseguro; tampoco permite certificar permisos backend.';
- }
-}
-async function loadHomeOperationalSummary(){
- try{
-  const u=(await CP.auth.getUser()).data?.user;
-  if(!u)throw new Error('Sesión no disponible');
-  const [gp,tx]=await Promise.all([
-   CP.from('game_player_progress').select('current_phase,total_games,total_reward_crx').eq('user_id',u.id).maybeSingle(),
-   CP.from('transactions').select('amount,status,type,rail,created_at').eq('user_id',u.id).eq('type','game_reward').eq('currency','CRX').eq('status','completed').order('created_at',{ascending:true}).limit(100)
-  ]);
-  if(gp.error)throw gp.error;
-  if(tx.error)throw tx.error;
-  const g=gp.data;
-  const rewards=(tx.data||[]).reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-  const progressReward=Number(g?.total_reward_crx)||0;
-  const verified=rewards;
-  if(q('homeGameReward'))q('homeGameReward').textContent=fmt(verified)+' CRX';
-  if(q('homeGameCount'))q('homeGameCount').textContent=String(g?.total_games??(tx.data||[]).length);
-  if(q('homeGamePhase'))q('homeGamePhase').textContent=String(g?.current_phase??1);
-  const rewardNode=q('homeGameReward');
-  if(rewardNode){
-   rewardNode.title=(Math.abs(progressReward-verified)<0.00000001)
-    ?'Verificado contra transactions.game_reward completadas.'
-    :'Revisar: el progreso del juego no coincide con las recompensas liquidadas.';
-   rewardNode.style.textDecoration=Math.abs(progressReward-verified)<0.00000001?'none':'underline';
-  }
- }catch(_){
-  if(q('homeGameReward'))q('homeGameReward').textContent='—';
-  if(q('homeGameCount'))q('homeGameCount').textContent='—';
-  if(q('homeGamePhase'))q('homeGamePhase').textContent='—';
- }
- try{
-  if(!q('homeRechargeProvider'))return;
-  const {data:d}=await CP.functions.invoke('mobile-recharge-gateway',{body:{op:'status'}});
-  q('homeRechargeProvider').innerHTML=d?.configured&&d?.live?'<span class="verified">● Gateway y proveedor accesibles</span>':'<span class="wait">● Gateway integrado; falta activar credencial del proveedor</span>';
- }catch(_){q('homeRechargeProvider').textContent='Estado del proveedor no disponible.'}
-}
-async function syncQvaPayRates(){
- const {data:{session},error:se}=await CP.auth.getSession();
- if(se)throw se;
- if(!session?.access_token)throw new Error('No hay una sesión autenticada con JWT.');
- const {data,error}=await CP.functions.invoke('financial-exchange-gateway',{
-  body:{operation:'sync_rates'},
-  headers:{Authorization:`Bearer ${session.access_token}`}
- });
- if(error)throw error;
- if(!data?.ok)throw new Error(data?.message||data?.code||'El gateway no confirmó la sincronización.');
- const synced=Array.isArray(data?.rates?.synced)?data.rates.synced:[];
- const rows=synced.map(x=>`<div class="notice"><b>${esc(x.currency)}</b> · ${esc(x.network||'—')} · tasa CRX→${esc(x.currency)}: ${fmt(x.rate)}</div>`).join('');
- modalM('Tasas QvaPay sincronizadas',`<div class="msg ok">JWT de usuario aceptado. No se ejecutó ningún exchange ni se modificó el saldo.</div><p class="notice">CRX→USD base: ${fmt(data?.rates?.crx_usd_rate)}</p>${rows||'<div class="msg warn">QvaPay no devolvió monedas elegibles para sincronizar.</div>'}`);
-}
-async function systemAuditPanel(){
- modalM('Auditoría integral · solo lectura','<div id="systemAuditBox" class="notice">Ejecutando auditoría local y financiera…</div>');
- const box=q('systemAuditBox'); if(!box)return;
- const rows=[]; const add=(name,ok,detail)=>rows.push('<div class="mini-row"><span><b>'+e(name)+'</b></span><span class="'+(ok?'ok-text':'danger-text')+'">'+(ok?'OK':'REVISAR')+'</span><br><small>'+e(detail)+'</small></div>');
- const ops=[...document.querySelectorAll('[data-op]')].map(x=>x.dataset.op).filter(Boolean);
- const mapped=new Set(['transfer','receive','deposit','withdraw','recharge','orders','invoices','links','pay','admin','payment_methods','p2p','crypto','crm','provider','security','financial_audit','sync_rates','diagnostics','system_audit','integrity','withdrawal_audit','ai','reconciliation','incidents','usdt_gateway','performance','preflight','financial_lab','transaction_verify','state_machine','orchestrator','execution_kernel','e2e_full_test']);
- const missing=[...new Set(ops.filter(x=>!mapped.has(x)))];
- add('Botones de operación',missing.length===0,missing.length?'Sin manejador declarado: '+missing.join(', '):ops.length+' operaciones declaradas con ruta de UI');
- add('Sesión',!!currentUser,getCurrentUser()?.email||'No autenticada');
- try{
-  const {data:w,error}=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',getCurrentUser()?.id).order('currency');
-  if(error)throw error;
-  const bad=(w||[]).filter(x=>Number(x.balance)<0||Number(x.locked)<0||Number(x.locked)>Number(x.balance));
-  add('Integridad básica de wallets',bad.length===0,bad.length?'Filas a revisar: '+bad.length:(w||[]).length+' wallets consultadas; sin valores negativos');
- }catch(x){add('Wallets',false,x?.message||String(x))}
- try{
-  const {data:t,error}=await CP.from('transactions').select('id,status,type,amount,currency,reconciliation_state,external_id').eq('user_id',getCurrentUser()?.id).order('created_at',{ascending:false}).limit(100);
-  if(error)throw error;
-  const open=(t||[]).filter(x=>['pending','processing','created'].includes(String(x.status||'').toLowerCase()));
-  const unreconciled=(t||[]).filter(x=>x.reconciliation_state&&x.reconciliation_state!=='reconciled'&&!['failed','cancelled','reversed'].includes(String(x.status||'').toLowerCase()));
-  add('Transacciones reales',true,(t||[]).length+' consultadas; abiertas '+open.length+'; no conciliadas '+unreconciled.length);
-  const txIds=new Set((t||[]).map(x=>x.id));
-  const {data:le,error:lee}=await CP.from('ledger_entries').select('transaction_id').in('transaction_id',[...txIds]);
-  if(lee) throw lee;
-  const covered=new Set((le||[]).map(x=>x.transaction_id));
-  const missingLedger=(t||[]).filter(x=>x.status==='completed'&&!covered.has(x.id));
-  add('Ledger de transacciones del usuario',missingLedger.length===0,missingLedger.length?missingLedger.length+' transacciones completadas sin ledger; son excepciones históricas, no se modifican automáticamente.':(t||[]).filter(x=>x.status==='completed').length+' completadas con ledger correspondiente');}catch(x){add('Transacciones',false,x?.message||String(x))}
- try{
-  const {data:p,error}=await CP.from('provider_transactions').select('id,transaction_id,provider,provider_status,provider_transaction_id').eq('provider','qvapay').order('created_at',{ascending:false}).limit(50);
-  if(error)throw error;
-  add('Trazabilidad QvaPay',true,(p||[]).length+' registros visibles para la cuenta mediante RLS');
- }catch(x){add('Trazabilidad QvaPay',false,x?.message||String(x))}
- try{
-  const {data:r,error}=await CP.functions.invoke('cuba-plus-ai-v2',{body:{question:'¿Qué es CUBA PLUS PAY?'}});
-  add('CUBA PLUS AI',!error&&r?.ok===true,error?.message||r?.code||((r?.ai?'IA generativa':'motor verificado')+' respondió correctamente'));
- }catch(x){add('CUBA PLUS AI',false,x?.message||String(x))}
- try{
-  const {data:r,error}=await CP.functions.invoke('qvapay-gateway',{body:{operation:'webhook_status'}});
-  add('QvaPay control center',!error&&r?.ok===true,error?.message||('Eventos observados: '+(r?.audit?.qvapay_events_count??'—')+' · operaciones del usuario: '+(r?.audit?.user_provider_transactions?.length??0)));
- }catch(x){add('QvaPay control center',false,x?.message||String(x))}
- try{
-  const {data:r,error}=await CP.functions.invoke('auth-financial-e2e',{body:{}});
-  const rc=r?.reconciliation||{};
-  add('E2E financiero aislado',!error&&rc.all_wallets_conserved===true,error?.message||('Conservación: '+(rc.all_wallets_conserved?'OK':'REVISAR')+' · diferencia '+(rc.total_delta??'—')));
- }catch(x){add('E2E financiero',false,x?.message||String(x))}
- add('Funciones SECURITY DEFINER · revisión 25/25',true,'25 funciones sensibles revisadas: acceso explícito solo para authenticated/service_role; sin EXECUTE para anon; search_path fijado. El aviso 0029 permanece porque estas funciones necesitan privilegios elevados para operaciones financieras/RLS y no se eliminan sin romper el flujo.');
- add('Protección contra contraseñas comprometidas',false,'Supabase Auth mantiene esta opción pendiente de activación en Dashboard → Authentication → Password Security. La app no puede activarla desde el navegador sin credenciales de administración.');
- const runtime=window.__CPP_RUNTIME||{};
- add('Errores JavaScript de runtime',(runtime.errors||[]).length===0,(runtime.errors||[]).length+' acumulados desde el arranque');
- box.innerHTML='<div class="card"><b>CUBA PLUS PAY · auditoría integral</b><div class="mini-list">'+rows.join('')+'</div></div><div class="notice">Esta auditoría es de lectura: no crea pagos, no altera saldos, no ejecuta exchanges ni liquida operaciones. Una comprobación marcada “REVISAR” no cambia fondos.</div>';
-}
-
-async function diagnosticsPanel(){
- modalM('Diagnóstico técnico · solo lectura','<div id="diagBox" class="notice">Ejecutando comprobaciones…</div>');
- const box=q('diagBox');
- const rows=[];
- const add=(name,ok,detail)=>rows.push('<div class="mini-row"><span><b>'+e(name)+'</b></span><span class="'+(ok?'ok-text':'danger-text')+'">'+(ok?'OK':'REVISAR')+'</span><br><small>'+e(detail)+'</small></div>');
- add('HTML cargado',document.documentElement?.tagName==='HTML','Documento DOM disponible');
- add('Supabase cliente',!!CP,'Cliente Supabase inicializado');
- try{
-  const {data:{session},error}=await CP.auth.getSession();
-  add('Sesión',!error&&!!session,error?error.message:(session?'JWT de sesión presente':'Sin sesión autenticada'));
-  if(session){
-   const {data:user,error:ue}=await CP.auth.getUser();
-   add('Usuario autenticado',!ue&&!!user,ue?.message||user?.email||'—');
-  }
- }catch(x){add('Auth',false,x?.message||String(x))}
- try{
-  const {data,error}=await CP.functions.invoke('financial-exchange-gateway',{body:{operation:'rates'}});
-  add('Tasas CRX',!error&&Array.isArray(data)&&data.length>0,error?.message||((data||[]).length+' tasas habilitadas consultadas'));
- }catch(x){add('Tasas CRX',false,x?.message||String(x))}
- try{
-  const {data,error}=await CP.functions.invoke('financial-exchange-gateway',{body:{operation:'rates'}});
-  add('Exchange Gateway',!error&&data?.ok,error?.message||data?.message||data?.code||'Gateway consultado');
- }catch(x){add('Exchange Gateway',false,x?.message||String(x))}
- try{
-  const {data,error}=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',getCurrentUser()?.id).eq('currency','CRX').maybeSingle();
-  const bal=Number(data?.balance||0),locked=Number(data?.locked||0);
-  const ok=!error&&!!data&&Number.isFinite(bal)&&Number.isFinite(locked)&&locked>=0&&locked<=bal;
-  add('Exchange CRX · saldo disponible',ok,error?.message||('Balance '+bal.toFixed(8)+' CRX · bloqueado '+locked.toFixed(8)+' · disponible '+(bal-locked).toFixed(8)));
- }catch(x){add('Exchange CRX · wallet',false,x?.message||String(x))}
- try{
-  const {data,error}=await CP.functions.invoke('qvapay-health',{body:{}});
-  add('QvaPay Gateway',!error&&data?.ok!==false,error?.message||data?.message||data?.code||'Endpoint consultado');
- }catch(x){add('QvaPay Gateway',false,x?.message||String(x))}
- try{
-  const {data,error}=await CP.functions.invoke('qvapay-gateway',{body:{operation:'webhook_status'}});
-  add('QvaPay Webhook',!error&&data?.ok===true,error?.message||data?.message||data?.code||'Endpoint de webhook consultado');
- }catch(x){add('QvaPay Webhook',false,x?.message||String(x))}
- try{
-  const {data,error}=await CP.functions.invoke('mobile-recharge-gateway',{body:{op:'status'}});
-  add('Recargas Gateway',!error&&!!data,error?.message||data?.code||data?.message||'Estado consultado');
- }catch(x){add('Recargas Gateway',false,x?.message||String(x))}
- const runtime=window.__CPP_RUNTIME||{};
- add('Errores JavaScript acumulados',!(runtime.errors||[]).length,(runtime.errors||[]).length+' errores desde el arranque');
- box.innerHTML='<div class="card"><b>Diagnóstico CUBA PLUS PAY V7.5.2</b><div class="mini-list">'+rows.join('')+'</div></div><div class="notice">Este diagnóstico no cambia saldos, no crea pagos y no ejecuta exchanges. Sirve para detectar fallos de arranque y conectividad.</div>';
-}
-
-async function usdtOnchainPanel(){
- modalM('USDT On-Chain Gateway · TRC20','<div id="usdtGatewayBox" class="notice">Consultando capacidades reales…</div>');
- const box=q('usdtGatewayBox'); if(!box)return;
- try{
-  const {data,error}=await CP.functions.invoke('usdt-onchain-gateway',{body:{operation:'capabilities'}});
-  if(error)throw error; if(!data?.ok)throw new Error(data?.code||data?.message||'Gateway no disponible');
-  const l=data.limits||{};
-  box.innerHTML='<div class="card"><b>Capacidades verificadas</b><div class="mini-list">'+
-   '<div class="mini-row"><span>Activo</span><b>'+esc(data.asset||'USDT_TRC20')+'</b></div>'+
-   '<div class="mini-row"><span>Red</span><b>'+esc(data.network||'TRON')+' · '+esc(data.token_standard||'TRC20')+'</b></div>'+
-   '<div class="mini-row"><span>Wallet interna</span><span class="'+(data.wallet_enabled?'ok-text':'danger-text')+'">'+(data.wallet_enabled?'HABILITADA':'DESHABILITADA')+'</span></div>'+
-   '<div class="mini-row"><span>Depósito on-chain</span><span class="'+(data.deposit_enabled?'ok-text':'danger-text')+'">'+(data.deposit_enabled?'HABILITADO':'NO HABILITADO')+'</span></div>'+
-   '<div class="mini-row"><span>Retiro on-chain</span><span class="'+(data.withdraw_enabled&&data.native_provider_rail_connected?'ok-text':'danger-text')+'">'+(data.withdraw_enabled&&data.native_provider_rail_connected?'HABILITADO':'BLOQUEADO')+'</span></div>'+
-   '<div class="mini-row"><span>Proveedor</span><b>'+esc(data.provider||'—')+'</b></div>'+
-   '<div class="mini-row"><span>Límites</span><b>'+fmt(l.min_out)+' – '+fmt(l.max_out)+' USDT</b></div>'+
-   '</div></div>'+
-   '<div class="notice">El gateway ya valida red, dirección TRON, límites y saldo disponible sin mover fondos. El envío blockchain permanece bloqueado mientras el catálogo real no confirme un rail de custodia/proveedor conectado.</div>'+
-   '<div class="field"><label>Dirección TRON para validar</label><input id="usdtTronAddress" maxlength="34" placeholder="T…"></div><button id="usdtValidateBtn" class="btn secondary full">Validar dirección</button><div id="usdtValidateMsg" class="msg hidden"></div>'+
-   '<div class="field"><label>Monto USDT</label><input id="usdtQuoteAmount" type="number" min="0.01" step="0.01" placeholder="0.00"></div><button id="usdtQuoteBtn" class="btn secondary full">Cotizar retiro</button><div id="usdtQuoteMsg" class="msg hidden"></div>';
-  q('usdtValidateBtn')?.addEventListener('click',async()=>{
-    const address=q('usdtTronAddress')?.value.trim()||''; if(!address)return msg('usdtValidateMsg','Escribe una dirección TRON.','error');
-    const {data,error}=await CP.functions.invoke('usdt-onchain-gateway',{body:{operation:'validate_address',wallet_address:address}});
-    if(error)return msg('usdtValidateMsg',error.message,'error');
-    msg('usdtValidateMsg',data?.valid?'Dirección TRON válida para el formato TRC20.':'Dirección TRON no válida.',''+(data?.valid?'ok':'error'));
-  });
-  q('usdtQuoteBtn')?.addEventListener('click',async()=>{
-    const amount=Number(q('usdtQuoteAmount')?.value||0),address=q('usdtTronAddress')?.value.trim()||'';
-    if(!Number.isFinite(amount)||amount<=0)return msg('usdtQuoteMsg','Indica un monto válido.','error');
-    if(!address)return msg('usdtQuoteMsg','Valida primero una dirección TRON.','error');
-    const {data,error}=await CP.functions.invoke('usdt-onchain-gateway',{body:{operation:'quote_withdrawal',amount,wallet_address:address}});
-    if(error)return msg('usdtQuoteMsg',error.message,'error');
-    if(!data?.ok)return msg('usdtQuoteMsg',data?.code||'No hay cotización.','error');
-    msg('usdtQuoteMsg','Cotización solo lectura: '+fmt(data.amount)+' USDT · comisión estimada '+fmt(data.fee)+' · recibirías '+fmt(data.receive_amount)+' USDT · disponible '+fmt(data.available_balance)+' USDT · retiro habilitado: '+(data.withdrawal_enabled?'sí':'no'),' '+(data.can_submit?'ok':'wait'));
-  });
- }catch(e){box.className='notice warn';box.textContent='No se pudo consultar el gateway: '+(e?.message||e);}
-}
-
-async function financialPreflightPanel(){
- modalM('Preflight financiero · GO / NO-GO','<div id="preflightBox" class="notice">Ejecutando controles de seguridad y consistencia sin mover fondos…</div>');
- const box=q('preflightBox'); if(!box)return;
- const rows=[]; let hardFail=0, review=0;
- const add=(name,state,detail)=>{const cls=state==='GO'?'ok-text':state==='REVISAR'?'wait':'danger-text';if(state==='NO-GO')hardFail++;else if(state==='REVISAR')review++;rows.push('<div class="mini-row"><div><b>'+esc(name)+'</b><br><small>'+esc(detail)+'</small></div><span class="'+cls+'">'+state+'</span></div>')};
- try{
-  const {data:{session},error}=await CP.auth.getSession();
-  if(error||!session){add('Sesión autenticada','NO-GO',error?.message||'Se necesita una sesión JWT válida.');box.innerHTML='<div class="card"><b>Resultado: NO-GO</b><div class="mini-list">'+rows.join('')+'</div></div><div class="notice">No se ejecutó ninguna operación financiera. Inicia sesión y vuelve a ejecutar el preflight.</div>';return;}
-  const {data:user,error:ue}=await CP.auth.getUser();
-  if(ue||!user){add('Identidad del usuario','NO-GO',ue?.message||'No se pudo validar el usuario.');}
-  else add('Identidad del usuario','GO','JWT válido · '+(user.email||'usuario autenticado'));
- }catch(x){add('Autenticación','NO-GO',x?.message||String(x));}
- if(hardFail===0)try{
-  const {data:w,error}=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',getCurrentUser()?.id).order('currency');
-  if(error)throw error;
-  const bad=(w||[]).filter(x=>Number(x.balance)<0||Number(x.locked)<0||Number(x.locked)>Number(x.balance));
-  add('Invariantes de wallets',bad.length?'NO-GO':'GO',bad.length?bad.length+' wallet(s) con balance/locked inválido.':(w||[]).length+' wallets verificadas');
- }catch(x){add('Invariantes de wallets','NO-GO',x?.message||String(x));}
- if(hardFail===0)try{
-  const {data:r,error}=await CP.functions.invoke('financial-exchange-gateway',{body:{operation:'rates'}});
-  add('Tasas de exchange','GO',error?.message||((r?.rates?.length??r?.data?.length??0)+' tasas consultadas sin ejecutar conversión'));
- }catch(x){add('Tasas de exchange','REVISAR',x?.message||String(x));}
- if(hardFail===0)try{
-  const {data:a,error}=await CP.rpc('financial_reconciliation_audit',{p_user:getCurrentUser()?.id});
-  if(error)throw error;
-  add('Motor de reconciliación','GO',a?.ok===false?'El backend reportó hallazgos; revisar detalle.':'Auditoría de solo lectura ejecutada');
-  if(a?.ok===false)review++;
- }catch(x){add('Motor de reconciliación','REVISAR',x?.message||String(x));}
- if(hardFail===0)try{
-  const {data:a,error}=await CP.rpc('financial_incident_scan',{p_user:getCurrentUser()?.id});
-  if(error)throw error;
-  const n=Array.isArray(a?.incidents)?a.incidents.length:0;
-  add('Detector de incidentes',n?'REVISAR':'GO',n?('Incidentes detectados: '+n):'Sin incidentes según las reglas actuales');
- }catch(x){add('Detector de incidentes','REVISAR',x?.message||String(x));}
- if(hardFail===0)try{
-  const {data:a,error}=await CP.rpc('audit_withdrawal_integrity',{p_user:getCurrentUser()?.id});
-  if(error)throw error;
-  add('Integridad de retiros',a?.ok===false?'REVISAR':'GO',a?.ok===false?'El motor encontró una inconsistencia.':'Wallet, locks, proveedor y ledger coherentes');
- }catch(x){add('Integridad de retiros','REVISAR',x?.message||String(x));}
- if(hardFail===0)try{
-  const {data:a,error}=await CP.functions.invoke('usdt-onchain-gateway',{body:{operation:'capabilities'}});
-  if(error)throw error;
-  add('Rail USDT TRC20',a?.withdraw_enabled&&a?.native_provider_rail_connected?'GO':'REVISAR',a?.withdraw_enabled&&a?.native_provider_rail_connected?'Rail de retiro conectado':'Retiro on-chain permanece bloqueado hasta conectar custodia/proveedor real');
- }catch(x){add('Rail USDT TRC20','REVISAR',x?.message||String(x));}
- if(hardFail===0)try{
-  const {data:a,error}=await CP.functions.invoke('cuba-plus-ai-v2',{body:{question:'Devuelve únicamente: PREFLIGHT_OK'}});
-  add('CUBA PLUS AI',!error&&a?.ok===true?'GO':'REVISAR',error?.message||'Endpoint AI respondió; esto no autoriza movimientos financieros');
- }catch(x){add('CUBA PLUS AI','REVISAR',x?.message||String(x));}
- const verdict=hardFail?'NO-GO':review?'REVISAR':'GO';
- box.innerHTML='<div class="card"><b>Resultado global: <span class="'+(verdict==='GO'?'ok-text':verdict==='REVISAR'?'wait':'danger-text')+'">'+verdict+'</span></b><div class="mini-list">'+rows.join('')+'</div></div><div class="notice">Este preflight es estrictamente de lectura. No crea CRX, no ejecuta exchange, no bloquea fondos, no libera escrow y no envía USDT. Un resultado GO habilita el siguiente paso de prueba controlada; no certifica producción.</div>';
-}
-
-async function financialLabPanel(){
- modalM('Laboratorio financiero · circuito controlado','<div id="labBox" class="notice">Preparando prueba segura…</div>');
- const box=q('labBox'); if(!box)return;
- const escapeHtml=(v)=>esc(String(v??''));
- const state={quote:null,armed:false};
- try{
-  const {data:{session},error:se}=await CP.auth.getSession();
-  if(se||!session){box.innerHTML='<div class="card"><b class="danger-text">NO-GO</b><p>Se necesita una sesión JWT válida.</p></div>';return;}
-  const {data:user,error:ue}=await CP.auth.getUser();
-  if(ue||!user){box.innerHTML='<div class="card"><b class="danger-text">NO-GO</b><p>No se pudo validar la identidad.</p></div>';return;}
-  const {data:w,error:we}=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',user.id).eq('currency','CRX').maybeSingle();
-  if(we)throw we;
-  const available=Math.max(0,Number(w?.balance||0)-Number(w?.locked||0));
-  const minTest=Math.min(0.01,available);
-  box.innerHTML='<div class="card"><b>Circuito de prueba controlada</b><div class="mini-list">'+
-   '<div class="mini-row"><span>Sesión JWT</span><span class="ok-text">OK</span></div>'+
-   '<div class="mini-row"><span>CRX disponible</span><span>'+escapeHtml(available.toFixed(8))+'</span></div>'+ 
-   '<div class="mini-row"><span>Monto candidato</span><span>'+escapeHtml(minTest.toFixed(8))+' CRX</span></div>'+ 
-   '</div></div>'+
-   '<div class="notice">Esta fase NO mueve fondos. Primero obtiene una cotización real y verifica idempotencia, límites y capacidad del backend. La ejecución de exchange queda bloqueada hasta una confirmación explícita.</div>'+ 
-   '<div class="actions"><button class="btn" id="labQuote" '+(minTest<=0?'disabled':'')+'>1 · Cotizar prueba</button><button class="btn" id="labArm" disabled>2 · Armar ejecución</button><button class="btn danger" id="labExecute" disabled>3 · Ejecutar exchange real</button></div>'+ 
-   '<div id="labResult" class="notice">Monto sugerido: '+escapeHtml(minTest.toFixed(8))+' CRX. Si no quieres mover fondos, puedes detenerte después de la cotización.</div>';
-  const result=q('labResult'), quoteBtn=q('labQuote'), armBtn=q('labArm'), execBtn=q('labExecute');
-  quoteBtn?.addEventListener('click',async()=>{
-   quoteBtn.disabled=true; result.textContent='Consultando quote real…';
-   try{
-    const {data,error}=await CP.functions.invoke('financial-exchange-gateway',{body:{operation:'quote_exchange',direction:'crx_to_asset',currency:'USDT_TRC20',amount:minTest}});
-    if(error)throw error;
-    if(!data?.ok)throw new Error(data?.code||'QUOTE_REJECTED');
-    state.quote=data;
-    result.innerHTML='<b class="ok-text">QUOTE OK</b><br>CRX: '+escapeHtml(data.amount??minTest)+' → USDT_TRC20: '+escapeHtml(data.output_amount??data.quoted_output??data.net_output??'calculado por gateway')+'<br>Fee: '+escapeHtml(data.fee??data.fee_amount??0)+'<br><small>La cotización no mueve fondos. Validez: '+escapeHtml(data.valid_until||data.expires_at||'según gateway')+'</small>';
-    armBtn.disabled=false;
-   }catch(e){result.innerHTML='<b class="danger-text">QUOTE NO-GO</b><br>'+escapeHtml(e?.message||e);}
-   finally{quoteBtn.disabled=false;}
-  });
-  armBtn?.addEventListener('click',()=>{
-   if(!state.quote){return;}
-   state.armed=true; armBtn.disabled=true; execBtn.disabled=false;
-   result.innerHTML='<b>EXECUTION ARMED</b><br>Se habilitó únicamente el botón de ejecución real. Revisa el monto y la cotización antes de continuar.';
-  });
-  execBtn?.addEventListener('click',async()=>{
-   if(!state.armed||!state.quote)return;
-   const ok=window.confirm('ATENCIÓN: esta acción puede mover CRX real y crear una operación financiera. ¿Confirmas ejecutar '+minTest.toFixed(8)+' CRX → USDT_TRC20?');
-   if(!ok)return;
-   execBtn.disabled=true; result.textContent='Ejecutando con idempotencia…';
-   const id='LAB-'+crypto.randomUUID();
-   try{
-    const {data,error}=await CP.functions.invoke('financial-exchange-gateway',{body:{operation:'exchange_crx',to_currency:'USDT_TRC20',amount:minTest,p_idempotency:id}});
-    if(error)throw error;
-    if(!data?.ok)throw new Error(data?.code||'EXCHANGE_REJECTED');
-    const txId=data.transaction_id||'';
-    let verification='';
-    if(txId){
-      try{
-        const [vr,sr]=await Promise.all([
-          CP.rpc('financial_transaction_verify',{p_transaction_id:txId}),
-          CP.rpc('financial_transaction_state_machine',{p_transaction_id:txId})
-        ]);
-        if(vr.error)throw vr.error;
-        if(sr.error)throw sr.error;
-        verification='<div class="notice"><b>Verificación posterior</b><br>Transaction Verify: <span class="'+(vr.data?.state==='GO'?'ok-text':'wait')+'">'+escapeHtml(vr.data?.state||'REVISAR')+'</span><br>State Machine: <span class="'+(sr.data?.state==='SETTLED_VERIFIED'?'ok-text':sr.data?.state==='FAILED_TERMINAL'?'danger-text':'wait')+'">'+escapeHtml(sr.data?.state||'REVISAR')+'</span><br>Siguiente acción: '+escapeHtml(sr.data?.next_action||'—')+'</div>';
-      }catch(verr){
-        verification='<div class="msg warn">Exchange aceptado, pero la verificación posterior no pudo completarse: '+escapeHtml(verr?.message||verr)+'</div>';
-      }
-    }
-    result.innerHTML='<b class="ok-text">EXCHANGE ACEPTADO</b><br>Idempotencia: '+escapeHtml(id)+'<br>Transaction: '+escapeHtml(txId)+'<br>'+verification;
-   }catch(e){result.innerHTML='<b class="danger-text">EXCHANGE NO COMPLETADO</b><br>'+escapeHtml(e?.message||e)+'<br><small>La clave de idempotencia evita repetir accidentalmente la misma solicitud.</small>';}
-   finally{execBtn.disabled=false;}
-  });
- }catch(e){box.innerHTML='<div class="card"><b class="danger-text">LAB NO-GO</b><p>'+escapeHtml(e?.message||e)+'</p></div>';}
-}
-
-async function transactionStateMachinePanel(transactionId=''){
- modalM('State Machine Financiera · Control de ciclo','<div id="stateBox" class="notice">Preparando máquina de estados…</div>');
- const box=q('stateBox'); if(!box)return;
- box.innerHTML='<div class="card"><b>Orquestador de estados</b><p class="notice">Motor de solo lectura. Observa Transaction, Ledger, Journal, Provider y reconciliación. No mueve fondos ni cambia estados.</p><div class="field"><label>Transaction UUID</label><input id="stateTxId" value="'+esc(String(transactionId||''))+'" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off"></div><div class="actions"><button class="btn" id="stateRun">Analizar ciclo</button></div></div><div id="stateResult" class="notice">Esperando una transacción.</div>';
- const input=q('stateTxId'),run=q('stateRun'),result=q('stateResult');
- run?.addEventListener('click',async()=>{
-  const id=(input?.value||'').trim();
-  if(!/^[0-9a-fA-F-]{36}$/.test(id)){result.innerHTML='<b class="danger-text">NO-GO</b><br>UUID no válido.';return;}
-  run.disabled=true; result.textContent='Calculando estado financiero…';
-  try{
-   const {data,error}=await CP.rpc('financial_transaction_state_machine',{p_transaction_id:id}); if(error)throw error;
-   if(!data?.ok)throw new Error(data?.code||'STATE_MACHINE_ERROR');
-   const st=String(data.state||'UNKNOWN'), action=String(data.next_action||'—');
-   const blockers=Array.isArray(data.blockers)?data.blockers:[];
-   const obs=data.observed||{};
-   const terminal=data.terminal===true;
-   result.innerHTML='<div class="card"><b>Estado: <span class="'+(st==='SETTLED_VERIFIED'?'ok-text':st==='FAILED_TERMINAL'?'danger-text':'wait')+'">'+esc(st)+'</span></b><p class="notice">Siguiente acción segura: <b>'+esc(action)+'</b><br>Terminal: '+(terminal?'Sí':'No')+'</p><div class="mini-list"><div class="mini-row"><span>Ledger</span><span>'+esc(obs.ledger_count??0)+'</span></div><div class="mini-row"><span>Journal</span><span>'+esc(obs.journal_count??0)+'</span></div><div class="mini-row"><span>Provider</span><span>'+esc(obs.provider_count??0)+'</span></div><div class="mini-row"><span>Reconciliación</span><span>'+esc(obs.reconciliation_state||'—')+'</span></div></div>'+(blockers.length?'<div class="msg error"><b>Bloqueadores</b><br>'+blockers.map(esc).join('<br>')+'</div>':'<div class="msg ok">Sin bloqueadores detectados por este motor.</div>')+'<div class="notice">Flujo: REQUESTED → VALIDATED → RISK_CHECKED → RESERVED → EXECUTED → LEDGER_POSTED → RECONCILED → VERIFIED → SETTLED</div></div>';
-  }catch(e){result.innerHTML='<b class="danger-text">STATE MACHINE NO COMPLETADA</b><br>'+esc(e?.message||e);}
-  finally{run.disabled=false;}
- });
- if(transactionId)run?.click();
-}
-
-async function transactionVerificationPanel(transactionId=''){
- modalM('Verificación E2E · Financial Control Plane','<div id="verifyBox" class="notice">Preparando verificación…</div>');
- const box=q('verifyBox'); if(!box)return;
- const safe=esc(String(transactionId||''));
- box.innerHTML='<div class="card"><b>Motor de verificación</b><p>Solo lectura: no crea dinero, no modifica wallets y no ejecuta operaciones.</p><div class="field"><label>Transaction UUID</label><input id="verifyTxId" value="'+safe+'" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off"></div><div class="actions"><button class="btn" id="verifyRun">Ejecutar verificación</button></div></div><div id="verifyResult" class="notice">Esperando una transacción.</div>';
- const input=q('verifyTxId'), run=q('verifyRun'), result=q('verifyResult');
- run?.addEventListener('click',async()=>{
-  const id=(input?.value||'').trim();
-  if(!/^[0-9a-fA-F-]{36}$/.test(id)){result.innerHTML='<b class="danger-text">NO-GO</b><br>UUID no válido.';return;}
-  run.disabled=true; result.textContent='Ejecutando Transaction → Ledger → Journal → Idempotencia…';
-  try{
-   const {data,error}=await CP.rpc('financial_transaction_verify',{p_transaction_id:id});
-   if(error)throw error;
-   const checks=Array.isArray(data?.checks)?data.checks:[];
-   const state=data?.state||'REVISAR';
-   result.innerHTML='<div class="card"><b>Resultado: <span class="'+(state==='GO'?'ok-text':state==='NO-GO'?'danger-text':'wait')+'">'+esc(state)+'</span></b><div class="mini-list">'+checks.map(c=>'<div class="mini-row"><div><b>'+esc(c.name)+'</b><br><small>'+esc(c.detail)+'</small></div><span class="'+(c.state==='GO'?'ok-text':c.state==='NO-GO'?'danger-text':'wait')+'">'+esc(c.state)+'</span></div>').join('')+'</div><div class="notice">TX: '+esc(data?.transaction_id||id)+' · Referencia: '+esc(data?.reference||'')+' · Estado: '+esc(data?.status||'')+'</div></div>';
-  }catch(e){result.innerHTML='<b class="danger-text">VERIFICACIÓN NO COMPLETADA</b><br>'+esc(e?.message||e);}
-  finally{run.disabled=false;}
- });
- if(transactionId)run?.click();
-}
-
-async function databasePerformancePanel(){
- modalM('Rendimiento de base de datos · solo lectura','<div id="perfBox" class="notice">Analizando controles de rendimiento…</div>');
- const box=q('perfBox'); if(!box)return;
- try{
-  const {data,error}=await CP.functions.invoke('qvapay-gateway',{body:{operation:'webhook_status'}});
-  const ok=!error&&data?.ok===true;
-  box.innerHTML='<div class="card"><b>Endurecimiento aplicado</b><div class="mini-list">'+
-   '<div class="mini-row"><span>Índices de claves foráneas</span><span class="ok-text">22/22 creados</span></div>'+
-   '<div class="mini-row"><span>RLS auth.uid()</span><span class="ok-text">Optimizado con SELECT</span></div>'+
-   '<div class="mini-row"><span>Políticas permisivas P2P/Marketplace</span><span class="ok-text">Separadas por operación</span></div>'+
-   '<div class="mini-row"><span>QvaPay gateway</span><span class="'+(ok?'ok-text':'danger-text')+'">'+(ok?'RESPONDE':'REVISAR')+'</span></div>'+
-   '</div></div><div class="notice">No se eliminan índices marcados como “no usados”: esa métrica puede reflejar que el proyecto aún tiene poco tráfico. Primero se mide en uso real y después se decide.</div>';
- }catch(e){box.className='notice warn';box.textContent='No se pudo completar el diagnóstico: '+(e?.message||e);}
-}
-
-async function financialExecutionKernelPanel(){
- modalM('Financial Execution Kernel · V8','<div id=\"execKernelBox\" class=\"notice\">Preparando núcleo de ejecución…</div>');
- const box=q('execKernelBox'); if(!box)return;
- box.innerHTML='<div class=\"card\"><b>Núcleo de ejecución controlada</b><p class=\"notice\">Prepara una intención financiera real sin mover fondos. Genera idempotencia, huella determinista y caducidad. La ejecución final queda separada y requiere el rail/proveedor y autorización correspondientes.</p><div class=\"field\"><label>Tipo</label><select id=\"ekType\"><option value=\"transfer_crx\">Transferencia CRX</option><option value=\"exchange\">Conversión</option><option value=\"deposit\">Depósito</option><option value=\"withdrawal\">Retiro</option><option value=\"p2p\">P2P</option><option value=\"payment\">Pago</option></select></div><div class=\"field\"><label>Moneda</label><input id=\"ekCurrency\" placeholder=\"CRX / USDT_TRC20 / BTC…\"></div><div class=\"field\"><label>Monto</label><input id=\"ekAmount\" type=\"number\" min=\"0\" step=\"any\" placeholder=\"0.00\"></div><div class=\"field\"><label>Destino (opcional)</label><input id=\"ekDestination\" placeholder=\"usuario / wallet / referencia\"></div><div class=\"field\"><label>Rail (opcional)</label><input id=\"ekRail\" placeholder=\"internal / qvapay / tron / p2p…\"></div><div class=\"field\"><label>Idempotency key</label><input id=\"ekIdem\" placeholder=\"mínimo 12 caracteres\"></div><div class=\"actions\"><button class=\"btn\" id=\"ekPrepare\">Preparar intención</button></div></div><div id=\"ekResult\" class=\"notice\">Esperando preflight.</div>';
- const result=q('ekResult'),btn=q('ekPrepare');
- btn?.addEventListener('click',async()=>{
-  const type=q('ekType')?.value,currency=(q('ekCurrency')?.value||'').trim()||null,amountRaw=(q('ekAmount')?.value||'').trim(),amount=amountRaw===''?null:Number(amountRaw),destination=(q('ekDestination')?.value||'').trim()||null,rail=(q('ekRail')?.value||'').trim()||null,idem=(q('ekIdem')?.value||'').trim();
-  if(idem.length<12){result.innerHTML='<b class=\"danger-text\">NO-GO</b><br>La idempotency key debe tener al menos 12 caracteres.';return;}
-  if(amount!==null&&(!Number.isFinite(amount)||amount<=0)){result.innerHTML='<b class=\"danger-text\">NO-GO</b><br>El monto debe ser positivo.';return;}
-  btn.disabled=true; result.textContent='Generando intención segura…';
-  try{const {data,error}=await CP.rpc('financial_execution_prepare',{p_intent_type:type,p_currency:currency,p_amount:amount,p_destination:destination,p_rail:rail,p_idempotency_key:idem});if(error)throw error;result.innerHTML='<div class=\"card\"><b>PREPARED · sin movimiento de fondos</b><div class=\"mini-list\"><div class=\"mini-row\"><span>Intent ID</span><span>'+esc(data?.intent_id||'—')+'</span></div><div class=\"mini-row\"><span>Fingerprint</span><span style=\"word-break:break-all\">'+esc(data?.fingerprint||'—')+'</span></div><div class=\"mini-row\"><span>Idempotente</span><span>'+esc(String(data?.idempotent===true))+'</span></div><div class=\"mini-row\"><span>Expira</span><span>'+esc(data?.expires_at||'—')+'</span></div></div><div class=\"notice\">Este paso NO transfiere, convierte, deposita ni retira dinero. Solo deja una intención verificable para el siguiente ciclo de ejecución.</div></div>';}catch(e){result.innerHTML='<b class=\"danger-text\">ERROR</b><br>'+esc(e?.message||String(e));}finally{btn.disabled=false;}
- });
-}
-
-async function financialOrchestratorPanel(){
- modalM('Financial Orchestrator · Control central','<div id="orchBox" class="notice">Preparando control central…</div>');
- const box=q('orchBox'); if(!box)return;
- box.innerHTML='<div class="card"><b>Orquestador financiero</b><p class="notice">Motor central de <b>solo lectura</b>. Consolida reconciliación, incidentes, integridad de retiros y, opcionalmente, una transacción concreta. No mueve fondos, no libera reservas y no ejecuta recuperación automática.</p><div class="field"><label>Transaction UUID (opcional)</label><input id="orchTxId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off"></div><div class="actions"><button class="btn" id="orchRun">Ejecutar readiness</button></div></div><div id="orchResult" class="notice">Esperando ejecución.</div>';
- const input=q('orchTxId'),run=q('orchRun'),result=q('orchResult');
- run?.addEventListener('click',async()=>{
-  const id=(input?.value||'').trim();
-  if(id&&!/^[0-9a-fA-F-]{36}$/.test(id)){result.innerHTML='<b class="danger-text">NO-GO</b><br>El UUID introducido no es válido.';return;}
-  run.disabled=true; result.textContent='Ejecutando control central…';
-  try{
-   const {data,error}=await CP.rpc('financial_orchestrator_readiness',{p_transaction_id:id||null}); if(error)throw error;
-   const overall=String(data?.overall||'REVIEW');
-   const cls=overall==='GO'?'ok-text':overall==='NO-GO'?'danger-text':'wait';
-   const blockers=Array.isArray(data?.blockers)?data.blockers:[];
-   const warnings=Array.isArray(data?.warnings)?data.warnings:[];
-   const arch=Array.isArray(data?.architecture)?data.architecture:[];
-   const sm=data?.state_machine||{}; const tv=data?.transaction_verification||{};
-   result.innerHTML='<div class="card"><b>Readiness: <span class="'+cls+'">'+esc(overall)+'</span></b><p class="notice">Modo: READ_ONLY · Dinero automático: NO · Liberación automática: NO · Recuperación automática: NO</p>'+
-    '<div class="mini-list"><div class="mini-row"><span>Reconciliación</span><span>'+esc(data?.reconciliation?.ok===true?'OK':'REVISAR')+'</span></div><div class="mini-row"><span>Incidentes</span><span>'+esc(data?.incidents?.ok===true?'OK':'REVISAR')+'</span></div><div class="mini-row"><span>Retiros</span><span>'+esc(data?.withdrawal_integrity?.ok===true?'OK':'REVISAR')+'</span></div>'+(id?'<div class="mini-row"><span>State Machine</span><span>'+esc(sm.state||'—')+'</span></div><div class="mini-row"><span>Verificación E2E</span><span>'+esc(tv.state||'—')+'</span></div>':'')+'</div>'+
-    (blockers.length?'<div class="msg error"><b>Bloqueadores</b><br>'+blockers.map(esc).join('<br>')+'</div>':'<div class="msg ok">Sin bloqueadores críticos detectados por el orquestador.</div>')+
-    (warnings.length?'<div class="msg warn"><b>Advertencias</b><br>'+warnings.map(esc).join('<br>')+'</div>':'')+
-    '<div class="notice"><b>Arquitectura:</b><br>'+arch.map(esc).join(' → ')+'</div></div>';
-  }catch(e){result.innerHTML='<b class="danger-text">ORQUESTADOR NO COMPLETADO</b><br>'+esc(e?.message||e)+'<br><small>No se realizó ningún movimiento financiero.</small>';}
-  finally{run.disabled=false;}
- });
-}
-
-
-async function fullE2ETestPanel(){
- modalM('CUBA PLUS PAY · Prueba E2E completa','<div id="e2eBox" class="notice">Preparando prueba…</div>');
- const box=q('e2eBox'); if(!box)return;
- box.innerHTML='<div class="card"><b>Prueba integral de producción controlada</b><p class="notice">Solo lectura. No crea dinero, no altera saldos, no ejecuta transferencias, no convierte activos y no realiza retiros. Comprueba sesión, acceso a datos propios, módulos financieros y disponibilidad de proveedores.</p><div class="actions"><button class="btn" id="e2eRun">Ejecutar diagnóstico E2E</button></div></div><div id="e2eResult" class="notice">Esperando ejecución.</div>';
- const run=q('e2eRun'),result=q('e2eResult');
- run?.addEventListener('click',async()=>{
-  run.disabled=true; result.textContent='Ejecutando pruebas…';
-  const checks=[];
-  const add=(name,ok,detail)=>checks.push({name,ok,detail});
-  try{
-   const sess=await CP.auth.getSession(); const user=sess?.data?.session?.user||null;
-   add('Sesión autenticada',!!user,user?('JWT activo · '+(user.email||user.id)):'No existe sesión autenticada');
-   if(!user){result.innerHTML='<div class="msg error"><b>NO-GO</b><br>Primero hay que iniciar sesión con un usuario real de Supabase.</div>';return;}
-   const reads=[
-    ['Perfil','profiles','id'],['Wallets','wallets','user_id'],['Transacciones','transactions','user_id'],['Juego','game_player_progress','user_id']
-   ];
-   for(const [name,table,col] of reads){
-    try{const r=await CP.from(table).select('*',{count:'exact',head:false}).eq(col,user.id).limit(5); add(name,!r.error,r.error?r.error.message:('Acceso OK · '+((r.data||[]).length)+' registro(s) visibles'));}
-    catch(e){add(name,false,e?.message||String(e));}
-   }
-   try{
-    const tx=await CP.from('transactions').select('id').eq('user_id',user.id).limit(100);
-    if(tx.error)throw tx.error;
-    const ids=(tx.data||[]).map(x=>x.id).filter(Boolean);
-    if(!ids.length){add('Ledger',true,'Sin transacciones propias para comprobar ledger; no se asume una columna user_id inexistente.');}
-    else{
-      const r=await CP.from('ledger_entries').select('transaction_id',{count:'exact',head:false}).in('transaction_id',ids).limit(100);
-      add('Ledger',!r.error,r.error?r.error.message:('Acceso OK · '+((r.data||[]).length)+' asiento(s) vinculados a transacciones propias'));
-    }
-   }catch(e){add('Ledger',false,e?.message||String(e));}
-   try{const r=await CP.functions.invoke('financial-exchange-gateway',{body:{operation:'rates'}}); add('Tasas de exchange',!r.error,r.error?r.error.message:('Catálogo accesible · '+((r.data||[]).length)+' fila(s)'));}catch(e){add('Tasas de exchange',false,e?.message||String(e));}
-   try{const r=await CP.from('asset_catalog').select('*').limit(20); add('Catálogo de activos',!r.error,r.error?r.error.message:('Activos accesibles · '+((r.data||[]).length)+' fila(s)'));}catch(e){add('Catálogo de activos',false,e?.message||String(e));}
-   try{const r=await CP.rpc('financial_reconciliation_audit',{p_user:user.id}); add('Reconciliación financiera',!r.error,r.error?r.error.message:(r.data?.ok===false?'REVISAR':'RPC respondió'));}catch(e){add('Reconciliación financiera',false,e?.message||String(e));}
-   try{const r=await CP.rpc('financial_incident_scan',{p_user:user.id}); add('Incidentes financieros',!r.error,r.error?r.error.message:(r.data?.ok===false?'REVISAR':'RPC respondió'));}catch(e){add('Incidentes financieros',false,e?.message||String(e));}
-   try{const r=await CP.rpc('audit_withdrawal_integrity',{p_user:user.id}); add('Integridad de retiros',!r.error,r.error?r.error.message:(r.data?.ok===false?'REVISAR':'RPC respondió'));}catch(e){add('Integridad de retiros',false,e?.message||String(e));}
-   try{const r=await CP.rpc('financial_orchestrator_readiness',{p_transaction_id:null}); add('Orquestador financiero',!r.error,r.error?r.error.message:('Readiness: '+(r.data?.overall||'REVIEW')));}catch(e){add('Orquestador financiero',false,e?.message||String(e));}
-   const okCount=checks.filter(x=>x.ok).length, fail=checks.filter(x=>!x.ok).length;
-   result.innerHTML='<div class="card"><b>Resultado E2E: '+(fail?'REVISAR':'CONECTIVIDAD OK')+'</b><div class="mini-list">'+checks.map(x=>'<div class="mini-row"><span>'+esc(x.name)+'</span><span class="'+(x.ok?'ok-text':'danger-text')+'">'+(x.ok?'OK':'ERROR')+'</span></div>').join('')+'</div><div class="notice"><b>Pruebas correctas:</b> '+okCount+' · <b>Errores de acceso:</b> '+fail+'</div><div class="notice">Esto verifica conectividad y lectura segura. Las operaciones que mueven fondos deben probarse después, una por una, con importes pequeños y confirmación explícita.</div><details><summary>Detalle técnico</summary><pre style="white-space:pre-wrap">'+esc(JSON.stringify(checks,null,2))+'</pre></details></div>';
-  }catch(e){result.innerHTML='<div class="msg error"><b>PRUEBA INTERRUMPIDA</b><br>'+esc(e?.message||String(e))+'</div>';}
-  finally{run.disabled=false;}
- });
-}
-
-function bindFinalIntegrations(){
- const advanced=new Set(['p2p','crypto','crm','provider','security','financial_audit','sync_rates','diagnostics','system_audit','integrity','withdrawal_audit','reconciliation','incidents','ai','usdt_gateway','performance','preflight','financial_lab','transaction_verify','state_machine','orchestrator','execution_kernel','e2e_full_test']);
- document.querySelectorAll('[data-op]').forEach(b=>{
-  const o=b.dataset.op;
-  if(!advanced.has(o)||b.dataset.moduleBound)return;
-  b.dataset.moduleBound='1';
-  b.addEventListener('click',()=>{
-   if(o==='p2p')p2pPanel();
-   else if(o==='crypto')cryptoPanel();
-   else if(o==='crm')crmPanel();
-   else if(o==='provider')providerPanel();
-   else if(o==='security')securityPanel();
-   else if(o==='financial_audit')financialAuditPanel();
-   else if(o==='sync_rates')syncQvaPayRates().catch(e=>modalM('Sincronización de tasas',`<div class="msg error">No se pudo sincronizar: ${esc(e?.message||e)}</div><p class="notice">La operación no modifica saldos cuando falla.</p>`));
-   else if(o==='diagnostics')diagnosticsPanel();
-   else if(o==='system_audit')systemAuditPanel();
-   else if(o==='integrity')integrityPanel();
-   else if(o==='withdrawal_audit')withdrawalAuditPanel();
-   else if(o==='reconciliation')reconciliationPanel();
-   else if(o==='incidents')financialIncidentsPanel();
-   else if(o==='ai')aiPanel();
-   else if(o==='usdt_gateway')usdtOnchainPanel();
-   else if(o==='performance')databasePerformancePanel();
-   else if(o==='preflight')financialPreflightPanel();
-   else if(o==='financial_lab')financialLabPanel();
-   else if(o==='transaction_verify')transactionVerificationPanel();
-   else if(o==='state_machine')transactionStateMachinePanel();
-   else if(o==='orchestrator')financialOrchestratorPanel();
-   else if(o==='execution_kernel')financialExecutionKernelPanel();
-   else if(o==='e2e_full_test')fullE2ETestPanel();
-  });
- });
-}
-setTimeout(()=>{bindFinalIntegrations();window.__CPP_RUNTIME.ready=true;const box=q('cppBootStatus');if(box)box.textContent='CUBA PLUS PAY V7.5.2 listo · centro financiero real · sin saldos ficticios';},120);
-window.__CPP_FINAL_INTEGRATIONS={loadExchangeOptions,quoteExchange,syncExchangeRates,exchangeCRX,bindExchangeQuote,openExchangePanel,financialAuditPanel,requireMfaForSensitive,runFinancialAudit,loadHomeOperationalSummary,syncQvaPayRates,systemAuditPanel,diagnosticsPanel,usdtOnchainPanel,financialPreflightPanel,financialLabPanel,transactionStateMachinePanel,transactionVerificationPanel,databasePerformancePanel,financialExecutionKernelPanel,financialOrchestratorPanel,fullE2ETestPanel};
-})();</script>
-<script id="cpp-final-integrity-marker">
-(()=>{
-'use strict';
-window.CUBA_PLUS_PAY_BUILD={
- version:'V21',
- build:'V23-MASTER-CRX-CUP-EXCHANGE-TRANSFERMOVIL-BANMET-20260929',
- game:'crx_island_v1',
- financial_data:'supabase-real',
- fake_balances:false,
- fake_payments:false,
- exchange:'live-qvapay-rate-sync-plus-idempotent-supabase-ledger',
- deposits:'qvapay-invoice-plus-crypto-topup-wallet-address-reconciliation',
- withdrawals:'qvapay-gateway-generic-asset-reserve-idempotency-rejection-release-status',
- mobile_recharge:'qvapay-store-direct-or-cuba-plus-pay-usd-reserved-ledger',
- q_global_runtime:'window-q-defensive-binding',
- v15_router_features_preserved:true,
- v16_exchange_bridge_features_preserved:true,
- v17_wallet_deposit_withdraw_hardening_preserved:true,
- v20_cup_funding_ui_preserved:true,
- v21_cup_rail_hardening:true,
- cubapay_adapter:'provider-normalization-layer; no verified public cubapay.online trading API',
- provider:'qvapay',
- qvapay_gateway:'v42-active-with-withdraw-provider-intent-reserve-release',
- generated_at:'2026-09-29',
-};
-})();
-</script>
-<script id="cpp-universal-button-router">
-(()=>{
-'use strict';
-const core=()=>window.__CPP_CORE||{};
-const audit=()=>Object.assign({},window.CP_FINAL_AUDIT||{},window.__CPP_FINAL_INTEGRATIONS||{});
-const safe=(fn,errTitle)=>{try{const r=fn();if(r&&typeof r.catch==='function')r.catch(err=>{const c=core();if(typeof c.modal==='function')c.modal(errTitle||'Error','<div class="msg error">'+(typeof c.esc==='function'?c.esc(err?.message||err):String(err?.message||err))+'</div>');});}catch(err){const c=core();if(typeof c.modal==='function')c.modal(errTitle||'Error','<div class="msg error">'+(typeof c.esc==='function'?c.esc(err?.message||err):String(err?.message||err))+'</div>');}};
-const routes={
- transfer:c=>c.nav&&c.nav('transfer'), receive:c=>c.receive&&c.receive(), deposit:c=>c.deposit&&c.deposit(), withdraw:c=>(window.__CPP_V18?.financialCenterV18?window.__CPP_V18.financialCenterV18():c.withdrawFor&&c.withdrawFor('CRX')), recharge:c=>c.rechargePanel&&c.rechargePanel(), orders:c=>c.loadOrders&&c.loadOrders(), invoices:c=>c.loadInvoices&&c.loadInvoices(), links:c=>c.loadPaymentLinks&&c.loadPaymentLinks(), pay:c=>c.payInvoice&&c.payInvoice(), admin:c=>c.adminPanel&&c.adminPanel(), payment_methods:c=>c.paymentMethods&&c.paymentMethods(), exchange:()=>window.__CPP_EXCHANGE?.open(), cup_funding:()=>window.__CPP_V20_CUP?.open(),
- p2p:a=>a.p2pPanel&&a.p2pPanel(), crypto:a=>a.cryptoPanel&&a.cryptoPanel(), crm:a=>a.crmPanel&&a.crmPanel(), provider:a=>a.providerPanel&&a.providerPanel(), security:a=>a.securityPanel&&a.securityPanel(), financial_audit:a=>a.financialAuditPanel&&a.financialAuditPanel(), sync_rates:a=>a.syncQvaPayRates&&a.syncQvaPayRates(), diagnostics:a=>a.diagnosticsPanel&&a.diagnosticsPanel(), system_audit:a=>a.systemAuditPanel&&a.systemAuditPanel(), integrity:a=>a.integrityPanel&&a.integrityPanel(), withdrawal_audit:a=>a.withdrawalAuditPanel&&a.withdrawalAuditPanel(), reconciliation:a=>a.reconciliationPanel&&a.reconciliationPanel(), incidents:a=>a.financialIncidentsPanel&&a.financialIncidentsPanel(), ai:a=>a.aiPanel&&a.aiPanel(), usdt_gateway:a=>a.usdtOnchainPanel&&a.usdtOnchainPanel(), performance:a=>a.databasePerformancePanel&&a.databasePerformancePanel(), preflight:a=>a.financialPreflightPanel&&a.financialPreflightPanel(), financial_lab:a=>a.financialLabPanel&&a.financialLabPanel(), transaction_verify:a=>a.transactionVerificationPanel&&a.transactionVerificationPanel(), state_machine:a=>a.transactionStateMachinePanel&&a.transactionStateMachinePanel(), orchestrator:a=>a.financialOrchestratorPanel&&a.financialOrchestratorPanel(), execution_kernel:a=>a.financialExecutionKernelPanel&&a.financialExecutionKernelPanel(), e2e_full_test:a=>a.fullE2ETestPanel&&a.fullE2ETestPanel()
-};
-document.addEventListener('click',ev=>{
- const b=ev.target?.closest?.('[data-op]'); if(!b)return;
- const op=b.dataset.op; const c=core(), a=audit(); const fn=routes[op]; if(!fn)return;
- if((op==='exchange' && typeof window.__CPP_EXCHANGE?.open!=='function') || (op!=='exchange' && typeof fn!=='function')){ if(typeof c.modal==='function')c.modal('Módulo no disponible','<div class="msg error">El módulo '+(typeof c.esc==='function'?c.esc(op):op)+' no está cargado.</div>'); return; }
- ev.preventDefault(); ev.stopImmediatePropagation();
- b.disabled=true;
- Promise.resolve().then(()=>fn(c,a)).catch(err=>{
-   const esc=typeof c.esc==='function'?c.esc:(x=>String(x??''));
-   if(typeof c.modal==='function')c.modal('Módulo no disponible','<div class="msg error">'+esc(err?.message||err)+'</div>');
- }).finally(()=>{b.disabled=false;});
-},true);
-window.__CPP_RUNTIME=window.__CPP_RUNTIME||{};
-window.__CPP_RUNTIME.universalRouter=true;
-})();
-</script>
-<script id="cpp-v18-real-financial-control-plane">
+<script id="cpp-v27-functional-router">
 (()=>{
 'use strict';
 const CORE=window.__CPP_CORE||{};
-const DB=CORE.db||window.__CPP_DB||window.db||null;
-const $id=(id)=>document.getElementById(id);
-const esc=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
-const fmt=CORE.fmt||((v)=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('es-ES',{maximumFractionDigits:8}):'—'});
-const uuid=CORE.safeUUID||(()=>crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
-const errorText=(x)=>{
-  if(!x)return 'Error desconocido';
-  if(typeof x==='string')return x;
-  if(x.message)return String(x.message);
-  if(x.code)return String(x.code);
-  try{return JSON.stringify(x)}catch{return String(x)}
-};
-const getUser=async()=>{
-  if(DB?.auth?.getUser){const r=await DB.auth.getUser();if(!r.error&&r.data?.user)return r.data.user;}
-  return CORE.currentUser||window.currentUser||null;
-};
-async function invoke(fn,body){
-  if(!DB?.functions?.invoke)throw new Error('SUPABASE_FUNCTIONS_CLIENT_UNAVAILABLE');
-  const r=await DB.functions.invoke(fn,{body});
-  if(r.error){
-    const ctx=r.error?.context;
-    let extra='';
-    try{if(ctx?.body){const b=typeof ctx.body==='string'?JSON.parse(ctx.body):ctx.body;extra=b?.message||b?.code||''}}catch{}
-    throw new Error(extra||r.error.message||'La Edge Function devolvió un error.');
-  }
-  if(!r.data)throw new Error('EMPTY_GATEWAY_RESPONSE');
-  return r.data;
-}
-function modal(title,html){
-  const m=$id('modal'),mt=$id('modalTitle'),mb=$id('modalBody');
-  if(!m||!mt||!mb){window.alert(title+'\n\n'+String(html).replace(/<[^>]+>/g,''));return}
-  mt.textContent=title;mb.innerHTML=html;m.classList.remove('hidden');}
-function showMsg(id,text,type=''){
-  const n=$id(id);if(!n)return;n.textContent=text;n.className='msg'+(text?' '+type:'');n.classList.toggle('hidden',!text);
-}
-async function refresh(){try{if(typeof CORE.loadData==='function')await CORE.loadData();else if(typeof window.loadData==='function')await window.loadData()}catch(e){console.warn('refresh',e)}}
-
-let coinCache=null,coinCacheAt=0,lastRateSync=0;
-async function qvaCoins(force=false){
-  if(coinCache&&!force&&Date.now()-coinCacheAt<30000)return coinCache;
-  const d=await invoke('qvapay-gateway',{operation:'coins'});
-  if(!d?.ok)throw new Error(d?.message||d?.code||'QVAPAY_COIN_CATALOG_UNAVAILABLE');
-  const groups=Array.isArray(d.result)?d.result:(Array.isArray(d.result?.data)?d.result.data:[]);
-  coinCache=groups.flatMap(g=>Array.isArray(g?.Coins)?g.Coins:[]);
-  coinCacheAt=Date.now();
-  return coinCache;
-}
-function coinFor(coins,c){
-  const map={
-    BTC:x=>String(x?.tick).toUpperCase()==='BTC'&&String(x?.network).toUpperCase()==='BTC',
-    LTC:x=>String(x?.tick).toUpperCase()==='LTC'&&String(x?.network).toUpperCase()==='LTC',
-    ETH:x=>String(x?.tick).toUpperCase()==='ETH'&&String(x?.network).toUpperCase()==='ETH',
-    TRX:x=>String(x?.tick).toUpperCase()==='TRX'&&String(x?.network).toUpperCase()==='TRON',
-    USDT_TRC20:x=>String(x?.tick).toUpperCase()==='USDT'&&String(x?.network).toUpperCase()==='TRON',
-    USDT_ERC20:x=>String(x?.tick).toUpperCase()==='USDTERC20'&&['ETH','ETHEREUM'].includes(String(x?.network).toUpperCase())
-  };
-  return (coins||[]).find(map[c]||(()=>false));
-}
-const labels={USD:'USD',CUP:'CUP',USDT_TRC20:'USDT TRC20',USDT_ERC20:'USDT ERC20',BTC:'BTC',ETH:'ETH',LTC:'LTC',TRX:'TRX',CRX:'CRX'};
-const qvaDepositMethod={BTC:'BTC',LTC:'LTC',ETH:'ETH',TRX:'TRX',USDT_TRC20:'USDT',USDT_ERC20:'USDTERC20'};
-const qvaWithdrawMethod={USD:'tron_usdt',BTC:'btc',LTC:'ltc',ETH:'eth',TRX:'trx',USDT_TRC20:'tron_usdt',USDT_ERC20:'USDTERC20'};
-const networkName=c=>({BTC:'Bitcoin',LTC:'Litecoin',ETH:'Ethereum',TRX:'TRON',USDT_TRC20:'TRON',USDT_ERC20:'Ethereum'}[c]||'');
-const walletRegex={
-  TRON:/^T[1-9A-HJ-NP-Za-km-z]{33}$/,
-  BTC:/^(bc1[ac-hj-np-z02-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/,
-  ETH:/^0x[a-fA-F0-9]{40}$/,
-  LTC:/^(L|M)[1-9A-HJ-NP-Za-km-z]{26,33}$|^ltc1[ac-hj-np-z02-9]{20,90}$/
-};
-function validateWallet(currency,address){
-  const w=String(address||'').trim();
-  if(currency==='USD'||currency==='USDT_TRC20'||currency==='TRX')return walletRegex.TRON.test(w);
-  if(currency==='BTC')return walletRegex.BTC.test(w);
-  if(currency==='ETH'||currency==='USDT_ERC20')return walletRegex.ETH.test(w);
-  if(currency==='LTC')return walletRegex.LTC.test(w);
-  return false;
-}
-async function ensureRates(force=false){
-  if(!force&&Date.now()-lastRateSync<60000&&window.__CPP_EXCHANGE_RATES)return window.__CPP_EXCHANGE_RATES;
-  const currencies=['CUP','USD','USDT_TRC20','USDT_ERC20','BTC','ETH','TRX','LTC'];
-  const rows=[];
-  for(const c of currencies){
-    const r=await DB.rpc('get_exchange_rate',{p_from:'CRX',p_to:c});
-    if(!r.error&&r.data?.ok&&Number(r.data.rate)>0)rows.push(r.data);
-  }
-  if(!rows.length)throw new Error('NO_PUBLISHED_CRX_RATES');
-  const d={ok:true,rates:rows};
-  window.__CPP_EXCHANGE_RATES=d;lastRateSync=Date.now();return d;
-}
-
-/* ---------- EXCHANGE: one authoritative implementation ---------- */
-async function loadExchangeOptionsV18(opts={}){
-  const sel=$id('crxExchangeAsset'),dir=$id('crxExchangeDirection'),btn=$id('crxExchangeBtn'),info=$id('crxExchangeInfo');
-  if(!sel)return;
-  try{
-    if(opts.sync===true)await ensureRates(true);
-    const gw=await invoke('financial-exchange-gateway',{operation:'rates'});
-    if(!gw?.ok)throw new Error(gw?.message||gw?.code||'No se pudieron consultar las tasas.');
-    const r={data:(gw.rates||[]).filter(x=>String(x.from_currency||'').toUpperCase()==='CRX'),error:null};
-    const seen=new Set(),rows=[];
-    for(const x of (r.data||[])){if(seen.has(x.to_currency))continue;if(x.to_currency==='CRX')continue;seen.add(x.to_currency);rows.push(x)}
-    const order=['CUP','USD','USDT_TRC20','USDT_ERC20','BTC','ETH','TRX','LTC'];
-    rows.sort((a,b)=>(order.indexOf(a.to_currency)<0?99:order.indexOf(a.to_currency))-(order.indexOf(b.to_currency)<0?99:order.indexOf(b.to_currency)));
-    const usable=rows;
-    let options=usable.map(x=>'<option value="'+esc(x.to_currency)+'">'+esc(labels[x.to_currency]||x.to_currency)+(networkName(x.to_currency)?' · '+esc(networkName(x.to_currency)):'')+'</option>').join('');
-    sel.innerHTML=options||'<option value="">No hay activos habilitados</option>';
-    if(usable.some(x=>x.to_currency==='TRX'))sel.value='TRX';else if(!sel.value&&usable.length)sel.value=usable[0].to_currency;
-    if(info)info.innerHTML='<span class="ok-text">✓ Tasas publicadas disponibles.</span> El motor usa las tasas vigentes de Supabase y registra la conversión en el ledger. <button id="crxRefreshRates" class="btn secondary" type="button">Actualizar tasas reales</button>';
-    $id('crxRefreshRates')?.addEventListener('click',async()=>{try{await ensureRates(true);await loadExchangeOptionsV18();await quoteExchangeV18()}catch(e){showMsg('crxExchangeMsg','No se pudieron actualizar las tasas: '+errorText(e),'error')}});
-    if(btn)btn.disabled=true;
-    updateExchangeNetworkV18();
-    if($id('crxExchangeAmount')&&!$id('crxExchangeAmount').value)$id('crxExchangeAmount').value='6';
-    await quoteExchangeV18();
-  }catch(e){
-    if(info)info.textContent='No se pudieron cargar las tasas reales: '+errorText(e);
-    if(btn)btn.disabled=true;
-    throw e;
-  }
-}
-function updateExchangeNetworkV18(){const c=$id('crxExchangeAsset')?.value||'';const n=$id('crxExchangeNetwork');if(n)n.textContent=(c==='USDT_TRC20'?'USDT TRC20 · TRON':c==='USDT_ERC20'?'USDT ERC20 · Ethereum':networkName(c)||c||'activo seleccionado')}
-async function quoteExchangeV18(){
-  const amount=Number($id('crxExchangeAmount')?.value||0),asset=$id('crxExchangeAsset')?.value||'',direction=$id('crxExchangeDirection')?.value||'crx_to_asset',box=$id('crxExchangeQuote'),btn=$id('crxExchangeBtn');
-  updateExchangeNetworkV18();
-  if(!box)return null;
-  if(!Number.isFinite(amount)||amount<=0||!asset){box.textContent='Introduce una cantidad válida para cotizar.';if(btn)btn.disabled=true;return null}
-  box.textContent='Consultando precio real y comisión…';if(btn)btn.disabled=true;
-  try{
-    await ensureRates(false);
-    let d;
-    if(direction==='crx_to_asset'){
-      const rr=await DB.rpc('quote_exchange',{p_to_currency:asset,p_amount:amount});
-      if(rr.error)throw rr.error; d=rr.data;
-    }else{
-      const rr=await DB.rpc('quote_exchange',{p_to_currency:asset,p_amount:amount});
-      if(rr.error)throw rr.error; d=rr.data;
-    }
-    if(!d?.ok)throw new Error(d?.message||d?.code||'Cotización rechazada.');
-    const avail=d.balance?.available;
-    box.innerHTML='<b>Cotización real · solo lectura</b><br>'+fmt(d.amount)+' '+esc(d.from_currency)+' → <b>'+fmt(d.quoted_output)+' '+esc(d.to_currency)+'</b><br><small>Tasa: '+fmt(d.rate)+' · Comisión: '+fmt(d.fee)+' '+esc(d.from_currency)+' · Neto: '+fmt(d.net_input)+' '+esc(d.from_currency)+(avail!==undefined?' · Disponible: '+fmt(avail)+' '+esc(d.from_currency):'')+'</small>';
-    if(btn)btn.disabled=avail!==undefined&&Number(avail)<amount;
-    return d;
-  }catch(e){box.textContent='No se pudo cotizar: '+errorText(e);if(btn)btn.disabled=true;throw e}
-}
-async function exchangeV18(){
-  const amount=Number($id('crxExchangeAmount')?.value||0),asset=$id('crxExchangeAsset')?.value||'',direction=$id('crxExchangeDirection')?.value||'crx_to_asset',btn=$id('crxExchangeBtn');
-  if(!Number.isFinite(amount)||amount<=0)return showMsg('crxExchangeMsg','Introduce una cantidad válida.','error');
-  if(!asset)return showMsg('crxExchangeMsg','Selecciona una moneda de destino/origen real.','error');
-  if(btn)btn.disabled=true;showMsg('crxExchangeMsg','Preparando conversión real…','wait');
-  try{
-    await ensureRates(false);
-    let q;
-    {const rr=await DB.rpc('quote_exchange',{p_to_currency:asset,p_amount:amount});if(rr.error)throw rr.error;q=rr.data;}
-    if(!q?.ok)throw new Error(q?.message||q?.code||'Cotización rechazada.');
-    const available=q.balance?.available;
-    if(available!==undefined&&Number(available)<amount)throw new Error('INSUFFICIENT_FUNDS_AVAILABLE');
-    const label=fmt(q.amount)+' '+q.from_currency+' → '+fmt(q.quoted_output)+' '+q.to_currency+' · comisión '+fmt(q.fee)+' '+q.from_currency;
-    if(!confirm('CONFIRMAR CONVERSIÓN REAL\n\n'+label+'\n\nLa operación mueve fondos entre tus wallets internas y crea su ledger/journal. No realiza un envío on-chain.'))return;
-    if(typeof CORE.requireMfaForSensitive==='function'&&!await CORE.requireMfaForSensitive('crxExchangeMsg'))return;
-    let r;
-    const idem=uuid();
-    if(direction==='crx_to_asset'){
-      const rr=await DB.rpc('exchange_crx',{p_to_currency:asset,p_amount:amount,p_idempotency:idem});
-      if(rr.error)throw rr.error;r=rr.data;
-    }else{
-      const rr=await DB.rpc('exchange_asset_to_crx',{p_from_currency:asset,p_amount:amount,p_idempotency:idem});
-      if(rr.error)throw rr.error;r=rr.data;
-    }
-    if(!r?.ok)throw new Error(r?.message||r?.code||'El backend rechazó la conversión.');
-    const d=r.result||r;
-    showMsg('crxExchangeMsg','Conversión completada y registrada en Supabase.\n'+fmt(d.from_amount??amount)+' '+(d.from_currency||q.from_currency)+' → '+fmt(d.to_amount??q.quoted_output)+' '+(d.to_currency||q.to_currency)+'\nID: '+(d.transaction_id||'—'),'ok');
-    await refresh();await loadExchangeOptionsV18();
-  }catch(e){showMsg('crxExchangeMsg','No se realizó la conversión: '+errorText(e),'error')}finally{if(btn)btn.disabled=false}
-}
-function openExchangeV18(){
-  try{if(typeof CORE.nav==='function')CORE.nav('game');else if(typeof window.nav==='function')window.nav('game');
-    const card=$id('crxExchangeAmount')?.closest('.card');card?.scrollIntoView({behavior:'smooth',block:'start'});$id('crxExchangeAmount')?.focus();return loadExchangeOptionsV18();
-  }catch(e){modal('Intercambio de monedas','<div class="msg error">'+esc(errorText(e))+'</div>')}
-}
-
-/* ---------- REAL DEPOSIT ---------- */
-async function reconcileDepositV18(uuidValue,targetId){
-  try{
-    const d=await invoke('qvapay-gateway',{operation:'reconcile_invoice',uuid:uuidValue});
-    const text=d?.settled?'Depósito confirmado y conciliado. El saldo local se actualizó con el settlement real.':'Depósito todavía no figura como pagado por QvaPay. No se modificó el saldo.';
-    showMsg(targetId,text,d?.settled?'ok':'wait');await refresh();return d;
-  }catch(e){showMsg(targetId,'No se pudo reconciliar el depósito: '+errorText(e),'error');throw e}
-}
-async function depositV18(){
-  modal('Depósito real con QvaPay','<p class="notice">El depósito se crea en QvaPay. El dinero de CUBA PLUS PAY solo se acredita cuando llega una confirmación real y se concilia.</p><div class="field"><label>Moneda de fondeo</label><select id="realDepCurrency"><option value="USD">USD · factura QvaPay</option><option value="USDT_TRC20">USDT TRC20 · TRON</option><option value="USDT_ERC20">USDT ERC20 · Ethereum</option><option value="BTC">BTC · Bitcoin</option><option value="ETH">ETH · Ethereum</option><option value="LTC">LTC · Litecoin</option><option value="TRX">TRX · TRON</option></select></div><div class="field"><label>Monto de crédito solicitado (USD)</label><input id="realDepAmount" type="number" min="1" step="0.01" value="1"/></div><div class="field"><label>Descripción</label><input id="realDepDescription" maxlength="255" value="Depósito CUBA PLUS PAY"/></div><button id="realDepCreate" class="btn full">Crear depósito real</button><div id="realDepMsg" class="msg hidden"></div><div id="realDepResult" class="notice hidden"></div>');
-  const render=async()=>{
-    const c=$id('realDepCurrency').value,a=Number($id('realDepAmount').value),msgId='realDepMsg',res=$id('realDepResult'),btn=$id('realDepCreate');
-    if(!Number.isFinite(a)||a<=0)return showMsg(msgId,'Monto inválido.','error');
-    btn.disabled=true;showMsg(msgId,'Consultando capacidad real del proveedor…','wait');res.classList.add('hidden');
-    try{
-      if(c!=='USD'){
-        const coin=coinFor(await qvaCoins(true),c);if(!coin)throw new Error('QVA_PAY_COIN_NOT_FOUND');
-        if(coin.enabled_in!==true)throw new Error('QVA_PAY_DEPOSIT_DISABLED_'+c);
-        const min=Number(coin.min_in||0);if(a<min)throw new Error('El mínimo de depósito para '+c+' es $'+fmt(min)+' USD.');
-        const d=await invoke('qvapay-gateway',{operation:'topup',amount:a,pay_method:qvaDepositMethod[c],currency:c});
-        if(!d?.ok)throw new Error(d?.message||d?.code||'QvaPay rechazó el depósito.');
-        const root=d.result||{},data=root.data||root;
-        const wallet=data.wallet||data.address||'—',value=data.value,coinName=data.coin||qvaDepositMethod[c],memo=data.memo||null,uuidValue=data.transaction_uuid||'';
-        res.innerHTML='<b>Depósito creado en QvaPay</b><br>Moneda: '+esc(coinName)+' · Red: '+esc(networkName(c))+'<br>Enviar exactamente: <b>'+fmt(value)+' '+esc(coinName)+'</b><br>Dirección: <b style="word-break:break-all">'+esc(wallet)+'</b>'+(memo?'<br>Memo/Tag: <b>'+esc(memo)+'</b>':'')+'<br>UUID: '+esc(uuidValue)+'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="copyDepAddr" class="btn secondary" type="button">Copiar dirección</button><button id="checkDep" class="btn secondary" type="button">Actualizar estado</button>'+(data.transaction_url?'<a class="btn secondary" href="'+esc(data.transaction_url)+'" target="_blank" rel="noopener">Abrir factura</a>':'')+'</div>';
-        res.classList.remove('hidden');
-        $id('copyDepAddr').onclick=async()=>{try{await navigator.clipboard.writeText(wallet);showMsg(msgId,'Dirección copiada. No cierres esta factura hasta confirmar el envío.','ok')}catch{showMsg(msgId,'Copia manualmente la dirección; el navegador no permitió el portapapeles.','wait')}};
-        $id('checkDep').onclick=async()=>reconcileDepositV18(uuidValue,msgId);
-        showMsg(msgId,'Depósito creado. El saldo no se acredita hasta confirmación real.','ok');
-      }else{
-        const desc=$id('realDepDescription').value.trim()||'Depósito CUBA PLUS PAY';
-        const d=await invoke('qvapay-gateway',{operation:'invoice',amount:a,description:desc});if(!d?.ok)throw new Error(d?.message||d?.code||'No se pudo crear la factura.');
-        const root=d.result||{},data=root.data||root,url=d.payment_url||data.url||data.transaction_url||data.checkout_url||root.url||'';
-        res.innerHTML='<b>Factura USD creada.</b><br>UUID: '+esc(data.transaction_uuid||root.transaction_uuid||'—')+(url?'<br><a class="btn secondary" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir pago QvaPay</a>':'')+'<br><small>La conciliación ocurre por webhook o mediante el estado de la transacción; el saldo no se inventa.</small>';
-        res.classList.remove('hidden');showMsg(msgId,'Factura creada y pendiente de pago.','ok');
-      }
-    }catch(e){showMsg(msgId,'No se creó el depósito: '+errorText(e),'error')}
-    finally{btn.disabled=false}
-  };
-  $id('realDepCreate').onclick=render;$id('realDepCurrency').onchange=()=>{const c=$id('realDepCurrency').value;if(c!=='USD')$id('realDepAmount').value=1;};
-}
-
-/* ---------- REAL WITHDRAW ---------- */
-async function withdrawV18(currency='CRX'){
-  if(currency==='CRX'){modal('Retiro CRX','<div class="notice">CRX no tiene salida externa habilitada en el proveedor. Para retirar valor real, primero convierte CRX a un activo con retiro habilitado, por ejemplo USDT TRC20, y después usa Retirar desde esa wallet.</div>');return}
-  try{
-    const coins=await qvaCoins(true),coin=currency==='USD'?null:coinFor(coins,currency);
-    if(currency!=='USD'&&(!coin||coin.enabled_out!==true))throw new Error('QvaPay no reporta salida habilitada para '+currency+' en este momento.');
-    const minUsd=currency==='USD'?1:Number(coin?.min_out||0),price=currency==='USD'?1:Number(coin?.price||1);
-    const minSrc=currency==='USD'?minUsd:minUsd/price,maxUsd=currency==='USD'?100000:Number(coin?.max_out||100000),maxSrc=currency==='USD'?maxUsd:maxUsd/price;
-    const method=qvaWithdrawMethod[currency];
-    modal('Retirar '+esc(labels[currency]||currency),' <p class="notice">Reserva local → llamada real a QvaPay → estado del proveedor → liquidación/release. Un rechazo del proveedor libera automáticamente la reserva local; un resultado ambiguo permanece bloqueado hasta conciliación.</p><div class="field"><label>Cantidad a retirar ('+esc(currency)+')</label><input id="realWdAmount" type="number" min="'+esc(minSrc)+'" max="'+esc(maxSrc)+'" step="0.00000001" placeholder="'+fmt(minSrc)+'"/></div><div class="field"><label>Wallet destino · '+esc(networkName(currency==='USD'?'USDT_TRC20':currency))+'</label><input id="realWdWallet" placeholder="Dirección externa real" autocomplete="off"/></div><div class="field"><label>Método QvaPay</label><input id="realWdMethod" readonly value="'+esc(method||'no definido')+'"/></div><div class="notice">Mínimo proveedor: '+fmt(minUsd)+' USD equivalente · máximo: '+fmt(maxUsd)+' USD equivalente.</div><button id="realWdCreate" class="btn full">Solicitar retiro real</button><div id="realWdMsg" class="msg hidden"></div>');
-    $id('realWdCreate').onclick=async()=>{
-      const amount=Number($id('realWdAmount').value),wallet=$id('realWdWallet').value.trim(),btn=$id('realWdCreate');
-      if(!Number.isFinite(amount)||amount<=0)return showMsg('realWdMsg','Cantidad inválida.','error');
-      if(amount<minSrc||amount>maxSrc)return showMsg('realWdMsg','Cantidad fuera del límite real del proveedor.','error');
-      const wc=currency==='USD'?'USDT_TRC20':currency;if(!validateWallet(currency,wallet))return showMsg('realWdMsg','La dirección no coincide con la red '+networkName(wc)+'.','error');
-      if(typeof CORE.requireMfaForSensitive==='function'&&!await CORE.requireMfaForSensitive('realWdMsg'))return;
-      if(!confirm('CONFIRMAR RETIRO REAL\n\n'+fmt(amount)+' '+currency+' → '+wallet+'\nMétodo: '+method+'\n\nEl retiro es irreversible cuando QvaPay lo acepte.'))return;
-      btn.disabled=true;showMsg('realWdMsg','Reservando fondos y enviando a QvaPay…','wait');
-      try{
-        const d=await invoke('qvapay-gateway',{operation:'withdraw',amount,currency,pay_method:method,details:{wallet},idempotency_key:uuid(),note:'Retiro CUBA PLUS PAY'});
-        if(!d?.ok)throw new Error(d?.message||d?.code||'QvaPay rechazó el retiro.');
-        showMsg('realWdMsg','Retiro creado. Estado: '+(d.status||'processing')+'\nID local: '+(d.transaction_id||'—')+'\nID QvaPay: '+(d.provider_withdraw_id||'—')+'\nLos fondos quedan reservados hasta la confirmación real.','ok');
-        const txId=d.transaction_id;
-        const box=$id('realWdMsg');
-        box.insertAdjacentHTML('afterend','<button id="realWdCheck" class="btn secondary" type="button" style="margin-top:8px">Actualizar estado del retiro</button>');
-        $id('realWdCheck').onclick=async()=>{try{const s=await invoke('qvapay-gateway',{operation:'withdraw_status',transaction_id:txId});showMsg('realWdMsg','Estado QvaPay: '+(s.status||'—')+'\nEl backend concilia y libera/liquida según el estado real.','ok');await refresh()}catch(e){showMsg('realWdMsg','No se pudo actualizar: '+errorText(e),'error')}};
-        await refresh();
-      }catch(e){showMsg('realWdMsg','No se realizó el retiro: '+errorText(e),'error')}finally{btn.disabled=false}
-    };
-  }catch(e){modal('Retiro no disponible','<div class="msg error">'+esc(errorText(e))+'</div>')}
-}
-
-/* ---------- REAL MOBILE RECHARGE ---------- */
-async function rechargePanelV18(){
-  modal('Recarga móvil real · QvaPay','<p class="notice">CubaPlusPay ofrece dos circuitos reales: <b>saldo USD de tu wallet</b> (reserva local + compra QvaPay + liquidación/release) o <b>saldo QvaPay del proveedor</b> mediante token Store. Nunca se simula una recarga.</p><div class="field"><label>Número cubano</label><input id="v18Phone" placeholder="+53XXXXXXXX" inputmode="tel"/></div><div class="field"><label>Nombre del destinatario (si QvaPay lo requiere)</label><input id="v18Recipient" placeholder="Nombre y apellidos"/></div><div class="field"><label>Forma de pago</label><select id="v18MobileMode"><option value="wallet">Saldo USD de CUBA PLUS PAY</option><option value="qvapay">Saldo QvaPay · Store token</option></select></div><div class="field"><label>Paquete real</label><select id="v18Package"><option value="">Consultando QvaPay…</option></select></div><div id="v18PackageInfo" class="notice">Cargando catálogo real…</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="v18ReloadPackages" class="btn secondary" type="button">Actualizar catálogo</button><button id="v18BuyPackage" class="btn" type="button">Comprar recarga real</button></div><div id="v18RechargeMsg" class="msg hidden"></div><div id="v18RechargeResult" class="notice hidden"></div>');
-  const sel=$id('v18Package'),info=$id('v18PackageInfo'),msgId='v18RechargeMsg',result=$id('v18RechargeResult');let packages=[];
-  const load=async()=>{const b=$id('v18ReloadPackages');b.disabled=true;showMsg(msgId,'Consultando catálogo real de QvaPay…','wait');try{const d=await invoke('qvapay-gateway',{operation:'phone_packages'});if(!d?.ok)throw new Error(d?.message||d?.code||'No hay catálogo disponible.');packages=Array.isArray(d.result?.phone_packages)?d.result.phone_packages:[];sel.innerHTML='<option value="">Selecciona un paquete</option>'+packages.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name||('Paquete '+p.id))+' · $'+Number(p.price||0).toFixed(2)+' USD</option>').join('');if(packages.length)sel.selectedIndex=1;update();showMsg(msgId,packages.length?'Catálogo real cargado.':'QvaPay no tiene paquetes disponibles ahora.','ok')}catch(e){showMsg(msgId,'No se pudo cargar QvaPay: '+errorText(e),'error')}finally{b.disabled=false}};
-  const update=()=>{const p=packages.find(x=>String(x.id)===String(sel.value));if(!p){info.textContent='Selecciona un paquete real.';return}info.innerHTML='<b>'+esc(p.name||'Paquete')+'</b><br>Precio: <b>$'+Number(p.price||0).toFixed(2)+' USD</b>'+(p.gold_price!=null?' · GOLD $'+Number(p.gold_price||0).toFixed(2):'')+' · '+esc(p.period||'')+(Array.isArray(p.details)&&p.details.length?'<br><small>'+p.details.map(x=>esc(x.label||'')+': '+esc(x.value||'')).join(' · ')+'</small>':'')};
-  const buy=async()=>{
-    const phone=$id('v18Phone').value.trim(),recipient=$id('v18Recipient').value.trim(),mode=$id('v18MobileMode').value,p=packages.find(x=>String(x.id)===String(sel.value)),b=$id('v18BuyPackage');
-    if(!/^\+53\d{8}$/.test(phone))return showMsg(msgId,'Número cubano inválido. Usa +53XXXXXXXX.','error');
-    if(!p)return showMsg(msgId,'Selecciona un paquete real.','error');
-    if(typeof CORE.requireMfaForSensitive==='function'&&!await CORE.requireMfaForSensitive(msgId))return;
-    const textMode=mode==='wallet'?'saldo USD de tu wallet de CUBA PLUS PAY':'saldo de tu cuenta QvaPay Store';
-    if(!confirm('CONFIRMAR RECARGA REAL\n\n'+p.name+' · $'+Number(p.price).toFixed(2)+' USD\nNúmero: '+phone+'\nPago: '+textMode+'\n\nQvaPay procesa la entrega después de crear la compra.'))return;
-    b.disabled=true;showMsg(msgId,'Enviando compra real…','wait');result.classList.add('hidden');
-    try{
-      const d=mode==='wallet'
-        ? await invoke('qvapay-gateway',{operation:'phone_package_wallet',phone_number:phone,phone_package_id:Number(p.id),recipient_name:recipient||undefined,idempotency_key:uuid()})
-        : await invoke('qvapay-gateway',{operation:'phone_package',phone_number:phone,phone_package_id:Number(p.id),package_price:Number(p.price),recipient_name:recipient||undefined});
-      if(!d?.ok)throw new Error(d?.message||d?.code||'QvaPay rechazó la recarga.');
-      const local=d.local_request_id||null,svc=d.buyedService||null,tu=d.transaction_uuid||'';
-      result.innerHTML='<b>Compra enviada a QvaPay.</b><br>Estado inicial: '+esc(d.status||'pending')+'<br>Servicio: '+esc(svc||'—')+'<br>UUID: '+esc(tu||'—')+(mode==='wallet'?'<br><small>La wallet USD queda reservada hasta que el estado real sea completado o fallido.</small>':'<br><small>Este modo descuenta del saldo QvaPay del proveedor; no debita la wallet de CUBA PLUS PAY.</small>')+'<div style="margin-top:8px"><button id="v18MobileStatus" class="btn secondary" type="button">Actualizar estado real</button></div>';
-      result.classList.remove('hidden');showMsg(msgId,'Compra creada. No se marca como entregada sin confirmación de QvaPay.','ok');
-      $id('v18MobileStatus').onclick=async()=>{
-        try{
-          const s=mode==='wallet'&&local
-            ? await invoke('qvapay-gateway',{operation:'phone_package_wallet_status',local_request_id:local})
-            : await invoke('qvapay-gateway',{operation:'phone_package_status',buyedService:svc});
-          showMsg(msgId,'Estado QvaPay: '+(s.status||'—')+'\nResultado actualizado desde el proveedor real.','ok');await refresh();
-        }catch(e){showMsg(msgId,'No se pudo consultar estado: '+errorText(e),'error')}
-      };
-      await refresh();
-    }catch(e){showMsg(msgId,'No se realizó la recarga: '+errorText(e),'error')}finally{b.disabled=false}
-  };
-  sel.onchange=update;$id('v18ReloadPackages').onclick=load;$id('v18BuyPackage').onclick=buy;await load();
-}
-
-/* ---------- FINANCIAL CENTER ---------- */
-async function financialCenterV18(){
-  modal('Centro financiero real','<div id="v18FinCenter" class="notice">Consultando wallets, capacidades QvaPay y operaciones…</div>');
-  const box=$id('v18FinCenter');if(!box)return;
-  try{
-    const user=await getUser();if(!user)throw new Error('AUTH_REQUIRED');
-    const [w,tx,catalog]=await Promise.all([
-      DB.from('wallets').select('currency,balance,locked,version').eq('user_id',user.id).order('currency'),
-      DB.from('transactions').select('id,type,status,amount,currency,rail,reference,external_id,reconciliation_state,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(25),
-      qvaCoins(true)
-    ]);
-    if(w.error)throw w.error;if(tx.error)throw tx.error;
-    const wallets=w.data||[],txs=tx.data||[];
-    const crypto=['BTC','LTC','ETH','TRX','USDT_TRC20','USDT_ERC20'];
-    const caps=crypto.map(c=>{const x=coinFor(catalog,c);return {c,x}});
-    const walletRows=wallets.map(x=>'<div class="mini-row"><div><b>'+esc(labels[x.currency]||x.currency)+'</b><br><small>Disponible '+fmt(Math.max(0,Number(x.balance||0)-Number(x.locked||0)) )+' · bloqueado '+fmt(x.locked||0)+'</small></div><div style="display:flex;gap:4px"><button class="btn secondary" data-v18-dep="'+esc(x.currency)+'" type="button">Depósito</button><button class="btn secondary" data-v18-wd="'+esc(x.currency)+'" type="button">Retiro</button></div></div>').join('');
-    const capRows=caps.map(({c,x})=>'<div class="mini-row"><div><b>'+esc(labels[c])+'</b><br><small>Red '+esc(networkName(c))+' · precio '+fmt(x?.price||0)+' USD</small></div><div class="'+(x?.enabled_in&&x?.enabled_out?'ok-text':'danger-text')+'">Entrada '+(x?.enabled_in?'OK':'NO')+' · Salida '+(x?.enabled_out?'OK':'NO')+'</div></div>').join('');
-    const txRows=txs.slice(0,10).map(x=>'<div class="mini-row"><div><b>'+esc(x.type)+' · '+esc(x.status)+'</b><br><small>'+esc(x.reference||'')+' · '+esc(x.created_at?new Date(x.created_at).toLocaleString('es-ES'):'')+'</small></div><span>'+fmt(x.amount)+' '+esc(x.currency)+'</span></div>').join('')||'<div class="empty">Sin movimientos.</div>';
-    box.innerHTML='<div class="card"><b>Acciones</b><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="v18CenterExchange" class="btn secondary">Intercambiar CRX / activos</button><button id="v18CenterCup" class="btn secondary">🇨🇺 Fondos CUP</button><button id="v18CenterDeposit" class="btn secondary">Depositar</button><button id="v18CenterWithdraw" class="btn secondary">Retirar</button><button id="v18CenterRecharge" class="btn secondary">Recargar móvil</button></div></div><div class="card" style="margin-top:10px"><b>Wallets reales de Supabase</b><div class="mini-list">'+(walletRows||'<div class="empty">Sin wallets.</div>')+'</div></div><div class="card" style="margin-top:10px"><b>QvaPay · capacidades públicas actuales</b><div class="mini-list">'+capRows+'</div></div><div class="card" style="margin-top:10px"><b>Últimos movimientos</b><div class="mini-list">'+txRows+'</div></div><div class="notice" style="margin-top:10px">Proveedor activo en esta versión: QvaPay (credenciales reales todavía requeridas). Cubo Developers dispone de API documentada para pagos con tarjeta, pero la documentación consultada no demuestra soporte para CUP/Banco Metropolitano; por eso no se habilita como riel CUP hasta confirmación contractual. Transfermóvil y BANMET quedan detrás de sus endpoints y credenciales oficiales.</div>';
-    $id('v18CenterExchange').onclick=openExchangeV18;$id('v18CenterCup').onclick=()=>window.__CPP_V20_CUP?.open();$id('v18CenterDeposit').onclick=depositV18;$id('v18CenterWithdraw').onclick=()=>{const first=(wallets.find(x=>x.currency==='USDT_TRC20'&&Number(x.balance)>0)||wallets.find(x=>x.currency==='USD'&&Number(x.balance)>0)||wallets.find(x=>['USDT_TRC20','USD'].includes(x.currency)));withdrawV18(first?.currency||'USDT_TRC20')};$id('v18CenterRecharge').onclick=rechargePanelV18;
-    box.querySelectorAll('[data-v18-dep]').forEach(b=>b.onclick=()=>depositV18().catch(()=>{}));
-    box.querySelectorAll('[data-v18-wd]').forEach(b=>b.onclick=()=>withdrawV18(String(b.dataset.v18Wd||'')));
-  }catch(e){box.innerHTML='<div class="msg error">No se pudo cargar el centro financiero: '+esc(errorText(e))+'</div>'}
-}
-
-/* Replace the old core references and exchange bridge with the V18 authoritative implementation. */
-const c=window.__CPP_CORE||{};
-c.q=(id)=>$id(id);
-c.deposit=depositV18;
-c.withdrawFor=withdrawV18;
-c.rechargePanel=rechargePanelV18;
-c.currentUser=c.currentUser;
-window.q=$id;
-window.deposit=depositV18;
-window.depositFor=depositV18;
-window.withdrawFor=withdrawV18;
-window.rechargePanel=rechargePanelV18;
-window.__CPP_EXCHANGE={open:openExchangeV18,quote:quoteExchangeV18,execute:exchangeV18,loadOptions:loadExchangeOptionsV18};
-window.__CPP_FINAL_INTEGRATIONS=window.__CPP_FINAL_INTEGRATIONS||{};
-Object.assign(window.__CPP_FINAL_INTEGRATIONS,{openExchangePanel:openExchangeV18,loadExchangeOptions:loadExchangeOptionsV18,quoteExchange:quoteExchangeV18,exchangeCRX:exchangeV18});
-
-/* Capture only wallet action buttons. Existing data-op router remains preserved. */
-document.addEventListener('click',(ev)=>{
-  const b=ev.target?.closest?.('[data-wallet-action]');if(!b)return;
-  ev.preventDefault();ev.stopImmediatePropagation();
-  const cur=String(b.dataset.currency||'');
-  Promise.resolve((b.dataset.walletAction==='deposit'?depositV18:withdrawV18)(cur)).catch(e=>modal('Operación financiera','<div class="msg error">'+esc(errorText(e))+'</div>'));
-},true);
-
-/* Dedicated financial center is not in the historical router, so handle it here. */
-document.addEventListener('click',(ev)=>{
-  const b=ev.target?.closest?.('[data-op="financial_center"]');if(!b)return;
-  ev.preventDefault();ev.stopImmediatePropagation();
-  Promise.resolve(financialCenterV18()).catch(e=>modal('Centro financiero','<div class="msg error">'+esc(errorText(e))+'</div>'));
-},true);
-
-/* Exchange buttons use IDs, not data-op, so this capture handler prevents duplicate old handlers. */
-document.addEventListener('click',(ev)=>{
-  const b=ev.target?.closest?.('#crxExchangeQuoteBtn,#crxExchangeBtn');if(!b)return;
-  ev.preventDefault();ev.stopImmediatePropagation();
-  const fn=b.id==='crxExchangeQuoteBtn'?quoteExchangeV18:exchangeV18;
-  Promise.resolve(fn()).catch(e=>showMsg('crxExchangeMsg',errorText(e),'error'));
-},true);
-$id('crxExchangeAmount')?.addEventListener('input',()=>quoteExchangeV18().catch(()=>{}));
-$id('crxExchangeAsset')?.addEventListener('change',()=>quoteExchangeV18().catch(()=>{}));
-$id('crxExchangeDirection')?.addEventListener('change',()=>quoteExchangeV18().catch(()=>{}));
-
-window.__CPP_V18={openExchangeV18,quoteExchangeV18,exchangeV18,depositV18,withdrawV18,rechargePanelV18,financialCenterV18,qvaCoins};
-window.__CPP_RUNTIME.v18_preserved=true;
-window.__CPP_RUNTIME=window.__CPP_RUNTIME||{};
-window.__CPP_RUNTIME.realFinancialControlPlaneV19=true;
-window.__CPP_RUNTIME.exchangeAuthoritative='v19';
-window.__CPP_RUNTIME.noFakeMoney=true;
-})();
-</script>
-<script id="cpp-v18-cumulative-marker">
-(()=>{
-  window.__CPP_RUNTIME=window.__CPP_RUNTIME||{};
-  window.__CPP_RUNTIME.cumulativeMaster=true;
-  window.__CPP_RUNTIME.preserves='V14 base + V15 router + V16 exchange bridge + V17 wallet/deposit/withdraw hardening + V18 real financial control plane + V19 authoritative router';
-})();
-</script>
-
-<script id="cpp-v19-authoritative-financial-router">
-(()=>{
-'use strict';
-const CORE=window.__CPP_CORE||{};
-const FINAL=window.__CPP_FINAL_INTEGRATIONS||{};
-const V18=window.__CPP_V18||{};
-const DB=CORE.db||window.__CPP_DB||window.db||null;
+const CP=CORE.db||window.__CPP_DB;
 const $=id=>document.getElementById(id);
 const esc=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
-const errText=e=>{if(!e)return'Error desconocido';if(typeof e==='string')return e;if(e.message)return String(e.message);if(e.code)return String(e.code);return String(e)};
-const invoke=async(body)=>{
-  if(!DB?.functions?.invoke)throw new Error('SUPABASE_FUNCTIONS_CLIENT_UNAVAILABLE');
-  const r=await DB.functions.invoke('financial-exchange-gateway',{body});
-  if(r.error){let extra='';try{const b=r.error.context?.body;const j=typeof b==='string'?JSON.parse(b):b;extra=j?.message||j?.code||''}catch{};throw new Error(extra||r.error.message||'financial-exchange-gateway error')}
-  if(!r.data)throw new Error('EMPTY_EXCHANGE_RESPONSE');
-  return r.data;
+const fmt=CORE.fmt||((v)=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8}));
+const uuid=CORE.safeUUID||(()=>crypto.randomUUID());
+const modal=CORE.modal||((t,h)=>{ $('modalTitle').textContent=t;$('modalBody').innerHTML=h;$('modal').classList.remove('hidden') });
+const close=()=>typeof CORE.show==='function'?CORE.show('modal',false):$('modal')?.classList.add('hidden');
+const user=()=>CORE.currentUser||null;
+const msg=(id,text,type='')=>{const x=$(id);if(!x)return;x.textContent=text;x.className='msg '+type;x.classList.remove('hidden')};
+const err=e=>e?.message||e?.code||String(e||'Error desconocido');
+const invoke=async(fn,body={})=>{const r=await CP.functions.invoke(fn,{body});if(r.error)throw r.error;if(!r.data)throw new Error('Respuesta vacía de '+fn);return r.data};
+const audit=()=>window.CP_FINAL_AUDIT||{};
+
+async function exchangePanel(){
+ modal('Intercambio de monedas · real','<div id="exBox" class="notice">Consultando tasas reales de Supabase…</div>');
+ const box=$('exBox');
+ try{
+  const now=new Date().toISOString();
+  const {data,error}=await CP.from('crx_exchange_rates').select('to_currency,rate,valid_from,valid_until').eq('from_currency','CRX').eq('enabled',true).lte('valid_from',now).or('valid_until.is.null,valid_until.gt.'+now).order('to_currency');
+  if(error)throw error; const rows=data||[];
+  if(!rows.length){box.innerHTML='<div class="msg error">No hay tasas CRX habilitadas. No se inventó ninguna tasa.</div>';return}
+  box.innerHTML='<div class="field"><label>Dirección</label><select id="v27Dir"><option value="crx_to_asset">CRX → Activo</option><option value="asset_to_crx">Activo → CRX</option></select></div><div class="field"><label>Activo</label><select id="v27Asset">'+rows.map(r=>'<option value="'+esc(r.to_currency)+'">'+esc(r.to_currency)+' · tasa '+esc(r.rate)+'</option>').join('')+'</select></div><div class="field"><label>Cantidad</label><input id="v27Amount" type="number" min="0.00000001" step="0.00000001" placeholder="0.00"></div><button id="v27Quote" class="btn secondary full">Cotizar</button><div id="v27QuoteOut" class="notice" style="margin-top:8px">Solo lectura.</div><button id="v27Exec" class="btn full" disabled style="margin-top:8px">Confirmar conversión real</button><div id="v27ExMsg" class="msg hidden"></div>';
+  let quote=null;
+  $('v27Quote').onclick=async()=>{const amount=Number($('v27Amount').value),currency=$('v27Asset').value,direction=$('v27Dir').value;if(!Number.isFinite(amount)||amount<=0)return msg('v27ExMsg','Cantidad inválida.','error');$('v27Quote').disabled=true;try{quote=await invoke('financial-exchange-gateway',{operation:'quote_exchange',direction,currency,amount});if(!quote.ok)throw new Error(quote.message||quote.code||'Cotización rechazada');$('v27QuoteOut').innerHTML='<b>'+fmt(quote.amount||amount)+' '+esc(quote.from_currency)+'</b> → <b>'+fmt(quote.quoted_output||quote.output_amount||0)+' '+esc(quote.to_currency)+'</b><br><small>Tasa '+fmt(quote.rate)+' · comisión '+fmt(quote.fee)+' '+esc(quote.from_currency||'')+'</small>';$('v27Exec').disabled=false}catch(e){msg('v27ExMsg',err(e),'error')}finally{$('v27Quote').disabled=false}};
+  $('v27Exec').onclick=async()=>{if(!quote)return;if(!confirm('CONFIRMAR CONVERSIÓN REAL\n\n'+fmt(quote.amount)+' '+quote.from_currency+' → '+fmt(quote.quoted_output)+' '+quote.to_currency+'\n\nSe moverán fondos internos y se registrará ledger/journal.'))return;$('v27Exec').disabled=true;try{const idem=uuid();const body=quote.direction==='crx_to_asset'?{operation:'exchange_crx',to_currency:quote.to_currency,amount:Number(quote.amount),p_idempotency:idem}:{operation:'exchange_asset_to_crx',from_currency:quote.from_currency,amount:Number(quote.amount),p_idempotency:idem};const r=await invoke('financial-exchange-gateway',body);if(!r.ok)throw new Error(r.message||r.code||'Exchange rechazado');msg('v27ExMsg','Conversión realizada y registrada. ID: '+(r.result?.transaction_id||r.transaction_id||'—'),'ok');await CORE.loadData?.()}catch(e){msg('v27ExMsg','No se realizó la conversión: '+err(e),'error')}finally{$('v27Exec').disabled=false}};
+ }catch(e){box.innerHTML='<div class="msg error">No se pudo cargar el exchange: '+esc(err(e))+'</div>'}
+}
+
+async function financialCenter(){
+ modal('Centro financiero real · V27','<div id="fcBox" class="notice">Consultando wallets reales…</div>');
+ const box=$('fcBox');try{const u=user();if(!u)throw new Error('AUTH_REQUIRED');const {data:w,error}=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',u.id).order('currency');if(error)throw error;const rows=(w||[]).map(x=>'<div class="mini-row"><div><b>'+esc(x.currency)+'</b><br><small>Disponible '+fmt(Number(x.balance)-Number(x.locked||0))+' · bloqueado '+fmt(x.locked||0)+'</small></div><div><button class="btn secondary" data-v27-dep="'+esc(x.currency)+'">Depositar</button> <button class="btn secondary" data-v27-wd="'+esc(x.currency)+'">Retirar</button></div></div>').join('')||'<div class="empty">Sin wallets.</div>';box.innerHTML='<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="fcEx" class="btn secondary">Intercambiar</button><button id="fcRec" class="btn secondary">Recargar móvil</button><button id="fcCup" class="btn secondary">Fondos CUP</button></div></div><div class="card" style="margin-top:10px"><b>Wallets reales</b><div class="mini-list">'+rows+'</div></div><div class="notice">Todas las cifras vienen de Supabase. Ninguna acción de esta pantalla crea saldo ficticio.</div>';box.querySelectorAll('[data-v27-dep]').forEach(b=>b.onclick=()=>CORE.deposit?.(b.dataset.v27Dep));box.querySelectorAll('[data-v27-wd]').forEach(b=>b.onclick=()=>CORE.withdrawFor?.(b.dataset.v27Wd));$('fcEx').onclick=exchangePanel;$('fcRec').onclick=()=>audit().rechargePanel?.();$('fcCup').onclick=cupFunding}catch(e){box.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}
+}
+
+async function cupFunding(){
+ modal('Fondos CUP · Transfermóvil / BANMET','<div id="cupBox" class="notice">Consultando configuración real…</div>');
+ const box=$('cupBox');try{const c=await invoke('cup-funding-gateway',{operation:'config_status'});const cap=c.capabilities||{};box.innerHTML='<div class="module-grid"><div class="card"><b>Transfermóvil</b><p>API directa: '+(cap.transfermovil?.direct_api?'✓':'—')+' · Manual: '+(cap.transfermovil?.manual?'✓':'—')+'</p><small>Solo se acredita CUP tras confirmación real.</small></div><div class="card"><b>BANMET</b><p>Payout API: '+(cap.banmet?.payout_api?'✓':'—')+' · Estado: '+(cap.banmet?.status_api?'✓':'—')+'</p></div><div class="card"><b>CuboPago</b><p>Credenciales: '+(cap.cubopago?.api_credentials?'✓':'—')+' · moneda: '+esc(cap.cubopago?.configured_currency||'—')+'</p></div></div><h3>Depósito CUP · Transfermóvil</h3><div class="field"><label>Monto CUP</label><input id="cupDepAmt" type="number" min="1" step="1"></div><button id="cupDep" class="btn full">Crear solicitud real</button><div id="cupDepOut" class="msg hidden"></div><h3>Retiro CUP · BANMET</h3><div class="field"><label>Monto CUP</label><input id="cupWdAmt" type="number" min="1" step="1"></div><div class="field"><label>Destino bancario / tarjeta</label><input id="cupWdDest" placeholder="Número de tarjeta o cuenta"></div><div class="field"><label>Titular</label><input id="cupWdHolder"></div><button id="cupWd" class="btn full">Solicitar retiro real</button><div id="cupWdOut" class="msg hidden"></div><div class="notice">Si el proveedor oficial no está configurado, la solicitud será rechazada sin mover fondos.</div>';
+  $('cupDep').onclick=async()=>{const amount=Number($('cupDepAmt').value);if(!Number.isFinite(amount)||amount<=0)return msg('cupDepOut','Monto inválido.','error');try{const r=await invoke('cup-funding-gateway',{operation:'create_transfermovil_deposit',amount_cup:amount,idempotency_key:uuid()});$('cupDepOut').textContent='Solicitud '+(r.reference||'creada')+' · estado '+(r.status||'pending')+(r.instructions?.destination?' · destino '+r.instructions.destination:'');$('cupDepOut').className='msg ok';$('cupDepOut').classList.remove('hidden')}catch(e){msg('cupDepOut',err(e),'error')}};
+  $('cupWd').onclick=async()=>{const amount=Number($('cupWdAmt').value),dest=$('cupWdDest').value.trim(),holder=$('cupWdHolder').value.trim();if(!Number.isFinite(amount)||amount<=0||dest.length<8||!holder)return msg('cupWdOut','Completa monto, destino y titular.','error');if(!confirm('CONFIRMAR RETIRO CUP REAL\n\n'+amount+' CUP → BANMET\n\nLos fondos se reservarán solo si el payout oficial está configurado.'))return;try{const r=await invoke('cup-funding-gateway',{operation:'create_bank_payout',amount_cup:amount,destination_ref:dest,account_type:'card',holder_name:holder,idempotency_key:uuid()});$('cupWdOut').textContent='Retiro creado · estado '+(r.status||'processing')+' · ID '+(r.transaction_id||'—');$('cupWdOut').className='msg ok';$('cupWdOut').classList.remove('hidden');await CORE.loadData?.()}catch(e){msg('cupWdOut',err(e),'error')}};
+ }catch(e){box.innerHTML='<div class="msg error">No se pudo consultar CUP: '+esc(err(e))+'</div>'}
+}
+
+async function providerPanel(){return audit().providerPanel?audit().providerPanel():modal('QvaPay','<div class="notice">Módulo QvaPay no disponible.</div>')}
+async function securityPanel(){try{const u=user();const {data:s}=await CP.auth.getSession();const {data:p,error}=await CP.from('profiles').select('role,kyc_status,mfa_required,risk_tier,country').eq('id',u?.id).maybeSingle();if(error)throw error;modal('Seguridad · sesión real','<div class="mini-list"><div class="mini-row"><span>JWT</span><b class="ok-text">'+(s?.session?.access_token?'PRESENTE':'AUSENTE')+'</b></div><div class="mini-row"><span>Rol</span><b>'+esc(p?.role||'—')+'</b></div><div class="mini-row"><span>KYC</span><b>'+esc(p?.kyc_status||'—')+'</b></div><div class="mini-row"><span>MFA requerido</span><b>'+esc(p?.mfa_required?'Sí':'No')+'</b></div><div class="mini-row"><span>Riesgo</span><b>'+esc(p?.risk_tier||'—')+'</b></div></div>')}catch(e){modal('Seguridad','<div class="msg error">'+esc(err(e))+'</div>')}}
+async function diagnostics(){modal('Diagnóstico · solo lectura','<div id="diagV27" class="notice">Consultando…</div>');const b=$('diagV27');try{const [s,w,r,qv]=await Promise.all([CP.auth.getSession(),CP.from('wallets').select('currency,balance,locked').eq('user_id',user()?.id),CP.from('crx_exchange_rates').select('to_currency,rate').eq('from_currency','CRX').eq('enabled',true),CP.functions.invoke('qvapay-health',{body:{}})]);b.innerHTML='<div class="mini-list"><div class="mini-row"><span>Sesión</span><b>'+(s.data?.session?'OK':'NO')+'</b></div><div class="mini-row"><span>Wallets</span><b>'+(w.data?.length||0)+'</b></div><div class="mini-row"><span>Tasas CRX</span><b>'+(r.data?.length||0)+'</b></div><div class="mini-row"><span>QvaPay</span><b class="'+(!qv.error&&qv.data?.ok!==false?'ok-text':'danger-text')+'">'+(!qv.error&&qv.data?.ok!==false?'RESPONDE':'REVISAR')+'</b></div></div>'}catch(e){b.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}}
+async function financialAudit(){modal('Auditoría financiera · solo lectura','<div id="faV27" class="notice">Ejecutando controles…</div>');const b=$('faV27');try{const [r,i,inc]=await Promise.allSettled([CP.rpc('financial_reconciliation_audit',{p_user:user()?.id}),CP.rpc('audit_withdrawal_integrity',{p_user:user()?.id}),CP.rpc('financial_incident_scan',{p_user:user()?.id})]);const row=(n,x)=>'<div class="mini-row"><span>'+n+'</span><span class="'+(x.status==='fulfilled'&&!x.value.error?'ok-text':'danger-text')+'">'+(x.status==='fulfilled'&&!x.value.error?'OK':'REVISAR')+'</span></div>';b.innerHTML='<div class="mini-list">'+row('Reconciliación',r)+row('Retiros',i)+row('Incidentes',inc)+'</div><div class="notice">Solo lectura. No se movieron fondos.</div>'}catch(e){b.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}}
+async function e2e(){modal('Verificación E2E · solo lectura','<div id="e2eV27" class="notice">Ejecutando…</div>');const b=$('e2eV27');try{const r=await invoke('auth-financial-e2e',{});b.innerHTML='<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>'}catch(e){b.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}}
+async function readiness(){modal('State Machine / Orchestrator · solo lectura','<div id="readyV27" class="notice">Consultando readiness…</div>');const b=$('readyV27');try{const r=await CP.rpc('financial_orchestrator_readiness',{p_transaction_id:null});if(r.error)throw r.error;b.innerHTML='<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r.data,null,2))+'</pre>'}catch(e){b.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}}
+async function executionKernel(){modal('Execution Kernel · solo lectura','<div id="kernelV27" class="notice">Consultando intents…</div>');const b=$('kernelV27');try{const {data,error}=await CP.from('financial_execution_intents').select('id,intent_type,status,idempotency_key,created_at,updated_at,execution_result').eq('user_id',user()?.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;b.innerHTML='<div class="mini-list">'+((data||[]).map(x=>'<div class="mini-row"><div><b>'+esc(x.intent_type)+'</b><br><small>'+esc(x.status)+' · '+esc(x.created_at)+'</small></div><span>'+esc(x.id.slice(0,8))+'</span></div>').join('')||'<div class="empty">Sin intents.</div>')+'</div>'}catch(e){b.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}}
+async function preflight(){await diagnostics();}
+async function advanced(op){const a=audit();const map={p2p:'p2pPanel',crypto:'cryptoPanel',crm:'crmPanel',ai:'aiPanel',integrity:'integrityPanel',withdrawal_audit:'withdrawalAuditPanel',reconciliation:'reconciliationPanel',incidents:'financialIncidentsPanel',recharge:'rechargePanel'};if(map[op]&&typeof a[map[op]]==='function')return a[map[op]]();if(op==='provider')return providerPanel();if(op==='security')return securityPanel();if(op==='financial_audit')return financialAudit();if(op==='diagnostics'||op==='performance')return diagnostics();if(op==='system_audit')return financialAudit();if(op==='preflight')return preflight();if(op==='financial_lab')return exchangePanel();if(op==='transaction_verify'||op==='e2e_full_test')return e2e();if(op==='state_machine'||op==='orchestrator')return readiness();if(op==='execution_kernel')return executionKernel();if(op==='financial_center')return financialCenter();if(op==='cup_funding')return cupFunding();modal('Módulo', '<div class="notice">'+esc(op)+' conectado al router V27.</div>')}
+
+const routes={
+ transfer:()=>CORE.nav?.('transfer'),receive:()=>CORE.receive?.(),deposit:()=>CORE.deposit?.(),withdraw:()=>CORE.withdrawFor?.('CRX'),recharge:()=>advanced('recharge'),orders:()=>CORE.loadOrders?.(),invoices:()=>CORE.loadInvoices?.(),links:()=>CORE.loadPaymentLinks?.(),pay:()=>CORE.payInvoice?.(),admin:()=>CORE.adminPanel?.(),payment_methods:()=>CORE.paymentMethods?.(),exchange:exchangePanel,
+ p2p:()=>advanced('p2p'),crypto:()=>advanced('crypto'),crm:()=>advanced('crm'),provider:()=>advanced('provider'),security:()=>advanced('security'),financial_audit:()=>advanced('financial_audit'),sync_rates:()=>invoke('financial-exchange-gateway',{operation:'rates'}).then(r=>modal('Tasas sincronizadas','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),diagnostics:()=>advanced('diagnostics'),system_audit:()=>advanced('system_audit'),integrity:()=>advanced('integrity'),withdrawal_audit:()=>advanced('withdrawal_audit'),reconciliation:()=>advanced('reconciliation'),incidents:()=>advanced('incidents'),ai:()=>advanced('ai'),usdt_gateway:()=>invoke('usdt-onchain-gateway',{operation:'capabilities'}).then(r=>modal('USDT On-Chain','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),performance:()=>advanced('performance'),preflight:()=>advanced('preflight'),financial_lab:()=>advanced('financial_lab'),transaction_verify:()=>advanced('transaction_verify'),state_machine:()=>advanced('state_machine'),orchestrator:()=>advanced('orchestrator'),execution_kernel:()=>advanced('execution_kernel'),e2e_full_test:()=>advanced('e2e_full_test'),financial_center:()=>advanced('financial_center'),cup_funding:()=>advanced('cup_funding')
 };
-const getMfa=()=>FINAL.requireMfaForSensitive||CORE.requireMfaForSensitive||null;
-async function exchangeV19(){return typeof V18.exchangeV18==='function'?V18.exchangeV18():Promise.reject(new Error('EXCHANGE_CONTROLLER_UNAVAILABLE'));}
-
-async function quoteV19(){
-  if(typeof V18.quoteExchangeV18==='function')return V18.quoteExchangeV18();
-  const amount=Number($('crxExchangeAmount')?.value||0),asset=$('crxExchangeAsset')?.value||'',direction=$('crxExchangeDirection')?.value||'crx_to_asset';
-  return invoke({operation:'quote_exchange',direction,currency:asset,amount});
-}
-async function openV19(){
-  if(typeof V18.openExchangeV18==='function')return V18.openExchangeV18();
-  if(typeof CORE.nav==='function')CORE.nav('game');
-}
-// Replace the callable exchange API with this final handler.
-window.__CPP_EXCHANGE=Object.assign({},window.__CPP_EXCHANGE||{},{open:openV19,quote:quoteV19,execute:exchangeV19,loadOptions:FINAL.loadExchangeOptions||window.__CPP_EXCHANGE?.loadOptions});
-window.__CPP_FINAL_INTEGRATIONS=Object.assign({},FINAL,{openExchangePanel:openV19,quoteExchange:quoteV19,exchangeCRX:exchangeV19});
-// Keep the old router but make every historical exchange entry point converge here.
-CORE.q=$;CORE.exchange=exchangeV19;CORE.requireMfaForSensitive=getMfa||CORE.requireMfaForSensitive;
-window.__CPP_RUNTIME=window.__CPP_RUNTIME||{};
-window.__CPP_RUNTIME.exchangeAuthoritative='v19';
-window.__CPP_RUNTIME.exchangeBackend='financial-exchange-gateway';
-window.__CPP_RUNTIME.mobileRechargeBackend='mobile-recharge-gateway';
-window.__CPP_RUNTIME.realProviders='qvapay + dingconnect';
-window.__CPP_RUNTIME.providerAdapter='qvapay-verified';
-window.__CPP_RUNTIME.cubapayPublicApiVerified=false;
-// Direct handlers for the actual exchange controls. They run in addition to the safe capture bridge,
-// but use the same authoritative function so older listeners cannot execute a different exchange path.
-const qb=$('crxExchangeQuoteBtn'),xb=$('crxExchangeBtn');
-// Los controles del Exchange se enlazan mediante delegación/capture; no se asignan onclick a nodos potencialmente nulos.
-$('crxExchangeAmount')?.addEventListener('input',()=>quoteV19().catch(()=>{}));
-$('crxExchangeAsset')?.addEventListener('change',()=>quoteV19().catch(()=>{}));
-$('crxExchangeDirection')?.addEventListener('change',()=>quoteV19().catch(()=>{}));
+document.addEventListener('click',ev=>{const b=ev.target?.closest?.('[data-op]');if(!b)return;const op=b.dataset.op,fn=routes[op];if(!fn)return;ev.preventDefault();ev.stopImmediatePropagation();b.disabled=true;Promise.resolve().then(fn).catch(e=>modal('Error del módulo '+op,'<div class="msg error">'+esc(err(e))+'</div>')).finally(()=>b.disabled=false)},true);
+window.__CPP_FINAL_INTEGRATIONS=Object.assign({},window.__CPP_FINAL_INTEGRATIONS||{}, {exchangePanel,financialCenter,cupFunding,diagnostics,financialAudit,readiness,executionKernel});
+window.__CPP_V27={version:'V27',realFinancialRouter:true,noFakeMoney:true,routes:Object.keys(routes)};
+const boot=$('cppBootStatus');if(boot)boot.textContent='CUBA PLUS PAY V27 listo · botones conectados · Supabase + proveedores reales · sin saldos ficticios';
 })();
+
 </script>
 
-
-<style id="cpp-v20-cup-css">
-.cup-v20-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.cup-v20-panel{border:1px solid #0c67c7;border-radius:16px;padding:14px;background:linear-gradient(145deg,#073b86,#041a43)}.cup-v20-panel h3{margin:0 0 6px;font-size:14px}.cup-v20-note{font-size:10px;color:#7ca9d4}.cup-v20-kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #0b3b76;font-size:11px}.cup-v20-kv:last-child{border-bottom:0}.cup-v20-status{font-weight:900}.cup-v20-good{color:#67ffd2}.cup-v20-warn{color:#ffd36f}.cup-v20-bad{color:#ff9eb1}@media(max-width:760px){.cup-v20-grid{grid-template-columns:1fr}}
-</style>
-<script id="cpp-v20-cup-js">(()=>{'use strict';
-const DB=window.__CPP_DB||window.db||null;
-const esc=(v)=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
-const id=(x)=>document.getElementById(x);
-const uuid=()=>crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-async function invoke(body){if(!DB?.functions?.invoke)throw new Error('SUPABASE_FUNCTIONS_CLIENT_UNAVAILABLE');const r=await DB.functions.invoke('cup-funding-gateway',{body});if(r.error){let m=r.error?.message||'Edge Function error';try{if(r.error?.context?.body){const b=typeof r.error.context.body==='string'?JSON.parse(r.error.context.body):r.error.context.body;m=b?.message||b?.code||m}}catch{}throw new Error(m)}if(!r.data)throw new Error('EMPTY_GATEWAY_RESPONSE');return r.data}
-const user=async()=>{const r=await DB.auth.getUser();if(r.error)throw r.error;return r.data.user};
-const msg=(txt,kind='')=>{const n=id('cupV20Msg');if(!n)return;n.textContent=txt;n.className='msg'+(txt?' '+kind:'');n.classList.toggle('hidden',!txt)};
-const refresh=async()=>{try{if(typeof window.loadData==='function')await window.loadData()}catch{}};
-async function render(){
-  try{const d=await invoke({operation:'config_status'});
-    const t=d.capabilities?.transfermovil||{}, b=d.capabilities?.banmet||{}, c=d.capabilities?.cubopago||{};
-    const badge=(ok,txt)=>'<span class="cup-v20-status '+(ok?'cup-v20-good':'cup-v20-warn')+'">'+(ok?'LISTO':'PENDIENTE')+' · '+esc(txt)+'</span>';
-    id('cupV20Status').innerHTML='<div class="cup-v20-kv"><span>Transfermóvil / MiTransfer</span>'+badge(t.enabled,t.direct_api?'API directa':t.manual?'modo manual':'contrato/API requerido')+'</div>'+'<div class="cup-v20-kv"><span>Banco Metropolitano · payout</span>'+badge(b.enabled,'API de salida '+(b.status_api?'detectada':'no configurada'))+'</div>'+'<div class="cup-v20-kv"><span>Tarjetas · Cubo Developers</span>'+badge(c.api_credentials,c.configured_currency?('moneda '+c.configured_currency):'credenciales no configuradas')+'</div>';
-  }catch(e){id('cupV20Status').innerHTML='<div class="msg error">No se pudo consultar estado: '+esc(e.message)+'</div>'}
+<script id="cpp-v27-button-engine-final">
+(()=>{
+'use strict';
+function by(id){return document.getElementById(id)}
+function core(){return window.__CPP_CORE||{}}
+function esc(v){return (core().esc||String)(v)}
+function modal(title,html){
+ const c=core();
+ if(typeof c.modal==='function'){c.modal(title,html);return}
+ const m=by('modal'),t=by('modalTitle'),b=by('modalBody');
+ if(t)t.textContent=title;if(b)b.innerHTML=html;if(m)m.classList.remove('hidden')
 }
-async function openPanel(){
-  const html='<div id="cupV20Status" class="notice">Consultando capacidades reales…</div>'+
-  '<div class="cup-v20-grid">'+
-  '<section class="cup-v20-panel"><h3>🇨🇺 Depositar CUP con Transfermóvil</h3><div class="cup-v20-note">La operación se crea pendiente. Solo se acredita el wallet CUP después de confirmación del proveedor.</div><div class="field"><label>Monto CUP</label><input id="cupV20DepAmount" type="number" min="1" step="0.01" placeholder="5000"></div><button id="cupV20Dep" class="btn full">Crear depósito CUP</button><div id="cupV20DepResult" class="notice hidden"></div></section>'+
-  '<section class="cup-v20-panel"><h3>💳 Tarjeta bancaria</h3><div class="cup-v20-note">Para tarjetas cubanas, el camino principal es pagar mediante Transfermóvil. Este módulo adicional solo se habilita con un procesador de tarjetas que confirme CUP y entregue credenciales reales. Nunca se almacenan PAN/CVV/PIN en Cuba Plus Pay.</div><div class="field"><label>Moneda</label><input id="cupV20CardCurrency" value="CUP" readonly></div><div class="field"><label>Monto CUP</label><input id="cupV20CardAmount" type="number" min="0.01" step="0.01" placeholder="5000"></div><button id="cupV20Card" class="btn full">Abrir pago seguro con tarjeta</button><div id="cupV20CardResult" class="notice hidden"></div></section>'+
-  '<section class="cup-v20-panel"><h3>🏦 Retirar CUP a Banco Metropolitano</h3><div class="cup-v20-note">El número completo de tarjeta/cuenta se transmite únicamente al gateway configurado y no se guarda en la base de datos. PIN/CVV nunca se solicitan.</div><div class="field"><label>Monto CUP</label><input id="cupV20WdAmount" type="number" min="1" step="0.01" placeholder="5000"></div><div class="field"><label>Tarjeta o cuenta BANMET destino</label><input id="cupV20Dest" inputmode="numeric" autocomplete="off" placeholder="Número de tarjeta o cuenta"></div><div class="field"><label>Titular</label><input id="cupV20Holder" maxlength="120" placeholder="Nombre del titular"></div><div class="field"><label>Tipo</label><select id="cupV20Type"><option value="card">Tarjeta</option><option value="account">Cuenta bancaria</option><option value="mitransfer">MiTransfer</option></select></div><button id="cupV20Wd" class="btn full">Solicitar retiro a BANMET</button><div id="cupV20WdResult" class="notice hidden"></div></section>'+
-  '<section class="cup-v20-panel"><h3>🔐 Reglas de seguridad</h3><div class="cup-v20-note">Sin saldo ficticio · sin confirmaciones por pantalla · idempotencia · reserva/release · conciliación · ledger/journal · trazabilidad.</div><div id="cupV20Msg" class="msg hidden"></div><button id="cupV20Refresh" class="btn secondary full">Actualizar estado</button></section>'+
-  '</div>';
-  const modal=typeof window.modal==='function'?window.modal:null;
-  if(modal){modal('Fondos CUP · Transfermóvil / BANMET · CRX',html)}else{alert('El módulo modal no está disponible.')}
-  id('cupV20Dep').onclick=deposit;id('cupV20Card').onclick=card;id('cupV20Wd').onclick=withdraw;id('cupV20Refresh').onclick=render;await render();
+function fail(op,e){modal('CUBA PLUS PAY · '+op,'<div class="msg error">No se pudo abrir este módulo.<br><br>'+esc(e?.message||e||'Error desconocido')+'</div>')}
+function call(name,...args){const c=core();if(typeof c[name]!=='function')throw new Error('La función '+name+' no está disponible en este archivo.');return c[name](...args)}
+const fallback={
+ transfer:()=>call('nav','transfer'),
+ receive:()=>call('receive'),
+ deposit:()=>call('deposit'),
+ withdraw:()=>call('withdrawFor','CRX'),
+ recharge:()=>typeof window.rechargePanel==='function'?window.rechargePanel():call('rechargePanel'),
+ orders:()=>call('loadOrders'), invoices:()=>call('loadInvoices'), links:()=>call('loadPaymentLinks'), pay:()=>call('payInvoice'),
+ admin:()=>call('adminPanel'), payment_methods:()=>call('paymentMethods'),
+ exchange:()=>window.__CPP_FINAL_INTEGRATIONS?.exchangePanel?window.__CPP_FINAL_INTEGRATIONS.exchangePanel():modal('Intercambio','<div class="notice">El motor de exchange no terminó de inicializar.</div>'),
+ security:()=>window.__CPP_FINAL_INTEGRATIONS?.securityPanel?window.__CPP_FINAL_INTEGRATIONS.securityPanel():modal('Seguridad','<div class="notice">Sesión: '+(core().currentUser?'autenticada':'no autenticada')+'</div>'),
+ diagnostics:()=>window.__CPP_FINAL_INTEGRATIONS?.diagnostics?window.__CPP_FINAL_INTEGRATIONS.diagnostics():modal('Diagnóstico','<div class="notice">Supabase: '+(core().db?'conectado al cliente':'no inicializado')+'</div>'),
+ financial_center:()=>window.__CPP_FINAL_INTEGRATIONS?.financialCenter?window.__CPP_FINAL_INTEGRATIONS.financialCenter():modal('Centro financiero','<div class="notice">El centro financiero no terminó de inicializar.</div>'),
+ cup_funding:()=>window.__CPP_FINAL_INTEGRATIONS?.cupFunding?window.__CPP_FINAL_INTEGRATIONS.cupFunding():modal('Fondos CUP','<div class="notice">El módulo CUP no terminó de inicializar.</div>')
+};
+const extras=['p2p','crypto','crm','provider','financial_audit','sync_rates','system_audit','integrity','withdrawal_audit','reconciliation','incidents','ai','usdt_gateway','performance','preflight','financial_lab','transaction_verify','state_machine','orchestrator','execution_kernel','e2e_full_test'];
+function run(op){
+ if(fallback[op])return Promise.resolve(fallback[op]());
+ const routes=window.__CPP_V27?.routes||[];
+ if(routes.includes(op) && typeof window.__CPP_FINAL_INTEGRATIONS?.[op]==='function')return Promise.resolve(window.__CPP_FINAL_INTEGRATIONS[op]());
+ if(extras.includes(op)){
+   const f=window.__CPP_V27_DISPATCH?.[op];
+   if(typeof f==='function')return Promise.resolve(f());
+ }
+ modal('Módulo '+op,'<div class="notice">El botón está activo, pero este módulo requiere su conector/backend específico. No se ejecutó ninguna operación financiera.</div>');
 }
-async function deposit(){const amount=Number(id('cupV20DepAmount')?.value);if(!Number.isFinite(amount)||amount<=0)return msg('Monto CUP inválido.','error');const b=id('cupV20Dep'),out=id('cupV20DepResult');b.disabled=true;out.classList.add('hidden');try{const r=await invoke({operation:'create_transfermovil_deposit',amount_cup:amount,idempotency_key:uuid()});let h='<b>Depósito creado</b><br>Referencia: '+esc(r.reference)+'<br>Estado: '+esc(r.status||'pending');if(r.mode==='manual_transfer')h+='<br>Destino: <b>'+esc(r.instructions?.destination||'—')+'</b><br><small>Nombre comercio: '+esc(r.instructions?.merchant_name||'CUBA PLUS PAY')+'</small><br><small>Después de pagar, el sistema debe recibir confirmación real antes de acreditar.</small>';if(r.checkout_url)h+='<div style="margin-top:8px"><a class="btn secondary" href="'+esc(r.checkout_url)+'" target="_blank" rel="noopener">Abrir pago</a></div>';out.innerHTML=h;out.classList.remove('hidden');msg('Solicitud creada. El wallet CUP permanece sin cambios hasta confirmación real.','ok');await refresh()}catch(e){out.innerHTML='<div class="msg error">'+esc(e.message)+'</div>';out.classList.remove('hidden');msg(e.message,'error')}finally{b.disabled=false}}
-async function card(){const amount=Number(id('cupV20CardAmount')?.value),currency=id('cupV20CardCurrency')?.value;if(!Number.isFinite(amount)||amount<=0)return msg('Monto de tarjeta inválido.','error');const b=id('cupV20Card');b.disabled=true;try{const r=await invoke({operation:'create_cubo_card_link',amount,currency,idempotency_key:uuid()});const out=id('cupV20CardResult');out.innerHTML='<b>Enlace de tarjeta generado</b><br>Estado: '+esc(r.status||'pending')+(r.checkout_url?'<div style="margin-top:8px"><a class="btn secondary" href="'+esc(r.checkout_url)+'" target="_blank" rel="noopener">Continuar al procesador</a></div>':'');out.classList.remove('hidden');msg('El procesador externo debe confirmar el cobro; Cuba Plus Pay no acredita por el retorno de pantalla.','ok')}catch(e){msg(e.message,'error')}finally{b.disabled=false}}
-async function withdraw(){const amount=Number(id('cupV20WdAmount')?.value),dest=id('cupV20Dest')?.value.trim(),holder=id('cupV20Holder')?.value.trim(),typ=id('cupV20Type')?.value;if(!Number.isFinite(amount)||amount<=0)return msg('Monto CUP inválido.','error');if(!dest||dest.length<8)return msg('Destino bancario inválido.','error');if(!holder)return msg('Titular requerido.','error');if(!confirm('CONFIRMAR SOLICITUD DE RETIRO\n\n'+amount+' CUP → Banco Metropolitano\n\nLos fondos se reservarán si el payout oficial está configurado.'))return;const b=id('cupV20Wd');b.disabled=true;try{const r=await invoke({operation:'create_bank_payout',amount_cup:amount,destination_ref:dest,account_type:typ,holder_name:holder,idempotency_key:uuid()});const out=id('cupV20WdResult');out.innerHTML='<b>Retiro solicitado</b><br>Estado: '+esc(r.status||'processing')+'<br>ID local: '+esc(r.transaction_id||'—');out.classList.remove('hidden');msg('Fondos reservados. El estado final debe confirmarse por el proveedor y liberar/liquidar automáticamente.','ok');await refresh()}catch(e){msg(e.message,'error')}finally{b.disabled=false}}
-function bind(){document.addEventListener('click',(ev)=>{const b=ev.target?.closest?.('[data-op="cup_funding"]');if(!b)return;ev.preventDefault();ev.stopImmediatePropagation();openPanel().catch(e=>alert(e.message))},true)}
-bind();window.__CPP_V20_CUP={open:openPanel,render};
-})();</script>
-
-<script id="cpp-home-action-bridge-v27">
-(()=>{'use strict';
-  const go=(op)=>{
-    try{
-      if(op==='transfer'){
-        if(typeof window.nav==='function')window.nav('transfer');
-        else document.querySelector('[data-page="transfer"]')?.click();
-        setTimeout(()=>document.getElementById('to')?.focus(),80);
-        return true;
-      }
-      if(op==='receive'){
-        if(typeof window.receive==='function')window.receive();
-        else alert('El módulo Recibir no está disponible en esta sesión.');
-        return true;
-      }
-      if(op==='exchange'){
-        const x=window.__CPP_EXCHANGE||window.__CPP_V18;
-        if(typeof x?.open==='function')x.open();
-        else if(typeof x?.openExchangeV18==='function')x.openExchangeV18();
-        else if(typeof window.nav==='function')window.nav('game');
-        setTimeout(()=>window.__CPP_EXCHANGE?.loadOptions?.().catch?.(()=>{}),120);
-        return true;
-      }
-      if(op==='deposit'){
-        if(typeof window.deposit==='function')window.deposit();
-        else if(typeof window.depositFor==='function')window.depositFor('USD');
-        else alert('El módulo de depósito no está disponible en esta sesión.');
-        return true;
-      }
-      if(op==='withdraw'){
-        if(typeof window.withdrawFor==='function')window.withdrawFor('CRX');
-        else if(typeof window.withdraw==='function')window.withdraw();
-        else alert('El módulo de retiro no está disponible en esta sesión.');
-        return true;
-      }
-      return false;
-    }catch(e){
-      console.error('CPP home action',op,e);
-      try{if(typeof window.modal==='function')window.modal('Operación','<div class="msg error">'+String(e?.message||e).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</div>');else alert(String(e?.message||e));}catch{}
-      return true;
-    }
-  };
-  document.addEventListener('click',(ev)=>{
-    const b=ev.target?.closest?.('[data-op]');
-    if(!b)return;
-    const op=String(b.dataset.op||'');
-    if(!['transfer','receive','exchange','deposit','withdraw'].includes(op))return;
-    ev.preventDefault();
-    ev.stopImmediatePropagation();
-    go(op);
-  },true);
-  window.__CPP_RUNTIME=window.__CPP_RUNTIME||{};
-  window.__CPP_RUNTIME.homeActionBridge='v27';
+function bind(){
+ document.querySelectorAll('[data-page]').forEach(b=>{
+   if(b.dataset.cppBound==='1')return;
+   b.dataset.cppBound='1';
+   b.addEventListener('click',e=>{e.preventDefault();try{call('nav',b.dataset.page)}catch(x){fail('Navegación',x)}});
+ });
+ document.querySelectorAll('[data-op]').forEach(b=>{
+   b.dataset.cppButton='1';
+   b.addEventListener('click',async e=>{
+     e.preventDefault();e.stopPropagation();
+     const op=b.dataset.op;b.disabled=true;
+     try{await run(op)}catch(x){fail(op,x)}finally{b.disabled=false}
+   },true);
+ });
+ const boot=by('cppBootStatus');if(boot)boot.textContent='CUBA PLUS PAY V27 · Motor de botones activo · Supabase · sin saldos ficticios';
+}
+window.__CPP_V27_BUTTON_ENGINE={version:'V27.1',bind,run};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
 </script>
-
 </body>
 </html>
