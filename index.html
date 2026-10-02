@@ -1053,5 +1053,48 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 window.__CPP_BUTTON_AUDIT={version:'V27.1',gameExchangeBound:true,realDataOnly:true};
 })();
 </script>
+<script id="cpp-login-emergency-fallback">
+(()=>{
+ 'use strict';
+ const byId=id=>document.getElementById(id);
+ const message=(text,type='')=>{const el=byId('authMsg');if(!el)return;el.textContent=text;el.className='msg'+(text?' '+type:'');el.classList.toggle('hidden',!text)};
+ let busy=false;
+ document.addEventListener('click',async event=>{
+  const button=event.target&&event.target.closest?event.target.closest('#authBtn'):null;
+  if(!button)return;
+  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+  if(busy)return;
+  const db=window.__CPP_DB;
+  if(!db||!db.auth){message('El módulo de acceso no se inicializó. Recarga la página con Internet; si continúa, hay un error de carga de la aplicación.','error');return;}
+  const email=(byId('email')?.value||'').trim();
+  const password=byId('password')?.value||'';
+  const label=(button.textContent||'').trim().toLowerCase();
+  const recovery=label.includes('guardar contraseña');
+  const signup=label.includes('crear cuenta');
+  if(recovery){
+   const next=byId('newPassword')?.value||'';
+   if(next.length<8){message('La nueva contraseña debe tener al menos 8 caracteres.','error');return;}
+  } else {
+   if(!email||!password){message('Escribe tu correo electrónico y contraseña.','error');return;}
+   if(password.length<6){message('La contraseña debe tener al menos 6 caracteres.','error');return;}
+  }
+  busy=true;button.disabled=true;button.textContent=recovery?'Guardando…':signup?'Creando…':'Conectando…';
+  message('Conectando con el servicio de acceso…','');
+  let timer;
+  try{
+   const operation=recovery?db.auth.updateUser({password:byId('newPassword').value}):signup?db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):db.auth.signInWithPassword({email,password});
+   const result=await Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('La solicitud tardó más de 20 segundos. Comprueba la conexión a Internet y vuelve a intentarlo.')),20000)})]);
+   if(result?.error)throw result.error;
+   if(signup&&!result?.data?.session){message('Cuenta creada. Revisa el correo de confirmación y luego inicia sesión.','ok');return;}
+   if(recovery){message('Contraseña actualizada. Ya puedes iniciar sesión.','ok');return;}
+   if(!signup&&!result?.data?.session)throw new Error('Supabase no devolvió una sesión. Comprueba correo, contraseña y confirmación del correo.');
+   message('Acceso validado. Abriendo tu cuenta…','ok');
+   setTimeout(()=>location.reload(),250);
+  }catch(error){message('No se pudo iniciar sesión: '+String(error?.message||error||'Error desconocido'),'error');}
+  finally{clearTimeout(timer);busy=false;button.disabled=false;button.textContent=recovery?'Guardar contraseña':signup?'Crear cuenta':'Entrar';}
+ },true);
+ window.__CPP_LOGIN_FALLBACK={installed:true};
+})();
+</script>
 </body>
 </html>
