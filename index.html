@@ -1069,34 +1069,3 @@ document.addEventListener('click',ev=>{
 },true);
 })();
 </script>
-<script id="cpp-final-button-audit">
-(()=>{
-'use strict';
-const CP=window.__CPP_DB, CORE=window.__CPP_CORE||{};
-const q=id=>document.getElementById(id);
-const esc=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
-const fmt=CORE.fmt||((v)=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8}));
-const say=(t,c='')=>{const x=q('crxExchangeMsg');if(!x)return;x.textContent=t;x.className='msg '+c;x.classList.remove('hidden')};
-const invoke=async(body)=>{const r=await CP.functions.invoke('financial-exchange-gateway',{body});if(r.error)throw r.error;if(!r.data)throw new Error('Respuesta vacía del gateway de exchange');return r.data};
-async function loadGameAssets(){
- const sel=q('crxExchangeAsset'); if(!sel||!CP)return;
- try{
-  const {data,error}=await CP.from('asset_catalog').select('code,name,enabled_wallet').eq('enabled_wallet',true).order('code');
-  if(error)throw error;
-  const rows=(data||[]).filter(x=>String(x.code).toUpperCase()!=='CRX');
-  sel.innerHTML='<option value="">Selecciona activo</option>';
-  rows.forEach(x=>{const o=document.createElement('option');o.value=x.code;o.textContent=(x.name||x.code)+' · '+x.code;sel.appendChild(o)});
-  const preferred=rows.find(x=>['USDT','TRX','BTC','USD','CUP'].includes(String(x.code).toUpperCase()));
-  if(preferred)sel.value=preferred.code;
-  const info=q('crxExchangeInfo'); if(info)info.textContent=rows.length?'Activos disponibles cargados desde Supabase. La cotización y la conversión las valida el backend.':'No hay activos habilitados para exchange en este momento.';
- }catch(e){
-  const info=q('crxExchangeInfo'); if(info)info.textContent='No se pudo cargar el catálogo real: '+(e?.message||e);
-  sel.innerHTML='<option value="">Sin activos disponibles</option>';
- }
-}
-async function quote(){
- const dir=q('crxExchangeDirection')?.value, amount=Number(q('crxExchangeAmount')?.value), asset=q('crxExchangeAsset')?.value;
- if(!dir||!asset||!Number.isFinite(amount)||amount<=0)return say('Completa dirección, activo y una cantidad válida.','error');
- const b=q('crxExchangeQuoteBtn'); if(b)b.disabled=true;
- try{
-  const r=await invoke({operation:'quote_exchange',direction:dir,currency:asset,amount});
