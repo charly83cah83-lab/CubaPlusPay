@@ -321,125 +321,79 @@ function modal(title,html){$('modalTitle').textContent=title;$('modalBody').inne
 function closeModal(){show('modal',false);$('modalBody').innerHTML=''}
 function receive(){const e=currentUser?.email||'',id=currentUser?.id||'';modal('Recibir dinero','<p style="color:#9dc4e8">Comparte estos datos para recibir CRX.</p><div class="field"><label>Correo</label><input readonly value="'+esc(e)+'"></div><button type="button" id="copyE" class="btn secondary full">Copiar correo</button><div class="field"><label>UUID</label><input readonly value="'+esc(id)+'"></div><button type="button" id="copyI" class="btn secondary full">Copiar UUID</button><div id="copyMsg" class="msg hidden"></div>');$('copyE').onclick=async()=>{try{await navigator.clipboard.writeText(e);msg('copyMsg','Correo copiado.','ok')}catch{msg('copyMsg','No se pudo copiar automáticamente.','error')}};$('copyI').onclick=async()=>{try{await navigator.clipboard.writeText(id);msg('copyMsg','UUID copiado.','ok')}catch{msg('copyMsg','No se pudo copiar automáticamente.','error')}}}
 async function doTransfer(){const to=$('to').value.trim(),a=Number($('amt').value),ref=$('ref').value.trim()||null;if(!to||!Number.isFinite(a)||a<=0)return msg('transferMsg','Indica destinatario y un monto válido.','error');const b=$('sendTransfer');b.disabled=true;b.textContent='Procesando…';try{const {data,error}=await db.rpc('transfer_crx_secure',{p_recipient:to,p_amount:a,p_reference:ref,p_idempotency:safeUUID(),p_metadata:{source:'web',version:'V19',ui:'mobile-reference'}});if(error)throw error;msg('transferMsg','Transferencia procesada.\nReferencia: '+(data?.reference||'—')+'\nEnviado: '+fmt(data?.amount)+' CRX\nComisión: '+fmt(data?.fee)+' CRX\nRecibido: '+fmt(data?.net)+' CRX','ok');await loadData()}catch(e){msg('transferMsg','No se realizó la transferencia.\n'+(e?.message||e),'error')}finally{b.disabled=false;b.textContent='Continuar'}}
+async function invokeFinancialFunction(name, body){
+  const {data,error}=await db.functions.invoke(name,{body});
+  if(!error) return data;
+  let detail=error.message||String(error);
+  try{
+    const response=error.context;
+    if(response && typeof response.json==='function'){
+      const payload=await response.json();
+      detail=payload?.message||payload?.error||payload?.code||detail;
+      const e=new Error(detail);
+      e.providerPayload=payload;
+      e.httpStatus=response.status;
+      throw e;
+    }
+  }catch(e){ if(e?.providerPayload) throw e; }
+  throw new Error(detail);
+}
+function providerUrl(result){
+  const r=result||{};
+  return r.url||r.payment_url||r.checkout_url||r.invoice_url||r.link||r.payment?.url||r.data?.url||null;
+}
 async function deposit(){
-  modal(
-    'Depositar con QvaPay',
-    '<p style="color:#9dc4e8">La factura se crea mediante la Edge Function real <b>qvapay-gateway</b>. El saldo no cambia hasta que el webhook confirma el pago.</p>'+
-    '<div class="field"><label>Monto USD</label><input id="depAmt" type="number" min="1" max="100000" step="0.01" placeholder="0.00"></div>'+
-    '<div class="field"><label>Descripción</label><input id="depDesc" maxlength="255" value="Depósito CUBA PLUS PAY"></div>'+
-    '<button type="button" id="createInvoice" class="btn full">Crear factura QvaPay</button>'+
+  modal('Depositar con QvaPay',
+    '<p style="color:#9dc4e8">Depósito real en USD mediante QvaPay. El saldo de tu wallet NO cambia al crear la factura: solo se acredita después de confirmación y conciliación.</p>'+
+    '<div class="field"><label>Monto USD</label><input id="depAmt" type="number" min="1" max="100000" step="0.01" placeholder="0.00"></div>'+ 
+    '<div class="field"><label>Descripción</label><input id="depDesc" maxlength="255" value="Depósito CUBA PLUS PAY"></div>'+ 
+    '<button type="button" id="createInvoice" class="btn full">Crear factura QvaPay</button>'+ 
     '<div id="depMsg" class="msg hidden"></div>'
   );
-
   $('createInvoice').onclick=async()=>{
-    const a=Number($('depAmt').value);
-    const d=$('depDesc').value.trim()||'Depósito CUBA PLUS PAY';
-    const b=$('createInvoice');
-
-    if(!Number.isFinite(a)||a<1||a>100000){
-      return msg('depMsg','Monto válido: 1 a 100000 USD.','error');
-    }
-
-    b.disabled=true;
-    b.textContent='Creando…';
-
+    const a=Number($('depAmt').value), d=$('depDesc').value.trim()||'Depósito CUBA PLUS PAY', b=$('createInvoice');
+    if(!Number.isFinite(a)||a<1||a>100000) return msg('depMsg','Monto válido: 1 a 100000 USD.','error');
+    b.disabled=true; b.textContent='Creando factura…';
     try{
       const {data:{session},error:sessionError}=await db.auth.getSession();
-
       if(sessionError) throw sessionError;
-
-      if(!session?.access_token){
-        throw new Error('No hay una sesión autenticada. Cierra sesión, vuelve a entrar y prueba nuevamente.');
-      }
-
-      const {data,error}=await db.functions.invoke(
-        'qvapay-gateway',
-        {
-          body:{
-            operation:'invoice',
-            amount:a,
-            description:d
-          }
-        }
-      );
-
-      if(error){
-        throw new Error(
-          'Error de Edge Function: '+
-          (error.message||JSON.stringify(error))
-        );
-      }
-
-      if(!data){
-        throw new Error('La Edge Function no devolvió ninguna respuesta.');
-      }
-
-      if(!data.ok){
-        throw new Error(
-          data.message||
-          data.error||
-          'La Edge Function rechazó la creación de la factura.'
-        );
-      }
-
-      const r=data.result||{};
-      const url=
-        r.url||
-        r.payment_url||
-        r.checkout_url||
-        r.invoice_url||
-        r.link||
-        r.payment?.url||
-        r.data?.url;
-
-      if(!url){
-        throw new Error(
-          'QvaPay respondió correctamente, pero no devolvió la URL de pago.'
-        );
-      }
-
-      msg(
-        'depMsg',
-        'Factura real creada correctamente. Abriendo QvaPay…',
-        'ok'
-      );
-
-      setTimeout(()=>{
-        location.href=url;
-      },500);
-
+      if(!session?.access_token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
+      const remote_id='cpp-deposit-'+currentUser.id+'-'+safeUUID();
+      const idempotency_key=safeUUID();
+      const data=await invokeFinancialFunction('qvapay-gateway',{operation:'invoice',amount:a,description:d,remote_id,idempotency_key});
+      if(!data?.ok) throw new Error(data?.message||data?.error||data?.code||'QvaPay rechazó la factura.');
+      const url=providerUrl(data)||providerUrl(data.result);
+      if(!url) throw new Error('QvaPay creó la operación pero no devolvió una URL de pago. Revisa el historial antes de repetir el depósito.');
+      msg('depMsg','Factura real creada. La apertura de QvaPay no acredita saldo por sí sola.','ok');
+      setTimeout(()=>location.href=url,700);
     }catch(e){
-      console.error('QvaPay invoice error:',e);
-
-      msg(
-        'depMsg',
-        'No se pudo crear la factura QvaPay.\n'+
-        (e?.message||String(e)),
-        'error'
-      );
-
-    }finally{
-      b.disabled=false;
-      b.textContent='Crear factura QvaPay';
-    }
+      console.error('CubaPlusPay deposit error',e);
+      msg('depMsg','No se pudo crear el depósito.\n'+(e?.message||String(e)),'error');
+    }finally{b.disabled=false;b.textContent='Crear factura QvaPay';}
   };
-  }
+}
 function assetForCurrency(c){return (window.assetCatalog||[]).find(x=>x.code===c)}
 function qvaPayMethod(c){return ({USDT_TRC20:'USDT',USDT_ERC20:'USDTERC20',TRX:'TRX',BTC:'BTC',LTC:'LTC',ETH:'ETH'})[c]||c}
 function paymentMethodsHtml(){const rows=window.paymentMethods||[];return rows.length?rows.map(x=>'<div class="tx"><div class="tx-icon">◆</div><div><b>'+esc(x.name)+'</b><small>'+esc(x.method_type)+' · '+esc(x.asset_code||'—')+' · '+(x.verified?'Verificado':'No verificado')+'</small></div><div class="amount"><button type="button" class="btn secondary" data-delete-pm="'+esc(x.id)+'">Eliminar</button></div></div>').join(''):'<div class="empty">No tienes métodos de pago guardados.</div>'}
-async function paymentMethods(){modal('Métodos de pago','<p style="color:#9dc4e8">Guarda cuentas bancarias, tarjetas compatibles, Transfermóvil o wallets externas. Los datos se almacenan en CUBA PLUS PAY; no se inventa ninguna conexión bancaria.</p><div id="pmList">'+paymentMethodsHtml()+'</div><hr style="border-color:#0b4381"><div class="field"><label>Tipo</label><select id="pmType"><option value="bank_account">Cuenta bancaria</option><option value="bank_card">Tarjeta bancaria</option><option value="mobile">Transfermóvil / móvil</option><option value="crypto_wallet">Wallet cripto</option><option value="cash">Efectivo</option><option value="other">Otro</option></select></div><div class="field"><label>Moneda</label><select id="pmAsset"><option value="USD">USD</option><option value="CUP">CUP</option><option value="USDT_TRC20">USDT TRC20</option><option value="USDT_ERC20">USDT ERC20</option><option value="TRX">TRX</option><option value="BTC">BTC</option></select></div><div class="field"><label>Nombre</label><input id="pmName" placeholder="Ej. Banco Metropolitano / Wallet TRC20"></div><div class="field"><label>Datos</label><input id="pmDetails" placeholder="Cuenta, tarjeta, teléfono o dirección"></div><button type="button" id="savePm" class="btn full">Guardar método</button><div id="pmMsg" class="msg hidden"></div>');document.querySelectorAll('[data-delete-pm]').forEach(b=>b.onclick=async()=>{const {error}=await db.from('payment_methods').delete().eq('id',b.dataset.deletePm);if(error)return msg('pmMsg',error.message,'error');await loadData();paymentMethods()});$('savePm').onclick=async()=>{const name=$('pmName').value.trim(),details=$('pmDetails').value.trim();if(!name||!details)return msg('pmMsg','Completa nombre y datos.','error');const pmType=$('pmType').value;if(pmType==='bank_card'){const digits=details.replace(/\D/g,'');if(digits.length>=12&&digits.length<=19)return msg('pmMsg','Por seguridad no se guarda el número completo de la tarjeta. Usa una referencia o los últimos 4 dígitos.','error');if(/\b(cvv|cvc|pin|telebanca|clave)\b/i.test(details))return msg('pmMsg','No guardes CVV, PIN ni claves bancarias.','error')}const {error}=await db.from('payment_methods').insert({user_id:currentUser.id,method_type:pmType,asset_code:$('pmAsset').value,name,details});if(error)return msg('pmMsg',error.message,'error');await loadData();paymentMethods()}}
-function depositFor(currency){const a=assetForCurrency(currency);if(!a){return unavailable('Depósito', 'La moneda no está registrada en el catálogo real.')};const can=a.enabled_deposit===true;if(currency==='USD'){deposit();return}if(!can){return unavailable('Depositar '+currency,'El proveedor real todavía no ha habilitado depósitos para '+currency+'. No se simulará ningún depósito.')};modal('Depositar '+currency,'<p style="color:#9dc4e8">Depósito mediante proveedor real. El saldo solo cambia después de confirmación y conciliación.</p><div class="field"><label>Método / ticker QvaPay</label><input id="depMethod" value="'+esc(qvaPayMethod(currency))+'"></div><div class="field"><label>Monto</label><input id="depAmt" type="number" min="0.00000001" step="0.00000001" placeholder="0.00"></div><button type="button" id="createTopup" class="btn full">Crear depósito</button><div id="depMsg" class="msg hidden"></div>');$('createTopup').onclick=async()=>{const amount=Number($('depAmt').value),pay_method=$('depMethod').value.trim();if(!Number.isFinite(amount)||amount<=0||!pay_method)return msg('depMsg','Monto y método válidos requeridos.','error');const b=$('createTopup');b.disabled=true;try{const {data,error}=await db.functions.invoke('qvapay-gateway',{body:{operation:'topup',amount,pay_method,currency}});if(error)throw error;const r=data?.result||{};const url=r.url||r.payment_url||r.checkout_url||r.invoice_url||r.link||r.payment?.url||r.data?.url;if(!data?.ok)throw new Error(data?.message||data?.code||'QvaPay rechazó el depósito');msg('depMsg',url?'Depósito creado. Abriendo proveedor…':'Depósito creado y pendiente de confirmación.','ok');if(url)setTimeout(()=>location.href=url,500)}catch(e){msg('depMsg','No se creó el depósito.\n'+(e?.message||e),'error')}finally{b.disabled=false}}}
+async function paymentMethods(){modal('Métodos de pago','<p style="color:#9dc4e8">Guarda cuentas bancarias, tarjetas compatibles, Transfermóvil o wallets externas. Los datos se almacenan en CUBA PLUS PAY; no se inventa ninguna conexión bancaria.</p><div id="pmList">'+paymentMethodsHtml()+'</div><hr style="border-color:#0b4381"><div class="field"><label>Tipo</label><select id="pmType"><option value="bank_account">Cuenta bancaria</option><option value="bank_card">Tarjeta bancaria</option><option value="mobile">Transfermóvil / móvil</option><option value="crypto_wallet">Wallet cripto</option><option value="cash">Efectivo</option><option value="other">Otro</option></select></div><div class="field"><label>Moneda</label><select id="pmAsset"><option value="USD">USD</option><option value="CUP">CUP</option><option value="USDT_TRC20">USDT TRC20</option><option value="USDT_ERC20">USDT ERC20</option><option value="TRX">TRX</option><option value="BTC">BTC</option></select></div><div class="field"><label>Nombre</label><input id="pmName" placeholder="Ej. Banco / Wallet"></div><div class="field"><label>Datos</label><input id="pmDetails" placeholder="Cuenta, teléfono o dirección"></div><button type="button" id="savePm" class="btn full">Guardar método</button><div id="pmMsg" class="msg hidden"></div>');document.querySelectorAll('[data-delete-pm]').forEach(b=>b.onclick=async()=>{const {error}=await db.from('payment_methods').delete().eq('id',b.dataset.deletePm);if(error)return msg('pmMsg',error.message,'error');await loadData();paymentMethods()});$('savePm').onclick=async()=>{const name=$('pmName').value.trim(),details=$('pmDetails').value.trim();if(!name||!details)return msg('pmMsg','Completa nombre y datos.','error');const pmType=$('pmType').value;if(pmType==='bank_card'){const digits=details.replace(/\D/g,'');if(digits.length>=12&&digits.length<=19)return msg('pmMsg','Por seguridad no se guarda el número completo de la tarjeta. Usa una referencia o los últimos 4 dígitos.','error');if(/\b(cvv|cvc|pin|telebanca|clave)\b/i.test(details))return msg('pmMsg','No guardes CVV, PIN ni claves bancarias.','error')}const {error}=await db.from('payment_methods').insert({user_id:currentUser.id,method_type:pmType,asset_code:$('pmAsset').value,name,details});if(error)return msg('pmMsg',error.message,'error');await loadData();paymentMethods()}}
+function depositFor(currency){
+  const a=assetForCurrency(currency);
+  if(!a)return unavailable('Depósito','La moneda no está registrada en el catálogo real.');
+  if(currency==='USD'){deposit();return;}
+  return unavailable('Depositar '+currency,'El gateway QvaPay actual acredita depósitos únicamente en USD. Para evitar crear saldo ficticio, este botón no ejecutará un depósito de otra moneda hasta que exista un proveedor y ruta de confirmación real para ese activo.');
+}
 function withdrawFor(currency){
   const a=assetForCurrency(currency);
   if(!a)return unavailable('Retiro','Moneda no registrada en el catálogo real.');
-  if(!a.enabled_withdraw)return unavailable('Retirar '+currency,'El catálogo real mantiene deshabilitado el retiro para '+currency+'. Primero debes convertir a un activo que tenga salida habilitada. No se simulará ningún retiro.');
+  if(!a.enabled_withdraw)return unavailable('Retirar '+currency,'El catálogo real mantiene deshabilitado el retiro para '+currency+'. No se simulará ningún retiro.');
   const min=Number(a.min_out),max=Number(a.max_out),fee=Number(a.fee_out);
-  const limits=(Number.isFinite(min)||Number.isFinite(max))?'<p class="notice">Límites reales: '+(Number.isFinite(min)?'mín. '+fmt(min):'')+(Number.isFinite(min)&&Number.isFinite(max)?' · ':'')+(Number.isFinite(max)?'máx. '+fmt(max):'')+(Number.isFinite(fee)?' · comisión catálogo '+fmt(fee):'')+'</p>':'';
+  const limits=(Number.isFinite(min)||Number.isFinite(max))?'<p class="notice">Límites del catálogo: '+(Number.isFinite(min)?'mín. '+fmt(min):'')+(Number.isFinite(min)&&Number.isFinite(max)?' · ':'')+(Number.isFinite(max)?'máx. '+fmt(max):'')+(Number.isFinite(fee)?' · comisión '+fmt(fee):'')+'</p>':'';
+  const destinationLabel=currency==='USD'?'Dirección USDT TRC20':'Destino / dirección compatible con QvaPay';
   modal('Retirar '+currency,
-    '<p style="color:#9dc4e8">El retiro usa la Edge Function real <b>withdraw-qvapay</b>. Primero se reservan los fondos; el saldo no se considera completado hasta la conciliación con QvaPay.</p>'+limits+
+    '<p style="color:#9dc4e8">Retiro real por QvaPay. Primero se reservan los fondos en Supabase. Si QvaPay rechaza, la reserva se libera; si queda pendiente, permanece bloqueada hasta conciliación.</p>'+limits+
     '<div class="field"><label>Monto '+esc(currency)+'</label><input id="wdAmt" type="number" min="0.00000001" step="0.00000001" placeholder="0.00"></div>'+ 
-    '<div class="field"><label>Método QvaPay</label><input id="wdMethod" value="'+esc(qvaPayMethod(currency))+'"></div>'+ 
-    '<div class="field"><label>Destino</label><input id="wdWallet" placeholder="Dirección / cuenta de destino"></div>'+ 
+    '<div class="field"><label>Método QvaPay</label><input id="wdMethod" value="'+esc(currency==='USD'?'USD':qvaPayMethod(currency))+'"></div>'+ 
+    '<div class="field"><label>'+destinationLabel+'</label><input id="wdWallet" placeholder="'+(currency==='USD'?'Ej. T… (TRON)':'Dirección o destino')+'"></div>'+ 
     '<div class="field"><label>Nota</label><input id="wdNote" maxlength="255" value="Retiro CUBA PLUS PAY"></div>'+ 
     '<button type="button" id="createWithdraw" class="btn full">Solicitar retiro real</button>'+ 
     '<button type="button" id="refreshWithdraw" class="btn secondary full" style="margin-top:8px">Actualizar retiros pendientes</button>'+ 
@@ -451,10 +405,15 @@ function withdrawFor(currency){
       const {data,error}=await db.from('transactions').select('id,amount,currency,status,external_id,reference,created_at,updated_at,metadata').eq('user_id',currentUser.id).eq('type','withdrawal').order('created_at',{ascending:false}).limit(10);
       if(error)throw error;
       const rows=data||[];
-      box.innerHTML=rows.length?'<div class="mini-list">'+rows.map(x=>'<div class="mini-row"><div><b>'+fmt(x.amount)+' '+esc(x.currency||'')+'</b><br><small>'+esc(x.reference||x.id.slice(0,8))+' · '+esc(new Date(x.created_at).toLocaleString('es-ES'))+'</small></div><div style="text-align:right"><span class="'+(['completed'].includes(x.status)?'ok':(['pending','processing'].includes(x.status)?'wait':'bad'))+'">'+esc(statusText(x.status))+'</span>'+(x.status==='pending'||x.status==='processing'?'<br><button type="button" class="btn secondary" data-wd-status="'+esc(x.metadata?.withdrawal_id||'')+'" style="margin-top:5px">Consultar</button>':'')+'</div></div>').join('')+'</div>':'<div class="empty">No hay retiros registrados para esta cuenta.</div>';
-      box.querySelectorAll('[data-wd-status]').forEach(b=>b.onclick=async()=>{
-        b.disabled=true;
-        try{const {data,error}=await db.functions.invoke('withdraw-qvapay',{body:{operation:'status',withdrawal_id:b.dataset.wdStatus}});if(error)throw error;if(!data?.ok)throw new Error(data?.message||data?.code||'No se pudo consultar el retiro');msg('wdMsg','Estado del proveedor: '+(data.status||'—')+'. La conciliación local se actualizó si correspondía.','ok');await loadData();await renderHistory()}catch(e){msg('wdMsg','No se pudo consultar el retiro.\n'+(e?.message||e),'error')}finally{b.disabled=false}
+      box.innerHTML=rows.length?'<div class="mini-list">'+rows.map(x=>'<div class="mini-row"><div><b>'+fmt(x.amount)+' '+esc(x.currency||'')+'</b><br><small>'+esc(x.reference||x.id.slice(0,8))+' · '+esc(new Date(x.created_at).toLocaleString('es-ES'))+'</small></div><div style="text-align:right"><span class="'+(['completed'].includes(x.status)?'ok':(['pending','processing'].includes(x.status)?'wait':'bad'))+'">'+esc(statusText(x.status))+'</span>'+(['pending','processing'].includes(x.status)?'<br><button type="button" class="btn secondary" data-wd-status="'+esc(x.id)+'" style="margin-top:5px">Consultar</button>':'')+'</div></div>').join('')+'</div>':'<div class="empty">No hay retiros registrados para esta cuenta.</div>';
+      box.querySelectorAll('[data-wd-status]').forEach(btn=>btn.onclick=async()=>{
+        btn.disabled=true;
+        try{
+          const data=await invokeFinancialFunction('qvapay-gateway',{operation:'withdraw_status',transaction_id:btn.dataset.wdStatus});
+          if(!data?.ok)throw new Error(data?.message||data?.code||'No se pudo consultar el retiro');
+          msg('wdMsg','Estado QvaPay: '+(data.status||'—')+'. La conciliación local se actualizó si correspondía.','ok');
+          await loadData(); await renderHistory();
+        }catch(e){msg('wdMsg','No se pudo consultar el retiro.\n'+(e?.message||e),'error')}finally{btn.disabled=false}
       });
     }catch(e){box.innerHTML='<div class="msg error">No se pudo cargar el historial de retiros: '+esc(e?.message||e)+'</div>'}
   };
@@ -463,17 +422,21 @@ function withdrawFor(currency){
   $('createWithdraw').onclick=async()=>{
     const amount=Number($('wdAmt').value),pay_method=$('wdMethod').value.trim(),wallet=$('wdWallet').value.trim(),note=$('wdNote').value.trim()||'Retiro CUBA PLUS PAY';
     if(!Number.isFinite(amount)||amount<=0||!pay_method||!wallet)return msg('wdMsg','Completa monto, método y destino.','error');
-    if(Number.isFinite(min)&&amount<min)return msg('wdMsg','El monto está por debajo del mínimo real del activo: '+fmt(min)+' '+currency+'.','error');
-    if(Number.isFinite(max)&&amount>max)return msg('wdMsg','El monto supera el máximo real del activo: '+fmt(max)+' '+currency+'.','error');
+    if(Number.isFinite(min)&&amount<min)return msg('wdMsg','El monto está por debajo del mínimo real: '+fmt(min)+' '+currency+'.','error');
+    if(Number.isFinite(max)&&amount>max)return msg('wdMsg','El monto supera el máximo real: '+fmt(max)+' '+currency+'.','error');
+    if(currency==='USD'&&!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(wallet))return msg('wdMsg','Para retirar USD mediante la ruta actual debes indicar una dirección USDT TRC20 válida (empieza por T).','error');
     const b=$('createWithdraw');b.disabled=true;b.textContent='Reservando y enviando…';
+    const idem=safeUUID();
     try{
-      const {data,error}=await db.functions.invoke('withdraw-qvapay',{body:{operation:'create',amount,wallet_address:wallet,idempotency_key:safeUUID()}});
-      if(error)throw error;
+      const data=await invokeFinancialFunction('qvapay-gateway',{operation:'withdraw',amount,currency,pay_method,details:{wallet},note,idempotency_key:idem});
       if(!data?.ok)throw new Error(data?.message||data?.code||'QvaPay rechazó el retiro');
-      msg('wdMsg','Retiro creado correctamente. Estado: '+(data.status||'processing')+'. Los fondos quedan reservados hasta la conciliación.','ok');
+      msg('wdMsg','Retiro creado. Estado: '+(data.status||'processing')+'. Idempotencia: '+idem.slice(0,8)+'… Los fondos permanecen reservados hasta la confirmación.','ok');
       await loadData();await renderHistory();
-    }catch(e){msg('wdMsg','No se realizó el retiro. No se inventó ningún movimiento.\n'+(e?.message||e),'error');await renderHistory()}
-    finally{b.disabled=false;b.textContent='Solicitar retiro real'}
+    }catch(e){
+      console.error('CubaPlusPay withdrawal error',e);
+      msg('wdMsg','No se realizó el retiro. La aplicación no debe inventar ningún movimiento.\n'+(e?.message||e),'error');
+      await loadData();await renderHistory();
+    }finally{b.disabled=false;b.textContent='Solicitar retiro real'}
   };
 }
 function unavailable(title,reason){modal(title,'<div class="notice warn"><b>No se ejecutó ninguna operación ficticia.</b><p>'+esc(reason)+'</p></div>')}
@@ -509,7 +472,7 @@ function loadPaymentLinks(){modal('Enlaces de pago','<p style="color:#9dc4e8">Cr
 function payInvoice(){modal('Pagar factura','<p style="color:#9dc4e8">Introduce el token de checkout de una factura que puedas pagar.</p><div class="field"><label>Token</label><input id="checkoutToken"></div><button type="button" id="payCheckout" class="btn full">Pagar con CRX</button><div id="payMsg" class="msg hidden"></div>');$('payCheckout').onclick=async()=>{const token=$('checkoutToken').value.trim();if(!token)return msg('payMsg','Token requerido.','error');const {data,error}=await db.rpc('cp_pay_checkout',{p_checkout_token:token,p_idempotency_key:safeUUID()});if(error)return msg('payMsg',error.message,'error');msg('payMsg','Pago realizado correctamente.','ok');await loadData()}}
 async function adminPanel(){modal('Administración','<p style="color:#9dc4e8">Panel protegido. Solo las funciones permitidas por el rol pueden ejecutarse.</p><div id="adminInfo">Consultando rol…</div>');try{if(!currentUser)throw new Error('Sesión no disponible.');const {data:p,error}=await db.from('profiles').select('role').eq('id',currentUser.id).maybeSingle();if(error)throw error;const ok=p&&['admin','owner','super_admin'].includes(String(p.role||'').toLowerCase());$('adminInfo').innerHTML=ok?'<div class="msg ok">Rol autorizado. Las operaciones administrativas sensibles permanecen en backend.</div>':'<div class="msg error">Tu cuenta no tiene rol administrativo.</div>'}catch(e){$('adminInfo').innerHTML='<div class="msg error">No se pudo verificar el rol: '+esc(e.message||e)+'</div>'}}
 function support(){modal('Soporte','<p style="color:#9dc4e8">Crea un ticket real en CUBA PLUS PAY.</p><div class="field"><label>Asunto</label><input id="supSubject" maxlength="160" placeholder="Describe el problema"></div><div class="field"><label>Mensaje</label><textarea id="supMessage" maxlength="5000" style="width:100%;min-height:120px;padding:12px;border-radius:13px;border:1px solid #0d65bb;background:#031638;color:#fff"></textarea></div><div class="field"><label>Prioridad</label><select id="supPriority" style="width:100%;padding:12px;border-radius:13px;background:#031638;color:#fff"><option value="normal">Normal</option><option value="high">Alta</option><option value="low">Baja</option></select></div><button type="button" id="createSupport" class="btn full">Enviar ticket</button><div id="supMsg" class="msg hidden"></div>');$('createSupport').onclick=async()=>{const subject=$('supSubject').value.trim(),message=$('supMessage').value.trim();if(subject.length<3||message.length<3)return msg('supMsg','Completa asunto y mensaje.','error');const {error}=await db.from('cp_support_tickets').insert({user_id:currentUser.id,subject,message,priority:$('supPriority').value});if(error)return msg('supMsg',error.message,'error');msg('supMsg','Ticket enviado correctamente.','ok')}}
-function wire(){document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));document.querySelectorAll('[data-action="support"]').forEach(b=>b.addEventListener('click',support));document.querySelectorAll('[data-op]').forEach(b=>b.addEventListener('click',()=>{const o=b.dataset.op;if(o==='transfer')nav('transfer');else if(o==='receive')receive();else if(o==='deposit')deposit();else if(o==='withdraw')withdrawFor('CRX');else if(o==='recharge'){if(typeof rechargePanel==='function')rechargePanel();else unavailable('Recargar móvil','El módulo de recargas no está cargado.');}else if(o==='orders')loadOrders();
+function wire(){document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>nav(b.dataset.page)));document.querySelectorAll('[data-action="support"]').forEach(b=>b.addEventListener('click',support));document.querySelectorAll('[data-op]').forEach(b=>b.addEventListener('click',()=>{const o=b.dataset.op;if(o==='transfer')nav('transfer');else if(o==='receive')receive();else if(o==='deposit')deposit();else if(o==='withdraw')withdrawFor('USD');else if(o==='recharge'){if(typeof rechargePanel==='function')rechargePanel();else unavailable('Recargar móvil','El módulo de recargas no está cargado.');}else if(o==='orders')loadOrders();
 else if(o==='invoices')loadInvoices();
 else if(o==='links')loadPaymentLinks();
 else if(o==='pay')payInvoice();else if(o==='admin')adminPanel();else if(o==='payment_methods')paymentMethods()}));$('openSide').onclick=()=>$('side').classList.add('open');$('refresh').onclick=async()=>{const b=$('refresh');b.disabled=true;try{await loadData()}catch(e){msg('accountState','Error al actualizar: '+(e?.message||e),'error')}finally{b.disabled=false}};$('closeModal').onclick=closeModal;$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{$('amt').value=(Number($('amt').value)||0)+Number(b.dataset.add)});$('sendTransfer').onclick=doTransfer;document.addEventListener('click',e=>{const b=e.target.closest('[data-wallet-action]');if(!b)return;const c=b.dataset.currency;if(b.dataset.walletAction==='deposit')depositFor(c);else if(b.dataset.walletAction==='withdraw')withdrawFor(c)});$('logout').onclick=async()=>{await db.auth.signOut();currentUser=null;gameSession=null;await session()};bindAuth();$('marketRefresh').onclick=loadMarketplace;$('marketSearch').addEventListener('input',()=>loadMarketplace());document.addEventListener('click',e=>{const b=e.target.closest('[data-buy-product]');if(b)buyProduct(b.dataset.buyProduct)});db.auth.onAuthStateChange((event,s)=>{if(event==='PASSWORD_RECOVERY'){recovery=true;show('auth',true);show('shell',false);$('authTitle').textContent='Nueva contraseña';$('authHint').textContent='Escribe tu nueva contraseña.';show('newPassWrap',true);show('modeBtn',false);show('resetBtn',false);$('authBtn').textContent='Guardar contraseña'}else{show('auth',!s);show('shell',!!s);if(s&&(event==='SIGNED_IN'||event==='INITIAL_SESSION'))setTimeout(()=>loadData().catch(()=>{}),0)}})}
@@ -897,7 +860,7 @@ async function exchangePanel(){
 
 async function financialCenter(){
  modal('Centro financiero real · V27','<div id="fcBox" class="notice">Consultando wallets reales…</div>');
- const box=$('fcBox');try{const u=user();if(!u)throw new Error('AUTH_REQUIRED');const {data:w,error}=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',u.id).order('currency');if(error)throw error;const rows=(w||[]).map(x=>'<div class="mini-row"><div><b>'+esc(x.currency)+'</b><br><small>Disponible '+fmt(Number(x.balance)-Number(x.locked||0))+' · bloqueado '+fmt(x.locked||0)+'</small></div><div><button type="button" class="btn secondary" data-v27-dep="'+esc(x.currency)+'">Depositar</button> <button type="button" class="btn secondary" data-v27-wd="'+esc(x.currency)+'">Retirar</button></div></div>').join('')||'<div class="empty">Sin wallets.</div>';box.innerHTML='<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="fcEx" class="btn secondary">Intercambiar</button><button type="button" id="fcRec" class="btn secondary">Recargar móvil</button><button type="button" id="fcCup" class="btn secondary">Fondos CUP</button></div></div><div class="card" style="margin-top:10px"><b>Wallets reales</b><div class="mini-list">'+rows+'</div></div><div class="notice">Todas las cifras vienen de Supabase. Ninguna acción de esta pantalla crea saldo ficticio.</div>';box.querySelectorAll('[data-v27-dep]').forEach(b=>b.onclick=()=>CORE.deposit?.(b.dataset.v27Dep));box.querySelectorAll('[data-v27-wd]').forEach(b=>b.onclick=()=>CORE.withdrawFor?.(b.dataset.v27Wd));$('fcEx').onclick=exchangePanel;$('fcRec').onclick=()=>audit().rechargePanel?.();$('fcCup').onclick=cupFunding}catch(e){box.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}
+ const box=$('fcBox');try{let u=user();if(!u?.id){const authResult=await CP.auth.getUser();if(authResult.error)throw authResult.error;u=authResult.data?.user||null;}if(!u?.id)throw new Error('AUTH_REQUIRED: la sesión de Supabase no está activa. Cierra sesión y vuelve a entrar.');const {data:w,error}=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',u.id).order('currency');if(error)throw error;const rows=(w||[]).map(x=>'<div class="mini-row"><div><b>'+esc(x.currency)+'</b><br><small>Disponible '+fmt(Number(x.balance)-Number(x.locked||0))+' · bloqueado '+fmt(x.locked||0)+'</small></div><div><button type="button" class="btn secondary" data-v27-dep="'+esc(x.currency)+'">Depositar</button> <button type="button" class="btn secondary" data-v27-wd="'+esc(x.currency)+'">Retirar</button></div></div>').join('')||'<div class="empty">Sin wallets.</div>';box.innerHTML='<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="fcEx" class="btn secondary">Intercambiar</button><button type="button" id="fcRec" class="btn secondary">Recargar móvil</button><button type="button" id="fcCup" class="btn secondary">Fondos CUP</button><button type="button" id="fcRecon" class="btn secondary">Conciliar QvaPay</button></div></div><div class="card" style="margin-top:10px"><b>Wallets reales</b><div class="mini-list">'+rows+'</div></div><div class="notice">Todas las cifras vienen de Supabase. Ninguna acción de esta pantalla crea saldo ficticio.</div>';box.querySelectorAll('[data-v27-dep]').forEach(b=>b.onclick=()=>CORE.deposit?.(b.dataset.v27Dep));box.querySelectorAll('[data-v27-wd]').forEach(b=>b.onclick=()=>CORE.withdrawFor?.(b.dataset.v27Wd));$('fcEx').onclick=exchangePanel;$('fcRec').onclick=()=>audit().rechargePanel?.();$('fcCup').onclick=cupFunding;$('fcRecon').onclick=async()=>{const b=$('fcRecon');b.disabled=true;b.textContent='Conciliando…';try{const r=await invoke('qvapay-gateway',{operation:'reconcile_pending'});const rows=Array.isArray(r?.results)?r.results:[];const settled=rows.filter(x=>x?.settled).length;const pending=rows.filter(x=>!x?.settled&&['pending','processing','created','unknown'].includes(String(x?.status||'').toLowerCase())).length;const failed=rows.filter(x=>x?.status==='provider_query_failed'||x?.status==='invalid_provider_amount').length;modal('Conciliación QvaPay','<div class="mini-list"><div class="mini-row"><span>Revisados</span><b>'+rows.length+'</b></div><div class="mini-row"><span>Pagados acreditados</span><b class="ok-text">'+settled+'</b></div><div class="mini-row"><span>Siguen pendientes</span><b>'+pending+'</b></div><div class="mini-row"><span>Con error de consulta</span><b class="danger-text">'+failed+'</b></div></div><details style="margin-top:10px"><summary>Detalle</summary><pre style="white-space:pre-wrap;overflow:auto">'+e(JSON.stringify(r,null,2))+'</pre></details><div class="notice">Solo se acredita cuando QvaPay confirma paid/completed. No se crean saldos ficticios.</div>');await CORE.loadData?.()}catch(x){const detail=x?.context?.json?await x.context.json().catch(()=>null):null;modal('Conciliación QvaPay','<div class="msg error">No se pudo conciliar: '+e(detail?.code||detail?.message||err(x))+'</div><details style="margin-top:10px"><summary>Detalle técnico</summary><pre style="white-space:pre-wrap;overflow:auto">'+e(JSON.stringify(detail||{message:err(x),status:x?.context?.status||null},null,2))+'</pre></details><div class="notice">No repitas depósitos. La protección de autenticación se mantiene activa.</div>')}finally{b.disabled=false;b.textContent='Conciliar QvaPay'}}}catch(e){box.innerHTML='<div class="msg error">'+esc(err(e))+'</div>'}
 }
 
 async function cupFunding(){
@@ -919,7 +882,7 @@ async function preflight(){await diagnostics();}
 async function advanced(op){const a=audit();const map={p2p:'p2pPanel',crypto:'cryptoPanel',crm:'crmPanel',ai:'aiPanel',integrity:'integrityPanel',withdrawal_audit:'withdrawalAuditPanel',reconciliation:'reconciliationPanel',incidents:'financialIncidentsPanel',recharge:'rechargePanel'};if(map[op]&&typeof a[map[op]]==='function')return a[map[op]]();if(op==='provider')return providerPanel();if(op==='security')return securityPanel();if(op==='financial_audit')return financialAudit();if(op==='diagnostics'||op==='performance')return diagnostics();if(op==='system_audit')return financialAudit();if(op==='preflight')return preflight();if(op==='financial_lab')return exchangePanel();if(op==='transaction_verify'||op==='e2e_full_test')return e2e();if(op==='state_machine'||op==='orchestrator')return readiness();if(op==='execution_kernel')return executionKernel();if(op==='financial_center')return financialCenter();if(op==='cup_funding')return cupFunding();modal('Módulo', '<div class="notice">'+esc(op)+' conectado al router V27.</div>')}
 
 const routes={
- transfer:()=>CORE.nav?.('transfer'),receive:()=>CORE.receive?.(),deposit:()=>CORE.deposit?.(),withdraw:()=>CORE.withdrawFor?.('CRX'),recharge:()=>advanced('recharge'),orders:()=>CORE.loadOrders?.(),invoices:()=>CORE.loadInvoices?.(),links:()=>CORE.loadPaymentLinks?.(),pay:()=>CORE.payInvoice?.(),admin:()=>CORE.adminPanel?.(),payment_methods:()=>CORE.paymentMethods?.(),exchange:exchangePanel,
+ transfer:()=>CORE.nav?.('transfer'),receive:()=>CORE.receive?.(),deposit:()=>CORE.deposit?.(),withdraw:()=>CORE.withdrawFor?.('USD'),recharge:()=>advanced('recharge'),orders:()=>CORE.loadOrders?.(),invoices:()=>CORE.loadInvoices?.(),links:()=>CORE.loadPaymentLinks?.(),pay:()=>CORE.payInvoice?.(),admin:()=>CORE.adminPanel?.(),payment_methods:()=>CORE.paymentMethods?.(),exchange:exchangePanel,
  p2p:()=>advanced('p2p'),crypto:()=>advanced('crypto'),crm:()=>advanced('crm'),provider:()=>advanced('provider'),security:()=>advanced('security'),financial_audit:()=>advanced('financial_audit'),sync_rates:()=>invoke('financial-exchange-gateway',{operation:'rates'}).then(r=>modal('Tasas sincronizadas','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),diagnostics:()=>advanced('diagnostics'),system_audit:()=>advanced('system_audit'),integrity:()=>advanced('integrity'),withdrawal_audit:()=>advanced('withdrawal_audit'),reconciliation:()=>advanced('reconciliation'),incidents:()=>advanced('incidents'),ai:()=>advanced('ai'),usdt_gateway:()=>invoke('usdt-onchain-gateway',{operation:'capabilities'}).then(r=>modal('USDT On-Chain','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),performance:()=>advanced('performance'),preflight:()=>advanced('preflight'),financial_lab:()=>advanced('financial_lab'),transaction_verify:()=>advanced('transaction_verify'),state_machine:()=>advanced('state_machine'),orchestrator:()=>advanced('orchestrator'),execution_kernel:()=>advanced('execution_kernel'),e2e_full_test:()=>advanced('e2e_full_test'),financial_center:()=>advanced('financial_center'),cup_funding:()=>advanced('cup_funding')
 };
 document.addEventListener('click',ev=>{const b=ev.target?.closest?.('[data-op]');if(!b)return;const op=b.dataset.op,fn=routes[op];if(!fn)return;ev.preventDefault();ev.stopImmediatePropagation();b.disabled=true;Promise.resolve().then(fn).catch(e=>modal('Error del módulo '+op,'<div class="msg error">'+esc(err(e))+'</div>')).finally(()=>b.disabled=false)},true);
