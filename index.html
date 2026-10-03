@@ -272,12 +272,47 @@ async function deposit(){
     $('depCrypto')?.addEventListener('click',()=>cryptoDeposit());
 
     async function qvaDeposit(){
-      showFlow('<div class="card"><h3>Depósito QvaPay</h3><div class="notice">Para <b>depositar en tu wallet</b>, la ruta predeterminada es TopUp: QvaPay genera una dirección real y acredita el depósito cuando el proveedor confirma el pago. La opción <b>Crear factura</b> es para cobrar a otra cuenta QvaPay; una factura creada por tu propia cuenta no puede pagarse desde esa misma cuenta.</div><div class="field"><label>Tipo</label><select id="qvaDepType"><option value="topup" selected>Depositar con cripto → USD · TopUp QvaPay</option><option value="invoice">Crear factura QvaPay · la paga otra cuenta</option></select></div><div class="field"><label>Monto USD a acreditar/cobrar</label><input id="qvaDepAmt" type="number" min="0.01" step="0.01" placeholder="0.00"></div><div id="qvaMethodWrap" class="field"><label>Método del proveedor</label><select id="qvaDepMethod"><option value="">Cargando catálogo real…</option></select></div><button id="qvaDepGo" class="btn full">Crear operación real</button><div id="qvaDepMsg" class="msg hidden"></div></div>');
-      const type=$('qvaDepType'),wrap=$('qvaMethodWrap'),sel=$('qvaDepMethod');
-      async function loadCoins(){try{const r=await call('qvapay-gateway',{operation:'coins'});const groups=Array.isArray(r.result)?r.result:[];const coins=groups.flatMap(g=>Array.isArray(g?.Coins)?g.Coins:[]).filter(c=>c?.enabled_in===true);const unique=[];const seen=new Set();for(const c of coins){const tick=String(c.tick||'').toUpperCase(),net=String(c.network||'').toUpperCase(),key=tick+'|'+net;if(!tick||seen.has(key))continue;seen.add(key);unique.push(c)}sel.innerHTML=unique.length?unique.map(c=>'<option value="'+escLocal(c.tick)+'">'+escLocal(c.tick)+(c.network?' · '+escLocal(c.network):'')+'</option>').join(''):'<option value="">Sin métodos de entrada confirmados por QvaPay</option>';}catch(e){sel.innerHTML='<option value="">No disponible</option>';msg('qvaDepMsg','No se pudo cargar el catálogo real de QvaPay: '+(e?.message||e),'error')}}
-      type.onchange=async()=>{wrap.classList.toggle('hidden',type.value!=='topup');if(type.value==='topup')await loadCoins()};
+      showFlow('<div class="card"><h3>Depósito QvaPay · TopUp</h3><div class="notice">Este es el único circuito de depósito QvaPay habilitado en Cuba Plus Pay. El depósito acredita <b>USD</b> y solo pasa a saldo después de la confirmación real de QvaPay y la conciliación del backend. No se crean facturas para financiar esta wallet.</div><div class="field"><label>Monto USD a acreditar</label><input id="qvaDepAmt" type="number" min="0.01" step="0.01" placeholder="0.00"></div><div class="field"><label>Activo con el que pagarás</label><select id="qvaDepMethod"><option value="">Consultando catálogo real de QvaPay…</option></select></div><button id="qvaDepGo" class="btn full">Crear depósito TopUp real</button><div id="qvaDepMsg" class="msg hidden"></div></div>');
+      const sel=$('qvaDepMethod');
+      async function loadCoins(){
+        try{
+          const r=await call('qvapay-gateway',{operation:'coins'});
+          const groups=Array.isArray(r.result)?r.result:[];
+          const coins=groups.flatMap(g=>Array.isArray(g?.Coins)?g.Coins:[]).filter(c=>c?.enabled_in===true);
+          const unique=[];const seen=new Set();
+          for(const c of coins){
+            const tick=String(c.tick||'').toUpperCase(),net=String(c.network||'').toUpperCase(),key=tick+'|'+net;
+            if(!tick||seen.has(key))continue;
+            seen.add(key);unique.push(c);
+          }
+          sel.innerHTML=unique.length
+            ? unique.map(c=>'<option value="'+escLocal(c.tick)+'">'+escLocal(c.tick)+(c.network?' · '+escLocal(c.network):'')+'</option>').join('')
+            : '<option value="">QvaPay no confirmó activos de entrada</option>';
+          if(!unique.length) msg('qvaDepMsg','QvaPay no ha confirmado ningún activo habilitado para TopUp. No se mostrará un proveedor alternativo.','error');
+        }catch(e){
+          sel.innerHTML='<option value="">No disponible</option>';
+          msg('qvaDepMsg','No se pudo consultar el catálogo real de QvaPay: '+(e?.message||e),'error');
+        }
+      }
       loadCoins();
-      $('qvaDepGo').onclick=async()=>{const amount=Number($('qvaDepAmt').value),b=$('qvaDepGo');if(!Number.isFinite(amount)||amount<=0)return msg('qvaDepMsg','Monto inválido.','error');b.disabled=true;b.textContent='Procesando de forma segura…';try{let r;if(type.value==='invoice'){if(amount>100000)throw new Error('Máximo 100000 USD por factura.');r=await call('qvapay-gateway',{operation:'invoice',amount,description:'Factura CUBA PLUS PAY'});}else{const pay_method=$('qvaDepMethod').value.trim();if(!pay_method)throw new Error('QvaPay no ha confirmado un método de entrada disponible.');r=await call('qvapay-gateway',{operation:'topup',amount,pay_method,currency:pay_method});}if(!r.ok)throw new Error(r.message||r.code||'QvaPay rechazó la operación');const root=r.result||{},d=root.data||root;const url=r.payment_url||d.url||d.payment_url||d.checkout_url||d.invoice_url||d.link||d.payment?.url||d.data?.url;const uuid=d.transaction_uuid||root.transaction_uuid||r.transaction_uuid||'—';if(type.value==='invoice'){const link=url?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn secondary" href="'+escLocal(url)+'" target="_blank" rel="noopener">Abrir factura</a><button id="copyQvaInvoice" class="btn secondary" type="button">Copiar enlace</button></div>':'';showFlow('<div class="card"><h3>Factura QvaPay creada</h3><div class="msg ok">UUID: '+escLocal(uuid)+'<br>Estado: Pendiente</div><div class="notice">Esta factura es para que <b>otra cuenta QvaPay</b> la pague. QvaPay no permite que la misma cuenta creadora pague su propia factura. La factura no acredita saldo en tu wallet hasta que exista un pago externo confirmado.</div>'+link+'<div id="qvaInvoiceCopyMsg" class="msg hidden"></div></div>');if(url&&$('copyQvaInvoice'))$('copyQvaInvoice').onclick=async()=>{try{await navigator.clipboard.writeText(url);msg('qvaInvoiceCopyMsg','Enlace copiado.','ok')}catch{msg('qvaInvoiceCopyMsg','No se pudo copiar automáticamente; usa el botón Abrir factura.','error')}};}else{const coin=d.coin||pay_method,value=d.value,wallet=d.wallet||d.address,memo=d.memo||null;const details='<b>Depósito TopUp creado</b><br>UUID: '+escLocal(uuid)+'<br>Moneda: '+escLocal(coin)+' · Enviar: <b>'+escLocal(value??'—')+' '+escLocal(coin)+'</b><br>Dirección: <b style="word-break:break-all">'+escLocal(wallet||'—')+'</b>'+(memo?'<br>Memo/Tag: <b>'+escLocal(memo)+'</b>':'')+(url?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn secondary" href="'+escLocal(url)+'" target="_blank" rel="noopener">Abrir QvaPay</a></div>':'')+'<div class="notice" style="margin-top:8px">El saldo de CubaPlusPay permanece pendiente hasta la confirmación real del proveedor y la conciliación del webhook/estado. No se acredita al crear la solicitud.</div>';showFlow('<div class="card">'+details+'</div>');}}catch(e){msg('qvaDepMsg','No se creó la operación: '+(e?.message||e),'error')}finally{b.disabled=false;b.textContent='Crear operación real'}};
+      $('qvaDepGo').onclick=async()=>{
+        const amount=Number($('qvaDepAmt').value),pay_method=String(sel.value||'').trim().toUpperCase(),b=$('qvaDepGo');
+        if(!Number.isFinite(amount)||amount<=0)return msg('qvaDepMsg','Monto inválido.','error');
+        if(!pay_method)return msg('qvaDepMsg','QvaPay no ha confirmado un activo de entrada disponible. No se abrirá ningún proveedor alternativo.','error');
+        b.disabled=true;b.textContent='Creando TopUp real…';
+        try{
+          const r=await call('qvapay-gateway',{operation:'topup',amount,pay_method,currency:pay_method});
+          if(!r.ok)throw new Error(r.message||r.code||'QvaPay rechazó la operación');
+          const root=r.result||{},d=root.data||root;
+          const url=r.payment_url||d.url||d.payment_url||d.checkout_url||d.invoice_url||d.link||d.payment?.url||d.data?.url;
+          const uuid=d.transaction_uuid||root.transaction_uuid||r.transaction_uuid||'—';
+          const coin=d.coin||pay_method,value=d.value,wallet=d.wallet||d.address,memo=d.memo||null;
+          const details='<b>Depósito TopUp creado</b><br>UUID: '+escLocal(uuid)+'<br>Activo: '+escLocal(coin)+' · Enviar: <b>'+escLocal(value??'—')+' '+escLocal(coin)+'</b><br>Dirección: <b style="word-break:break-all">'+escLocal(wallet||'—')+'</b>'+(memo?'<br>Memo/Tag: <b>'+escLocal(memo)+'</b>':'')+(url?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><a class="btn secondary" href="'+escLocal(url)+'" target="_blank" rel="noopener">Abrir QvaPay</a></div>':'')+'<div class="notice" style="margin-top:8px">El saldo de Cuba Plus Pay permanece pendiente hasta la confirmación real de QvaPay y la conciliación del webhook/estado. No se acredita al crear la solicitud.</div>';
+          showFlow('<div class="card">'+details+'</div>');
+        }catch(e){
+          msg('qvaDepMsg','No se creó el depósito TopUp: '+(e?.message||e),'error');
+        }finally{b.disabled=false;b.textContent='Crear depósito TopUp real'}
+      };
     }
 
     async function tmDeposit(){
