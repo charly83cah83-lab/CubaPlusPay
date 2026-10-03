@@ -184,7 +184,7 @@ window.addEventListener('unhandledrejection',event=>{
 });
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
 <script>
 (()=>{'use strict';
 const SUPABASE_URL='https://lqwxkevalagdhckhuelx.supabase.co';
@@ -481,7 +481,7 @@ try{setAuth()}catch(initError){console.error('CPP auth bootstrap',initError)}
 try{wire()}catch(initError){console.error('CPP event wiring',initError);const boot=document.getElementById('cppBootStatus');if(boot)boot.textContent='Inicialización parcial: '+(initError?.message||initError)}
 const params=new URLSearchParams(location.search);
 if(params.get('checkout')){setTimeout(async()=>{const token=params.get('checkout')||'';try{const {data,error}=await db.rpc('cp_get_checkout',{p_checkout_token:token});if(error)throw error;show('auth',!currentUser);show('shell',!!currentUser);if(currentUser)nav('more');modal('Checkout','<p style="color:#9dc4e8">Factura de pago real.</p><div id="checkoutInfo" class="notice"></div><div id="checkoutAction"></div>');$('checkoutInfo').innerHTML='<b>'+esc(fmt(data?.amount)+' '+(data?.currency||''))+'</b><br>'+esc(data?.description||'Pago CUBA PLUS PAY')+'<br><small>Estado: '+esc(statusText(data?.status))+'</small>';if(data?.status!=='pending'){ $('checkoutAction').innerHTML='<div class="msg wait">Este checkout no está pendiente de pago.</div>';return }if(!currentUser){$('checkoutAction').innerHTML='<div class="msg wait">Inicia sesión para pagar con CRX. El checkout público solo muestra la factura.</div>';return}$('checkoutAction').innerHTML='<button id="payCheckoutAuto" class="btn full">Pagar con CRX</button><div id="autoPayMsg" class="msg hidden"></div>';$('payCheckoutAuto').onclick=async()=>{const {data:r,error:e}=await db.rpc('cp_pay_checkout',{p_checkout_token:token,p_idempotency_key:safeUUID()});if(e)return msg('autoPayMsg',e.message,'error');msg('autoPayMsg','Pago realizado correctamente.','ok');history.replaceState({},document.title,location.pathname);await loadData()}}catch(e){show('auth',true);show('shell',false);modal('Checkout','<div class="msg error">No se pudo consultar el checkout: '+esc(e.message||e)+'</div>')}},300)}
-session();
+session().catch(initError=>{console.error('CPP session bootstrap',initError);const boot=document.getElementById('cppBootStatus');if(boot)boot.textContent='La interfaz cargó, pero no pudo recuperar la sesión: '+(initError?.message||String(initError));const am=document.getElementById('authMsg');if(am&&!document.getElementById('shell')?.classList.contains('active')){am.textContent='No se pudo comprobar la sesión. Comprueba Internet y vuelve a entrar.';am.className='msg error';am.classList.remove('hidden')}});
 })();
 </script>
 \n<script id="cpp-v752-module-hardening">
@@ -1053,11 +1053,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 window.__CPP_BUTTON_AUDIT={version:'V27.1',gameExchangeBound:true,realDataOnly:true};
 })();
 </script>
-<script id="cpp-login-emergency-fallback">
+
+<script id="cpp-login-recovery-bridge">
 (()=>{
  'use strict';
  const byId=id=>document.getElementById(id);
- const message=(text,type='')=>{const el=byId('authMsg');if(!el)return;el.textContent=text;el.className='msg'+(text?' '+type:'');el.classList.toggle('hidden',!text)};
+ const showMessage=(text,type='')=>{const el=byId('authMsg');if(!el)return;el.textContent=text;el.className='msg'+(text?' '+type:'');el.classList.toggle('hidden',!text)};
  let busy=false;
  document.addEventListener('click',async event=>{
   const button=event.target&&event.target.closest?event.target.closest('#authBtn'):null;
@@ -1065,35 +1066,33 @@ window.__CPP_BUTTON_AUDIT={version:'V27.1',gameExchangeBound:true,realDataOnly:t
   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
   if(busy)return;
   const db=window.__CPP_DB;
-  if(!db||!db.auth){message('El módulo de acceso no se inicializó. Recarga la página con Internet; si continúa, hay un error de carga de la aplicación.','error');return;}
-  const email=(byId('email')?.value||'').trim();
-  const password=byId('password')?.value||'';
+  if(!db||!db.auth){showMessage('El servicio de acceso no se inicializó. Comprueba Internet, recarga la página y vuelve a intentarlo.','error');return;}
   const label=(button.textContent||'').trim().toLowerCase();
   const recovery=label.includes('guardar contraseña');
   const signup=label.includes('crear cuenta');
-  if(recovery){
-   const next=byId('newPassword')?.value||'';
-   if(next.length<8){message('La nueva contraseña debe tener al menos 8 caracteres.','error');return;}
-  } else {
-   if(!email||!password){message('Escribe tu correo electrónico y contraseña.','error');return;}
-   if(password.length<6){message('La contraseña debe tener al menos 6 caracteres.','error');return;}
-  }
-  busy=true;button.disabled=true;button.textContent=recovery?'Guardando…':signup?'Creando…':'Conectando…';
-  message('Conectando con el servicio de acceso…','');
+  const email=(byId('email')?.value||'').trim();
+  const password=(byId('password')?.value||'');
+  if(!recovery&&!email){showMessage('Escribe tu correo electrónico.','error');return;}
+  if(!recovery&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMessage('Escribe un correo electrónico válido.','error');return;}
+  if(!recovery&&password.length<6){showMessage('La contraseña debe tener al menos 6 caracteres.','error');return;}
+  const newPassword=byId('newPassword')?.value||'';
+  if(recovery&&newPassword.length<8){showMessage('La nueva contraseña debe tener al menos 8 caracteres.','error');return;}
+  busy=true;button.disabled=true;button.textContent=recovery?'Guardando…':signup?'Creando…':'Entrando…';
+  showMessage('Conectando con el servicio de acceso…','');
   let timer;
   try{
-   const operation=recovery?db.auth.updateUser({password:byId('newPassword').value}):signup?db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):db.auth.signInWithPassword({email,password});
-   const result=await Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('La solicitud tardó más de 20 segundos. Comprueba la conexión a Internet y vuelve a intentarlo.')),20000)})]);
+   const operation=recovery?db.auth.updateUser({password:newPassword}):signup?db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):db.auth.signInWithPassword({email,password});
+   const result=await Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('La solicitud superó 20 segundos. Comprueba la conexión a Internet y vuelve a intentarlo.')),20000)})]);
    if(result?.error)throw result.error;
-   if(signup&&!result?.data?.session){message('Cuenta creada. Revisa el correo de confirmación y luego inicia sesión.','ok');return;}
-   if(recovery){message('Contraseña actualizada. Ya puedes iniciar sesión.','ok');return;}
-   if(!signup&&!result?.data?.session)throw new Error('Supabase no devolvió una sesión. Comprueba correo, contraseña y confirmación del correo.');
-   message('Acceso validado. Abriendo tu cuenta…','ok');
-   setTimeout(()=>location.reload(),250);
-  }catch(error){message('No se pudo iniciar sesión: '+String(error?.message||error||'Error desconocido'),'error');}
+   if(signup&&!result?.data?.session){showMessage('La cuenta se creó. Revisa el correo de confirmación y después inicia sesión.','ok');return;}
+   if(recovery){showMessage('Contraseña actualizada. Vuelve a iniciar sesión.','ok');try{await db.auth.signOut();}catch(_){}history.replaceState({},document.title,location.pathname+location.search);setTimeout(()=>location.reload(),500);return;}
+   if(!result?.data?.session)throw new Error('Supabase no devolvió una sesión. Comprueba la confirmación del correo y las credenciales.');
+   showMessage('Acceso validado. Abriendo tu cuenta…','ok');
+   setTimeout(()=>location.reload(),350);
+  }catch(error){console.error('CPP login bridge',error);showMessage('No se pudo iniciar sesión: '+String(error?.message||error||'Error desconocido'),'error');}
   finally{clearTimeout(timer);busy=false;button.disabled=false;button.textContent=recovery?'Guardar contraseña':signup?'Crear cuenta':'Entrar';}
  },true);
- window.__CPP_LOGIN_FALLBACK={installed:true};
+ window.__CPP_LOGIN_BRIDGE={installed:true};
 })();
 </script>
 </body>
