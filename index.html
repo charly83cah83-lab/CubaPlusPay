@@ -185,11 +185,51 @@ window.addEventListener('unhandledrejection',event=>{
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script id="cpp-auth-bootstrap">
+(()=>{
+  'use strict';
+  const URL='https://lqwxkevalagdhckhuelx.supabase.co';
+  const KEY='sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
+  const by=id=>document.getElementById(id);
+  const say=(t,kind='')=>{const x=by('authMsg');if(x){x.textContent=t;x.className='msg '+kind;x.classList.remove('hidden')}};
+  const setBusy=(b,label)=>{const x=by('authBtn');if(x){x.disabled=b;x.textContent=label}};
+  window.__CPP_AUTH_BOOT={ready:false};
+  function start(){
+    if(!window.supabase||typeof window.supabase.createClient!=='function'){say('No se pudo cargar el motor de acceso de Supabase. Recarga la página.','error');return;}
+    const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    window.__CPP_BOOT_DB=db; window.__CPP_AUTH_BOOT.ready=true;
+    const go=async()=>{
+      const email=by('email')?.value.trim()||'', pass=by('password')?.value||'';
+      if(!email||!pass){say('Escribe correo y contraseña.','error');return;}
+      setBusy(true,'Entrando…'); say('Conectando con Supabase…');
+      try{
+        const {data,error}=await db.auth.signInWithPassword({email,password:pass});
+        if(error) throw error;
+        if(!data?.session) throw new Error('Supabase no devolvió una sesión válida.');
+        window.__CPP_AUTHENTICATED=true;
+        const auth=by('auth'),shell=by('shell');
+        if(auth)auth.classList.add('hidden'); if(shell)shell.classList.remove('hidden');
+        say('');
+        if(typeof window.__CPP_AFTER_LOGIN==='function') await window.__CPP_AFTER_LOGIN(data.session);
+      }catch(e){say(e?.message||'No se pudo iniciar sesión.','error');}
+      finally{setBusy(false,'Entrar')}
+    };
+    window.__CPP_AUTH_LOGIN=go;
+    const b=by('authBtn'); if(b){b.type='button';b.onclick=go;}
+    const p=by('password'); if(p)p.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go()}});
+    const em=by('email'); if(em)em.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();p?.focus()}});
+    db.auth.getSession().then(({data})=>{
+      if(data?.session){window.__CPP_AUTHENTICATED=true;by('auth')?.classList.add('hidden');by('shell')?.classList.remove('hidden');}
+    }).catch(e=>say(e?.message||'No se pudo comprobar la sesión.','error'));
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
 <script>
 (()=>{'use strict';
 const SUPABASE_URL='https://lqwxkevalagdhckhuelx.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_TlCg5ocePwG904LtieWigw_4lw2SGv4';
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.__CPP_DB=db;
+const db=window.__CPP_BOOT_DB||window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.__CPP_DB=db;
 const $=id=>document.getElementById(id), show=(id,on=true)=>$(id)?.classList.toggle('hidden',!on);
 const msg=(id,text,type='')=>{const e=$(id);if(!e)return;e.textContent=text;e.className='msg'+(text?' '+type:'');show(id,!!text)};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -205,6 +245,7 @@ function bindAuth(){
  if(!btn||!mode||!reset||!email||!password){console.error('[CubaPlusPay] Auth UI incompleta');return false}
  mode.onclick=()=>{signup=!signup;setAuth();email.focus()};
  btn.onclick=async()=>{
+  if(window.__CPP_AUTH_LOGIN&&!recovery&&!signup){return window.__CPP_AUTH_LOGIN()}
   if(btn.dataset.busy==='1')return;
   try{
    if(recovery){
@@ -476,6 +517,7 @@ setAuth();bindAuth();wire();
 const params=new URLSearchParams(location.search);
 if(params.get('checkout')){setTimeout(async()=>{const token=params.get('checkout')||'';try{const {data,error}=await db.rpc('cp_get_checkout',{p_checkout_token:token});if(error)throw error;show('auth',!currentUser);show('shell',!!currentUser);if(currentUser)nav('more');modal('Checkout','<p style="color:#9dc4e8">Factura de pago real.</p><div id="checkoutInfo" class="notice"></div><div id="checkoutAction"></div>');$('checkoutInfo').innerHTML='<b>'+esc(fmt(data?.amount)+' '+(data?.currency||''))+'</b><br>'+esc(data?.description||'Pago CUBA PLUS PAY')+'<br><small>Estado: '+esc(statusText(data?.status))+'</small>';if(data?.status!=='pending'){ $('checkoutAction').innerHTML='<div class="msg wait">Este checkout no está pendiente de pago.</div>';return }if(!currentUser){$('checkoutAction').innerHTML='<div class="msg wait">Inicia sesión para pagar con CRX. El checkout público solo muestra la factura.</div>';return}$('checkoutAction').innerHTML='<button type="button" id="payCheckoutAuto" class="btn full">Pagar con CRX</button><div id="autoPayMsg" class="msg hidden"></div>';$('payCheckoutAuto').onclick=async()=>{const {data:r,error:e}=await db.rpc('cp_pay_checkout',{p_checkout_token:token,p_idempotency_key:safeUUID()});if(e)return msg('autoPayMsg',e.message,'error');msg('autoPayMsg','Pago realizado correctamente.','ok');history.replaceState({},document.title,location.pathname);await loadData()}}catch(e){show('auth',true);show('shell',false);modal('Checkout','<div class="msg error">No se pudo consultar el checkout: '+esc(e.message||e)+'</div>')}},300)}
 window.__CPP_CORE={db, q:$, esc, fmt, safeUUID, msg, loadData, nav, modal, show, receive, deposit, withdrawFor, doTransfer, rechargePanel, loadOrders, loadInvoices, loadPaymentLinks, payInvoice, adminPanel, paymentMethods, get currentUser(){return currentUser;}};
+window.__CPP_AFTER_LOGIN=async()=>{try{currentUser=(await db.auth.getUser()).data.user||currentUser;await session();}catch(e){const x=document.getElementById('authMsg');if(x){x.textContent=e?.message||'Sesión iniciada, pero no se pudo cargar el panel.';x.className='msg error';x.classList.remove('hidden')}}};
 session();
 })();
 </script>
