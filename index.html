@@ -1105,6 +1105,7 @@ const open=async op=>{
 if(['orchestrator','execution_kernel','e2e_full_test','financial_center','cup_funding'].includes(op))return run(op);
 if(op==='exchange'){const fn=window.__CPP_EXCHANGE_HARDENED__||window.__CPP_FINAL_INTEGRATIONS?.exchangePanel;if(typeof fn!=='function')throw Error('EXCHANGE_MODULE_NOT_READY');return fn();}
 if(op==='recharge')return window.CP_FINAL_AUDIT?.rechargePanel?.();
+if(op==='withdraw')return window.__CPP_WITHDRAW_HARDENED__?.();
 if(op==='p2p')return window.CP_FINAL_AUDIT?.p2pPanel?.();
 if(op==='crypto')return window.CP_FINAL_AUDIT?.cryptoPanel?.();
 if(op==='crm')return window.CP_FINAL_AUDIT?.crmPanel?.();
@@ -1202,4 +1203,41 @@ async function openExchange(){
  }catch(e){box.innerHTML='<div class="msg error">No se pudo cargar el intercambio: '+esc(e?.message||e)+'</div>'}
 }
 window.__CPP_EXCHANGE_HARDENED__=openExchange;
+})();</script>
+<script id="cpp-withdraw-hardened">
+(()=>{'use strict';
+const CP=window.__CPP_DB;
+const q=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+const fmt=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
+const show=(t,h)=>{const m=q('modal'),tt=q('modalTitle'),b=q('modalBody');if(!m||!tt||!b)throw Error('INTERFACE_MODAL_NOT_FOUND');tt.textContent=t;b.innerHTML=h;m.classList.remove('hidden')};
+async function openWithdraw(){
+ if(!CP)throw Error('SUPABASE_CLIENT_NOT_READY');
+ const u=await CP.auth.getUser();if(u.error||!u.data?.user)throw Error('AUTH_REQUIRED');
+ show('Retiro real · QvaPay','<div id="cppWdBox" class="notice">Preparando retiro seguro…</div>');
+ const box=q('cppWdBox');
+ box.innerHTML='<div class="notice">Seleccione el rail. La operación crea una reserva real y solo se envía a QvaPay después de su confirmación.</div>'+
+ '<div class="field"><label>Moneda</label><select id="cppWdCurrency"><option value="CUP">CUP</option><option value="USD">USD</option><option value="USDT_TRC20">USDT TRC20</option></select></div>'+
+ '<div class="field"><label>Método de retiro</label><select id="cppWdMethod"><option value="BANK_CUP">BANK_CUP · banco cubano</option><option value="BANDECPREPAGO">BANDECPREPAGO · BANDEC</option><option value="CLASICA">CLASICA · Tarjeta Clásica</option></select></div>'+
+ '<div class="field"><label>Monto</label><input id="cppWdAmount" type="number" min="0.00000001" step="0.00000001" inputmode="decimal" placeholder="0.00"></div>'+
+ '<div class="field"><label>Nombre y apellidos del titular</label><input id="cppWdName" maxlength="120" placeholder="Nombre completo"></div>'+
+ '<div class="field"><label>Número de tarjeta / destino</label><input id="cppWdCard" inputmode="numeric" maxlength="32" placeholder="Número de tarjeta"></div>'+
+ '<div class="field"><label>Teléfono</label><input id="cppWdPhone" inputmode="tel" maxlength="20" placeholder="+53XXXXXXXX"></div>'+
+ '<div id="cppWdHint" class="notice">BANK_CUP y BANDECPREPAGO se liquidan mediante el catálogo real de QvaPay. CLASICA se usa para retiro USD.</div>'+
+ '<button id="cppWdSubmit" class="btn full" style="margin-top:10px">Solicitar retiro real</button><div id="cppWdMsg" class="msg hidden"></div>';
+ const currency=q('cppWdCurrency'),method=q('cppWdMethod'),msg=(t,ok=false)=>{const x=q('cppWdMsg');x.textContent=t;x.className='msg '+(ok?'ok':'error');x.classList.remove('hidden')};
+ const sync=()=>{const cur=currency.value;const m=method.value;if(cur==='USD'){method.innerHTML='<option value="CLASICA">CLASICA · Tarjeta Clásica</option>';method.value='CLASICA'}else if(cur==='CUP'){method.innerHTML='<option value="BANK_CUP">BANK_CUP · banco cubano</option><option value="BANDECPREPAGO">BANDECPREPAGO · BANDEC</option>';if(!['BANK_CUP','BANDECPREPAGO'].includes(m))method.value='BANK_CUP'}else{method.innerHTML='<option value="tron_usdt">TRON · USDT TRC20</option>';method.value='tron_usdt'}q('cppWdHint').textContent=cur==='USD'?'CLASICA: retiro USD mediante el rail real de QvaPay.':cur==='CUP'?'CUP: BANK_CUP o BANDECPREPAGO según el destino disponible en QvaPay.':'USDT TRC20: use una dirección TRON válida en el campo de destino.'};
+ currency.onchange=sync;sync();
+ q('cppWdSubmit').onclick=async()=>{
+   const cur=currency.value,pm=method.value,amount=Number(q('cppWdAmount').value),name=q('cppWdName').value.trim(),card=q('cppWdCard').value.trim(),phone=q('cppWdPhone').value.trim();
+   if(!Number.isFinite(amount)||amount<=0)return msg('El monto debe ser mayor que cero.');
+   if(!name)return msg('Introduzca el nombre y apellidos del titular.');
+   if(cur==='USDT_TRC20'){if(!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(card))return msg('Para USDT TRC20 debe indicar una dirección TRON válida.')}else{if(!/^\\d{12,20}$/.test(card.replace(/\\s+/g,'')))return msg('El número de tarjeta/destino debe contener solo dígitos.');if(!/^\\+?53\\d{8}$/.test(phone.replace(/\\s+/g,'')))return msg('El teléfono debe tener formato cubano +53XXXXXXXX.')}
+   if(!confirm('CONFIRMAR RETIRO REAL\\n\\n'+fmt(amount)+' '+cur+' → '+pm+'\\nTitular: '+name+'\\n\\nQvaPay recibirá una solicitud financiera real. ¿Continuar?'))return;
+   q('cppWdSubmit').disabled=true;msg('Reservando fondos y enviando a QvaPay…');
+   try{const details=cur==='USDT_TRC20'?{wallet:card,recipient_name:name}:{name,card_number:card,phone_number:phone};const r=await CP.functions.invoke('qvapay-gateway',{body:{operation:'withdraw',currency:cur,pay_method:pm,amount,details,idempotency_key:(crypto?.randomUUID?crypto.randomUUID():'WD-'+Date.now()),note:'Retiro CUBA PLUS PAY'}});if(r.error)throw r.error;if(!r.data?.ok)throw Error(r.data?.message||r.data?.code||'Retiro rechazado');msg('Retiro enviado a QvaPay. Estado: '+(r.data.status||'processing')+'\\nID local: '+(r.data.withdrawal_id||r.data.transaction_id||'—'),true);}
+   catch(e){msg('No se realizó el retiro: '+(e?.message||e))}finally{q('cppWdSubmit').disabled=false}
+ };
+}
+window.__CPP_WITHDRAW_HARDENED__=openWithdraw;
 })();</script>
