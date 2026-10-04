@@ -1262,7 +1262,7 @@ const qrBlock=(url,label='Escanea para abrir en Cuba Plus Pay')=>'<div style="di
 const attachCopy=root=>root?.querySelectorAll('[data-cpp-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.cppCopy);b.textContent='Copiado'}catch{const i=root.querySelector('input[readonly]');i?.select();b.textContent='Selecciona y copia el enlace'}});
 const safeHtmlBank=(bank,holder,dest)=>'<div class="card" style="margin-top:10px"><b>Datos para transferencia</b><div class="profile-list"><div class="profile-item"><small>Banco</small><b>'+esc(bank||'—')+'</b></div><div class="profile-item"><small>Titular</small><b>'+esc(holder||'—')+'</b></div><div class="profile-item"><small>Tarjeta/cuenta</small><b style="word-break:break-all">'+esc(dest||'No configurada')+'</b></div></div></div>';
 window.__CPP_CUP_QR_PANEL__=async function(){
- if(!CORE.currentUser){modal('Fondos CUP · QR','<div class="notice">Inicia sesión para crear tu QR personal y las solicitudes de transferencia.</div>');return}
+ if(!(await user())){modal('Fondos CUP · QR','<div class="notice">Inicia sesión para crear tu QR personal y las solicitudes de transferencia.</div>');return}
  modal('Fondos CUP · QR personal y recargas','<div id="cppQrStatus" class="notice">Consultando configuración segura…</div><div id="cppQrBody"></div>');
  const status=$('cppQrStatus'),body=$('cppQrBody');
  try{
@@ -1302,7 +1302,7 @@ window.__CPP_CUP_QR_PANEL__=async function(){
 };
 let inboundHandled='';
 async function resolveInbound(){
- if(!CP?.functions||!CORE.currentUser)return;
+ if(!CP?.functions||!(await user()))return;
  const params=new URLSearchParams(location.search),requestToken=params.get('cpp_request'),receiveToken=params.get('cpp_receive');
  const token=requestToken||receiveToken,kind=requestToken?'request':'receive';
  if(!token||token===inboundHandled)return;
