@@ -1253,6 +1253,7 @@ const CORE=window.__CPP_CORE||{};
 const CP=CORE.db||window.__CPP_DB;
 const $=id=>document.getElementById(id);
 const modal=(title,html)=>{const t=$('modalTitle'),b=$('modalBody'),root=$('modal');if(!t||!b||!root)throw new Error('MODAL_UI_NOT_READY');t.textContent=title;b.innerHTML=html;root.classList.remove('hidden')};
+const user=async()=>{const u=CORE.currentUser;if(u?.id)return u;const r=await CP?.auth?.getUser();if(r?.error)throw r.error;return r?.data?.user||null};
 const esc=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
 const fmt=CORE.fmt||((v)=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:2}));
 const appBase='https://charly83cah83-lab.github.io/CubaPlusPay/';
