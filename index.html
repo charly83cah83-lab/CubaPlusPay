@@ -1252,6 +1252,7 @@ window.__CPP_WITHDRAW_HARDENED__=openWithdraw;
 const CORE=window.__CPP_CORE||{};
 const CP=CORE.db||window.__CPP_DB;
 const $=id=>document.getElementById(id);
+const modal=(title,html)=>{const t=$('modalTitle'),b=$('modalBody'),root=$('modal');if(!t||!b||!root)throw new Error('MODAL_UI_NOT_READY');t.textContent=title;b.innerHTML=html;root.classList.remove('hidden')};
 const esc=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
 const fmt=CORE.fmt||((v)=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:2}));
 const appBase='https://charly83cah83-lab.github.io/CubaPlusPay/';
@@ -1261,8 +1262,8 @@ const qrBlock=(url,label='Escanea para abrir en Cuba Plus Pay')=>'<div style="di
 const attachCopy=root=>root?.querySelectorAll('[data-cpp-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.cppCopy);b.textContent='Copiado'}catch{const i=root.querySelector('input[readonly]');i?.select();b.textContent='Selecciona y copia el enlace'}});
 const safeHtmlBank=(bank,holder,dest)=>'<div class="card" style="margin-top:10px"><b>Datos para transferencia</b><div class="profile-list"><div class="profile-item"><small>Banco</small><b>'+esc(bank||'—')+'</b></div><div class="profile-item"><small>Titular</small><b>'+esc(holder||'—')+'</b></div><div class="profile-item"><small>Tarjeta/cuenta</small><b style="word-break:break-all">'+esc(dest||'No configurada')+'</b></div></div></div>';
 window.__CPP_CUP_QR_PANEL__=async function(){
- if(!CORE.currentUser){CORE.modal('Fondos CUP · QR','<div class="notice">Inicia sesión para crear tu QR personal y las solicitudes de transferencia.</div>');return}
- CORE.modal('Fondos CUP · QR personal y recargas','<div id="cppQrStatus" class="notice">Consultando configuración segura…</div><div id="cppQrBody"></div>');
+ if(!CORE.currentUser){modal('Fondos CUP · QR','<div class="notice">Inicia sesión para crear tu QR personal y las solicitudes de transferencia.</div>');return}
+ modal('Fondos CUP · QR personal y recargas','<div id="cppQrStatus" class="notice">Consultando configuración segura…</div><div id="cppQrBody"></div>');
  const status=$('cppQrStatus'),body=$('cppQrBody');
  try{
   const [cfg,pr]=await Promise.all([call({operation:'config_status'}),call({operation:'profile_get_or_create'})]);
@@ -1309,12 +1310,12 @@ async function resolveInbound(){
  try{
   const r=await call({operation:kind==='request'?'resolve_request':'resolve_receive',token});
   if(kind==='request'){
-   CORE.modal('Solicitud CUP · '+(r.reference||''),'<div class="notice">Solicitud '+esc(r.status)+' · referencia <b>'+esc(r.reference)+'</b><br>Importe: <b>'+fmt(r.amount_cup)+' CUP</b><br>Destinatario: '+esc(r.recipient)+'<br>Vencimiento: '+esc(r.expires_at)+'</div>'+safeHtmlBank(r.bank_label,r.holder_name,r.destination_ref)+'<div class="notice">Realiza la transferencia en la aplicación bancaria por separado e incluye la referencia si el banco lo permite. Esta pantalla no detecta ni confirma el movimiento; no se acreditará CRX hasta conciliación real.</div><button class="btn secondary full" data-cpp-copy="'+esc(r.destination_ref)+'">Copiar tarjeta/cuenta</button><button class="btn secondary full" style="margin-top:8px" data-cpp-copy="'+esc(r.reference)+'">Copiar referencia</button>');
+   modal('Solicitud CUP · '+(r.reference||''),'<div class="notice">Solicitud '+esc(r.status)+' · referencia <b>'+esc(r.reference)+'</b><br>Importe: <b>'+fmt(r.amount_cup)+' CUP</b><br>Destinatario: '+esc(r.recipient)+'<br>Vencimiento: '+esc(r.expires_at)+'</div>'+safeHtmlBank(r.bank_label,r.holder_name,r.destination_ref)+'<div class="notice">Realiza la transferencia en la aplicación bancaria por separado e incluye la referencia si el banco lo permite. Esta pantalla no detecta ni confirma el movimiento; no se acreditará CRX hasta conciliación real.</div><button class="btn secondary full" data-cpp-copy="'+esc(r.destination_ref)+'">Copiar tarjeta/cuenta</button><button class="btn secondary full" style="margin-top:8px" data-cpp-copy="'+esc(r.reference)+'">Copiar referencia</button>');
   }else{
-   CORE.modal('QR de recepción Cuba Plus Pay','<div class="notice"><b>'+esc(r.display_name)+'</b><br>Perfil de recepción personal.</div>'+safeHtmlBank(r.bank_label,r.holder_name,r.destination_ref||'El usuario todavía no configuró su tarjeta/cuenta')+'<div class="notice">Este es un QR de identidad/solicitud de Cuba Plus Pay, no un QR bancario nativo. Para transferir, abre Transfermóvil por separado y verifica cuidadosamente el destinatario.</div>');
+   modal('QR de recepción Cuba Plus Pay','<div class="notice"><b>'+esc(r.display_name)+'</b><br>Perfil de recepción personal.</div>'+safeHtmlBank(r.bank_label,r.holder_name,r.destination_ref||'El usuario todavía no configuró su tarjeta/cuenta')+'<div class="notice">Este es un QR de identidad/solicitud de Cuba Plus Pay, no un QR bancario nativo. Para transferir, abre Transfermóvil por separado y verifica cuidadosamente el destinatario.</div>');
   }
   attachCopy($('modalBody'));
- }catch(e){inboundHandled='';CORE.modal('QR Cuba Plus Pay','<div class="msg error">'+esc(e?.message||e)+'</div><div class="notice">Inicia sesión en Cuba Plus Pay para consultar esta solicitud. No se ha realizado ningún movimiento financiero.</div>')}
+ }catch(e){inboundHandled='';modal('QR Cuba Plus Pay','<div class="msg error">'+esc(e?.message||e)+'</div><div class="notice">Inicia sesión en Cuba Plus Pay para consultar esta solicitud. No se ha realizado ningún movimiento financiero.</div>')}
 }
 try{CP?.auth?.onAuthStateChange((event,session)=>{if(session?.user)setTimeout(resolveInbound,500)})}catch{}
 setTimeout(resolveInbound,1800);
