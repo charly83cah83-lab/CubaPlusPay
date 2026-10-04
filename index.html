@@ -1081,8 +1081,32 @@ if(op==='cup_funding'){modal('Fondos CUP · Transfermóvil / BANMET · V30','<di
 if(op==='e2e_full_test'){modal('Prueba E2E completa · V30','<div id="v30r" class="notice">Ejecutando…</div>');const b=q('v30r');try{const r=await call('auth-financial-e2e',{});b.innerHTML='<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>'}catch(e){b.innerHTML='<div class="msg error">auth-financial-e2e: '+esc(e.message||e)+'</div>'}return}
 if(op==='execution_kernel'){modal('Execution Kernel · V30','<div id="v30r" class="notice">Consultando intents…</div>');const b=q('v30r'),r=await CP.from('financial_execution_intents').select('id,intent_type,status,idempotency_key,created_at,updated_at').eq('user_id',u.id).order('created_at',{ascending:false}).limit(20);if(r.error)throw r.error;b.innerHTML='<div class="mini-list">'+((r.data||[]).map(x=>'<div class="mini-row"><span><b>'+esc(x.intent_type)+'</b><br><small>'+esc(x.status)+' · '+esc(x.created_at)+'</small></span><span>'+esc(String(x.id).slice(0,8))+'</span></div>').join('')||'<div class="empty">Sin intents financieros.</div>')+'</div>';return}
 if(op==='orchestrator'){modal('Financial Orchestrator · V30','<div id="v30r" class="notice">Comprobando estado real…</div>');const b=q('v30r'),[w,i,a,s]=await Promise.all([CP.from('wallets').select('currency').eq('user_id',u.id),CP.from('financial_execution_intents').select('id').eq('user_id',u.id).limit(20),CP.from('asset_catalog').select('code').eq('enabled_wallet',true),CP.auth.getSession()]);let rr='No verificado';try{const x=await CP.rpc('financial_orchestrator_readiness',{p_transaction_id:null});rr=x.error?'ERROR: '+(x.error.message||x.error.code):'RPC OK'}catch(e){rr='ERROR: '+(e.message||e)}b.innerHTML='<div class="mini-list"><div class="mini-row"><span>Sesión</span><b class="ok-text">'+(s.data?.session?'OK':'REVISAR')+'</b></div><div class="mini-row"><span>Wallets</span><b>'+(w.data||[]).length+'</b></div><div class="mini-row"><span>Execution intents</span><b>'+(i.data||[]).length+'</b></div><div class="mini-row"><span>Activos habilitados</span><b>'+(a.data||[]).length+'</b></div></div><div class="notice">Readiness RPC: '+esc(rr)+'</div><div class="notice">Solo lectura. No mueve fondos.</div></div>';}}
-const map={orchestrator:1,execution_kernel:1,e2e_full_test:1,financial_center:1,cup_funding:1};
-window.addEventListener('click',e=>{const b=e.target?.closest?.('[data-op]');if(!b||!map[b.dataset.op])return;e.preventDefault();e.stopImmediatePropagation();b.disabled=true;run(b.dataset.op).catch(x=>modal('Error del módulo '+b.dataset.op,'<div class="msg error">'+esc(x.message||x)+'</div>')).finally(()=>b.disabled=false)},true);
+const map={exchange:1,p2p:1,crypto:1,crm:1,provider:1,security:1,financial_audit:1,sync_rates:1,diagnostics:1,system_audit:1,integrity:1,withdrawal_audit:1,reconciliation:1,incidents:1,ai:1,usdt_gateway:1,performance:1,preflight:1,financial_lab:1,transaction_verify:1,state_machine:1,orchestrator:1,execution_kernel:1,e2e_full_test:1,financial_center:1,cup_funding:1};
+const open=async op=>{
+if(['orchestrator','execution_kernel','e2e_full_test','financial_center','cup_funding'].includes(op))return run(op);
+if(op==='exchange')return window.__CPP_FINAL_INTEGRATIONS?.exchangePanel?.();
+if(op==='p2p')return window.CP_FINAL_AUDIT?.p2pPanel?.();
+if(op==='crypto')return window.CP_FINAL_AUDIT?.cryptoPanel?.();
+if(op==='crm')return window.CP_FINAL_AUDIT?.crmPanel?.();
+if(op==='provider')return window.CP_FINAL_INTEGRATIONS?.providerPanel?.()||window.CP_FINAL_AUDIT?.providerPanel?.();
+if(op==='security')return window.CP_FINAL_AUDIT?.securityPanel?.();
+if(op==='financial_audit')return window.__CPP_FINAL_INTEGRATIONS?.financialAudit?.();
+if(op==='sync_rates'){const r=await call('financial-exchange-gateway',{operation:'rates'});return modal('Tasas sincronizadas','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>');}
+if(op==='diagnostics'||op==='performance')return window.__CPP_FINAL_INTEGRATIONS?.diagnostics?.();
+if(op==='system_audit')return window.__CPP_FINAL_INTEGRATIONS?.systemAuditPanel?.();
+if(op==='integrity')return window.CP_FINAL_AUDIT?.integrityPanel?.();
+if(op==='withdrawal_audit')return window.CP_FINAL_AUDIT?.withdrawalAuditPanel?.();
+if(op==='reconciliation')return window.CP_FINAL_AUDIT?.reconciliationPanel?.();
+if(op==='incidents')return window.CP_FINAL_AUDIT?.financialIncidentsPanel?.();
+if(op==='ai')return window.CP_FINAL_AUDIT?.aiPanel?.();
+if(op==='usdt_gateway'){const r=await call('usdt-onchain-gateway',{operation:'capabilities'});return modal('USDT On-Chain','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>');}
+if(op==='preflight')return window.__CPP_FINAL_INTEGRATIONS?.preflight?.();
+if(op==='financial_lab')return window.__CPP_FINAL_INTEGRATIONS?.financialLabPanel?.();
+if(op==='transaction_verify')return run('e2e_full_test');
+if(op==='state_machine')return run('orchestrator');
+throw Error('MODULO_NO_CONECTADO:'+op);
+};
+window.addEventListener('click',e=>{const b=e.target?.closest?.('[data-op]');if(!b||!map[b.dataset.op])return;e.preventDefault();e.stopImmediatePropagation();b.disabled=true;Promise.resolve().then(()=>open(b.dataset.op)).catch(x=>modal('Error del módulo '+b.dataset.op,'<div class="msg error">'+esc(x.message||x)+'</div>')).finally(()=>b.disabled=false)},true);
 window.__CPP_V30_FINANCIAL_RESCUE={run};
 }catch(e){window.__CPP_V30_FINANCIAL_RESCUE_ERROR=String(e?.message||e)}})();
 </script>
