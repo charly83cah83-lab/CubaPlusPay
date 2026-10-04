@@ -1099,8 +1099,7 @@ const user=async()=>{const r=await CP.auth.getUser();if(r.error)throw r.error;re
 const call=async(fn,body)=>{const r=await CP.functions.invoke(fn,{body:body||{}});if(r.error)throw r.error;return r.data};
 const run=async op=>{if(!CP)throw Error('SUPABASE_CLIENT_NOT_READY');const u=await user();if(!u)throw Error('AUTH_REQUIRED');
 if(op==='financial_center'){modal('Centro financiero real · V30','<div id="v30r" class="notice">Consultando wallets reales…</div>');const b=q('v30r'),r=await CP.from('wallets').select('currency,balance,locked,version').eq('user_id',u.id).order('currency');if(r.error)throw r.error;b.innerHTML='<div class="mini-list">'+((r.data||[]).map(x=>'<div class="mini-row"><span><b>'+esc(x.currency)+'</b><br><small>Disponible '+fmt(Number(x.balance)-Number(x.locked||0))+' · bloqueado '+fmt(x.locked||0)+'</small></span><span>v'+esc(x.version??'—')+'</span></div>').join('')||'<div class="empty">Sin wallets.</div>')+'</div><div class="notice">Lectura directa de Supabase. Sin saldos ficticios.</div>';return}
-if(op==='cup_funding'){modal('Fondos CUP · Transfermóvil / BANMET · V30','<div id="v30r" class="notice">Consultando configuración real…</div>');const b=q('v30r');try{const r=await call('cup-funding-gateway',{operation:'config_status'}),c=r?.capabilities||{};b.innerHTML='<div class="mini-list"><div class="mini-row"><span>Transfermóvil</span><b>'+(c.transfermovil?.enabled?'HABILITADO':'NO CONFIGURADO')+'</b></div><div class="mini-row"><span>API directa</span><b>'+(c.transfermovil?.direct_api?'SÍ':'NO')+'</b></div><div class="mini-row"><span>Manual</span><b>'+(c.transfermovil?.manual?'SÍ':'NO')+'</b></div><div class="mini-row"><span>BANMET</span><b>'+(c.banmet?.enabled?'HABILITADO':'NO CONFIGURADO')+'</b></div></div>'}catch(e){b.innerHTML='<div class="msg error">'+esc(e.message||e)+'</div>'}return}
-if(op==='e2e_full_test'){modal('Prueba E2E completa · V30','<div id="v30r" class="notice">Ejecutando…</div>');const b=q('v30r');try{const r=await call('auth-financial-e2e',{});b.innerHTML='<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>'}catch(e){b.innerHTML='<div class="msg error">auth-financial-e2e: '+esc(e.message||e)+'</div>'}return}
+if(op==='cup_funding'){if(typeof window.__CPP_CUP_QR_PANEL__==='function')return window.__CPP_CUP_QR_PANEL__();modal('Fondos CUP','<div class="notice">El módulo QR se está inicializando. Vuelve a intentarlo.</div>');return}if(op==='e2e_full_test'){modal('Prueba E2E completa · V30','<div id="v30r" class="notice">Ejecutando…</div>');const b=q('v30r');try{const r=await call('auth-financial-e2e',{});b.innerHTML='<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>'}catch(e){b.innerHTML='<div class="msg error">auth-financial-e2e: '+esc(e.message||e)+'</div>'}return}
 if(op==='execution_kernel'){modal('Execution Kernel · V30','<div id="v30r" class="notice">Consultando intents…</div>');const b=q('v30r'),r=await CP.from('financial_execution_intents').select('id,intent_type,status,idempotency_key,created_at,updated_at').eq('user_id',u.id).order('created_at',{ascending:false}).limit(20);if(r.error)throw r.error;b.innerHTML='<div class="mini-list">'+((r.data||[]).map(x=>'<div class="mini-row"><span><b>'+esc(x.intent_type)+'</b><br><small>'+esc(x.status)+' · '+esc(x.created_at)+'</small></span><span>'+esc(String(x.id).slice(0,8))+'</span></div>').join('')||'<div class="empty">Sin intents financieros.</div>')+'</div>';return}
 if(op==='orchestrator'){modal('Financial Orchestrator · V30','<div id="v30r" class="notice">Comprobando estado real…</div>');const b=q('v30r'),[w,i,a,s]=await Promise.all([CP.from('wallets').select('currency').eq('user_id',u.id),CP.from('financial_execution_intents').select('id').eq('user_id',u.id).limit(20),CP.from('asset_catalog').select('code').eq('enabled_wallet',true),CP.auth.getSession()]);let rr='No verificado';try{const x=await CP.rpc('financial_orchestrator_readiness',{p_transaction_id:null});rr=x.error?'ERROR: '+(x.error.message||x.error.code):'RPC OK'}catch(e){rr='ERROR: '+(e.message||e)}b.innerHTML='<div class="mini-list"><div class="mini-row"><span>Sesión</span><b class="ok-text">'+(s.data?.session?'OK':'REVISAR')+'</b></div><div class="mini-row"><span>Wallets</span><b>'+(w.data||[]).length+'</b></div><div class="mini-row"><span>Execution intents</span><b>'+(i.data||[]).length+'</b></div><div class="mini-row"><span>Activos habilitados</span><b>'+(a.data||[]).length+'</b></div></div><div class="notice">Readiness RPC: '+esc(rr)+'</div><div class="notice">Solo lectura. No mueve fondos.</div></div>';}}
 const map={exchange:1,p2p:1,crypto:1,crm:1,recharge:1,provider:1,security:1,financial_audit:1,sync_rates:1,diagnostics:1,system_audit:1,integrity:1,withdrawal_audit:1,reconciliation:1,incidents:1,ai:1,usdt_gateway:1,performance:1,preflight:1,financial_lab:1,transaction_verify:1,state_machine:1,orchestrator:1,execution_kernel:1,e2e_full_test:1,financial_center:1,cup_funding:1};
@@ -1246,3 +1245,78 @@ async function openWithdraw(){
 }
 window.__CPP_WITHDRAW_HARDENED__=openWithdraw;
 })();</script>
+
+<script id="cpp-personal-cup-qr-v1">
+(()=> {
+'use strict';
+const CORE=window.__CPP_CORE||{};
+const CP=CORE.db||window.__CPP_DB;
+const $=id=>document.getElementById(id);
+const esc=CORE.esc||((v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+const fmt=CORE.fmt||((v)=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:2}));
+const appBase='https://charly83cah83-lab.github.io/CubaPlusPay/';
+const call=async body=>{if(!CP?.functions)throw new Error('Supabase no está inicializado.');const r=await CP.functions.invoke('cup-personal-qr',{body});if(r.error)throw r.error;const d=r.data;if(!d?.ok)throw new Error(d?.message||d?.code||'La operación no se completó.');return d};
+const qrUrl=url=>'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data='+encodeURIComponent(url);
+const qrBlock=(url,label='Escanea para abrir en Cuba Plus Pay')=>'<div style="display:grid;justify-items:center;gap:8px;margin:12px 0"><img alt="QR Cuba Plus Pay" loading="lazy" style="width:220px;height:220px;max-width:100%;padding:8px;background:#fff;border-radius:12px" src="'+qrUrl(url)+'"><small style="color:#9fc7eb;text-align:center">'+esc(label)+'</small><input readonly style="width:100%;padding:10px;border-radius:10px;border:1px solid #155fb7;background:#021333;color:#fff" value="'+esc(url)+'"><button type="button" class="btn secondary full" data-cpp-copy="'+esc(url)+'">Copiar enlace QR</button></div>';
+const attachCopy=root=>root?.querySelectorAll('[data-cpp-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.cppCopy);b.textContent='Copiado'}catch{const i=root.querySelector('input[readonly]');i?.select();b.textContent='Selecciona y copia el enlace'}});
+const safeHtmlBank=(bank,holder,dest)=>'<div class="card" style="margin-top:10px"><b>Datos para transferencia</b><div class="profile-list"><div class="profile-item"><small>Banco</small><b>'+esc(bank||'—')+'</b></div><div class="profile-item"><small>Titular</small><b>'+esc(holder||'—')+'</b></div><div class="profile-item"><small>Tarjeta/cuenta</small><b style="word-break:break-all">'+esc(dest||'No configurada')+'</b></div></div></div>';
+window.__CPP_CUP_QR_PANEL__=async function(){
+ if(!CORE.currentUser){CORE.modal('Fondos CUP · QR','<div class="notice">Inicia sesión para crear tu QR personal y las solicitudes de transferencia.</div>');return}
+ CORE.modal('Fondos CUP · QR personal y recargas','<div id="cppQrStatus" class="notice">Consultando configuración segura…</div><div id="cppQrBody"></div>');
+ const status=$('cppQrStatus'),body=$('cppQrBody');
+ try{
+  const [cfg,pr]=await Promise.all([call({operation:'config_status'}),call({operation:'profile_get_or_create'})]);
+  const p=pr.profile||{},features=cfg.features||{};
+  status.innerHTML='<b>Estado del módulo</b><br>QR personal: <span class="ok-text">disponible</span><br>Recarga a la wallet con cuenta central: <b class="'+(features.wallet_topup_qr?'ok-text':'warn-text')+'">'+(features.wallet_topup_qr?'destino configurado':'destino pendiente de configurar')+'</b><br><small>Transfermóvil/BANMET no notifican automáticamente por este QR. No se acredita saldo hasta una conciliación bancaria real.</small>';
+  body.innerHTML=
+   '<div class="card" style="margin-top:10px"><h3 style="margin-top:0">Mi QR personal de recepción</h3><p class="notice">Este QR identifica tu perfil Cuba Plus Pay. No es un QR bancario nativo de Transfermóvil. Al escanearlo, la otra persona abre Cuba Plus Pay y ve los datos que decidas compartir.</p><div class="field"><label>Nombre visible</label><input id="cppQrName" maxlength="120" value="'+esc(p.display_name||'')+'" placeholder="Nombre que verán al escanear"></div><div class="field"><label>Banco</label><select id="cppQrBank"><option value="">Selecciona banco</option><option value="BANMET">Banco Metropolitano (BANMET)</option><option value="BPA">BPA</option><option value="BANDEC">BANDEC</option><option value="OTHER">Otro banco</option></select></div><div class="field"><label>Tarjeta o cuenta CUP (12–20 dígitos)</label><input id="cppQrDest" inputmode="numeric" maxlength="24" placeholder="Introduce solo al guardar"></div><div class="field"><label>Titular bancario</label><input id="cppQrHolder" maxlength="120" value="'+esc(p.holder_name||'')+'" placeholder="Nombre del titular"></div><div id="cppQrSaved" class="notice">Destino guardado: '+esc(p.destination_masked||'No configurado')+'</div><button id="cppQrSave" class="btn full">Guardar mis datos de recepción</button><div id="cppQrOwn"></div></div>'+
+   '<div class="card" style="margin-top:10px"><h3 style="margin-top:0">Crear solicitud CUP</h3><p class="notice">Genera un importe y una referencia únicos para compartir. La otra persona podrá ver los datos de transferencia. La orden permanece pendiente; el QR no confirma el pago.</p><div class="field"><label>Importe CUP</label><input id="cppQrAmount" type="number" min="1" max="100000000" step="1" placeholder="1000"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="cppQrPersonalReq" class="btn">Solicitar CUP a mi tarjeta</button><button id="cppQrTopup" class="btn secondary">Recargar mi wallet CRX</button></div><div id="cppQrRequestOut"></div></div>'+
+   '<div class="card" style="margin-top:10px"><h3 style="margin-top:0">Mis solicitudes recientes</h3><button id="cppQrRefresh" class="btn secondary">Actualizar solicitudes</button><div id="cppQrHistory" class="mini-list" style="margin-top:8px">Consultando…</div></div>'+
+   '<div class="notice" style="margin-top:10px"><b>Protección financiera:</b> crear el QR o adjuntar un comprobante no acredita CUP ni CRX. La confirmación bancaria y la conversión automática requieren un canal oficial de conciliación que todavía no está conectado.</div>';
+  if(p.bank_code)$('cppQrBank').value=p.bank_code;
+  $('cppQrOwn').innerHTML=qrBlock(pr.qr_url,'QR permanente de tu perfil Cuba Plus Pay');attachCopy($('cppQrOwn'));
+  $('cppQrSave').onclick=async()=>{
+   const b=$('cppQrSave');b.disabled=true;
+   try{const r=await call({operation:'profile_update',display_name:$('cppQrName').value.trim(),bank_code:$('cppQrBank').value,destination_ref:$('cppQrDest').value.trim(),holder_name:$('cppQrHolder').value.trim()});
+    $('cppQrSaved').textContent='Datos guardados. Tarjeta/cuenta: '+(r.profile?.destination_masked||'—');
+    $('cppQrOwn').innerHTML=qrBlock(r.qr_url,'QR permanente de tu perfil Cuba Plus Pay');attachCopy($('cppQrOwn'));
+    $('cppQrDest').value='';
+   }catch(e){$('cppQrSaved').textContent='No se guardaron los datos: '+(e?.message||e)}
+   finally{b.disabled=false}
+  };
+  const loadHistory=async()=>{const h=$('cppQrHistory');try{const r=await call({operation:'list_requests'});h.innerHTML=(r.requests||[]).map(x=>'<div class="mini-row"><span><b>'+esc(x.reference)+'</b><br><small>'+fmt(x.amount_cup)+' CUP · '+esc(x.purpose)+' · '+esc(x.status)+' · '+esc(x.created_at)+'</small></span>'+(x.status==='pending'?'<button type="button" class="btn secondary" data-cpp-cancel="'+esc(x.id)+'">Cancelar</button>':'')+'</div>').join('')||'<div class="empty">Todavía no hay solicitudes.</div>';h.querySelectorAll('[data-cpp-cancel]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await call({operation:'cancel_request',request_id:b.dataset.cppCancel});await loadHistory()}catch(e){b.disabled=false;alert(e?.message||e)}})}catch(e){h.innerHTML='<div class="msg error">'+esc(e?.message||e)+'</div>'}};
+  const createRequest=async(purpose)=>{
+   const amount=Number($('cppQrAmount').value),target=$('cppQrRequestOut');
+   if(!Number.isFinite(amount)||amount<1){target.innerHTML='<div class="msg error">Introduce un importe CUP válido.</div>';return}
+   target.innerHTML='<div class="notice">Creando solicitud…</div>';
+   try{const r=await call({operation:'create_request',purpose,amount_cup:amount,idempotency_key:(crypto?.randomUUID?crypto.randomUUID():'CPP-'+Date.now()+'-'+Math.random().toString(36).slice(2))});
+    const x=r.request;target.innerHTML='<div class="msg wait">Solicitud '+esc(x.reference)+' · '+fmt(x.amount_cup)+' CUP · '+esc(x.status)+'<br>Vence: '+esc(x.expires_at)+'<br>No se ha acreditado saldo.</div>'+qrBlock(r.qr_url,'QR de esta solicitud; importe y referencia únicos')+safeHtmlBank(r.bank?.bank_label,r.bank?.holder_name,r.bank?.destination_ref||r.bank?.destination_masked)+'<div class="notice">'+esc(r.note||'Pendiente de transferencia y conciliación bancaria.')+'</div>';
+    attachCopy(target);await loadHistory();
+   }catch(e){target.innerHTML='<div class="msg error">'+esc(e?.message||e)+'</div>'}
+  };
+  $('cppQrPersonalReq').onclick=()=>createRequest('personal_receive');
+  $('cppQrTopup').onclick=()=>createRequest('wallet_topup');
+  $('cppQrRefresh').onclick=loadHistory;await loadHistory();
+ }catch(e){status.className='msg error';status.textContent='No se pudo cargar el QR: '+(e?.message||e);body.innerHTML='<div class="notice">No se ha movido ni acreditado ningún fondo.</div>'}
+};
+let inboundHandled='';
+async function resolveInbound(){
+ if(!CP?.functions||!CORE.currentUser)return;
+ const params=new URLSearchParams(location.search),requestToken=params.get('cpp_request'),receiveToken=params.get('cpp_receive');
+ const token=requestToken||receiveToken,kind=requestToken?'request':'receive';
+ if(!token||token===inboundHandled)return;
+ inboundHandled=token;
+ try{
+  const r=await call({operation:kind==='request'?'resolve_request':'resolve_receive',token});
+  if(kind==='request'){
+   CORE.modal('Solicitud CUP · '+(r.reference||''),'<div class="notice">Solicitud '+esc(r.status)+' · referencia <b>'+esc(r.reference)+'</b><br>Importe: <b>'+fmt(r.amount_cup)+' CUP</b><br>Destinatario: '+esc(r.recipient)+'<br>Vencimiento: '+esc(r.expires_at)+'</div>'+safeHtmlBank(r.bank_label,r.holder_name,r.destination_ref)+'<div class="notice">Realiza la transferencia en la aplicación bancaria por separado e incluye la referencia si el banco lo permite. Esta pantalla no detecta ni confirma el movimiento; no se acreditará CRX hasta conciliación real.</div><button class="btn secondary full" data-cpp-copy="'+esc(r.destination_ref)+'">Copiar tarjeta/cuenta</button><button class="btn secondary full" style="margin-top:8px" data-cpp-copy="'+esc(r.reference)+'">Copiar referencia</button>');
+  }else{
+   CORE.modal('QR de recepción Cuba Plus Pay','<div class="notice"><b>'+esc(r.display_name)+'</b><br>Perfil de recepción personal.</div>'+safeHtmlBank(r.bank_label,r.holder_name,r.destination_ref||'El usuario todavía no configuró su tarjeta/cuenta')+'<div class="notice">Este es un QR de identidad/solicitud de Cuba Plus Pay, no un QR bancario nativo. Para transferir, abre Transfermóvil por separado y verifica cuidadosamente el destinatario.</div>');
+  }
+  attachCopy($('modalBody'));
+ }catch(e){inboundHandled='';CORE.modal('QR Cuba Plus Pay','<div class="msg error">'+esc(e?.message||e)+'</div><div class="notice">Inicia sesión en Cuba Plus Pay para consultar esta solicitud. No se ha realizado ningún movimiento financiero.</div>')}
+}
+try{CP?.auth?.onAuthStateChange((event,session)=>{if(session?.user)setTimeout(resolveInbound,500)})}catch{}
+setTimeout(resolveInbound,1800);
+})();
+</script>
