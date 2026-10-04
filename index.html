@@ -1084,7 +1084,7 @@ if(op==='orchestrator'){modal('Financial Orchestrator · V30','<div id="v30r" cl
 const map={exchange:1,p2p:1,crypto:1,crm:1,recharge:1,provider:1,security:1,financial_audit:1,sync_rates:1,diagnostics:1,system_audit:1,integrity:1,withdrawal_audit:1,reconciliation:1,incidents:1,ai:1,usdt_gateway:1,performance:1,preflight:1,financial_lab:1,transaction_verify:1,state_machine:1,orchestrator:1,execution_kernel:1,e2e_full_test:1,financial_center:1,cup_funding:1};
 const open=async op=>{
 if(['orchestrator','execution_kernel','e2e_full_test','financial_center','cup_funding'].includes(op))return run(op);
-if(op==='exchange')return window.__CPP_FINAL_INTEGRATIONS?.exchangePanel?.();
+if(op==='exchange'){const fn=window.__CPP_EXCHANGE_HARDENED__||window.__CPP_FINAL_INTEGRATIONS?.exchangePanel;if(typeof fn!=='function')throw Error('EXCHANGE_MODULE_NOT_READY');return fn();}
 if(op==='recharge')return window.CP_FINAL_AUDIT?.rechargePanel?.();
 if(op==='p2p')return window.CP_FINAL_AUDIT?.p2pPanel?.();
 if(op==='crypto')return window.CP_FINAL_AUDIT?.cryptoPanel?.();
@@ -1111,3 +1111,76 @@ window.addEventListener('click',e=>{const b=e.target?.closest?.('[data-op]');if(
 window.__CPP_V30_FINANCIAL_RESCUE={run};
 }catch(e){window.__CPP_V30_FINANCIAL_RESCUE_ERROR=String(e?.message||e)}})();
 </script>
+<script id="cpp-v30-exchange-hardening">
+(()=>{'use strict';
+const CP=window.__CPP_DB;
+const q=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+const fmt=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
+const show=(t,h)=>{const m=q('modal'),tt=q('modalTitle'),b=q('modalBody');if(!m||!tt||!b)throw Error('INTERFACE_MODAL_NOT_FOUND');tt.textContent=t;b.innerHTML=h;m.classList.remove('hidden')};
+const call=async(body)=>{if(!CP)throw Error('SUPABASE_CLIENT_NOT_READY');const r=await CP.functions.invoke('financial-exchange-gateway',{body});if(r.error)throw r.error;return r.data};
+const uid=async()=>{const r=await CP.auth.getUser();if(r.error)throw r.error;if(!r.data?.user)throw Error('AUTH_REQUIRED');return r.data.user.id};
+async function openExchange(){
+ if(!CP)throw Error('SUPABASE_CLIENT_NOT_READY');
+ await uid();
+ show('Intercambio de monedas · real','<div id="cppExBox" class="notice">Consultando tasas reales de Supabase…</div>');
+ const box=q('cppExBox');
+ try{
+  const now=new Date().toISOString();
+  const {data,error}=await CP.from('crx_exchange_rates').select('from_currency,to_currency,rate,valid_from,valid_until').eq('enabled',true).lte('valid_from',now).or('valid_until.is.null,valid_until.gt.'+now).order('from_currency').order('to_currency');
+  if(error)throw error;
+  const rows=Array.isArray(data)?data:[];
+  if(!rows.length){box.innerHTML='<div class="msg error">No hay tasas de intercambio habilitadas. No se inventó ninguna tasa.</div>';return;}
+  const assetsFromCrx=[...new Set(rows.filter(r=>String(r.from_currency)==='CRX'&&String(r.to_currency)!=='CRX').map(r=>String(r.to_currency)))];
+  const assetsToCrx=[...new Set(rows.filter(r=>String(r.to_currency)==='CRX'&&String(r.from_currency)!=='CRX').map(r=>String(r.from_currency)))];
+  const initialDir=assetsFromCrx.length?'crx_to_asset':'asset_to_crx';
+  const opts=list=>list.map(a=>'<option value="'+esc(a)+'">'+esc(a)+'</option>').join('');
+  box.innerHTML='<div class="field"><label>Dirección</label><select id="cppExDir"><option value="crx_to_asset"'+(initialDir==='crx_to_asset'?' selected':'')+'>CRX → Activo</option><option value="asset_to_crx"'+(initialDir==='asset_to_crx'?' selected':'')+'>Activo → CRX</option></select></div>'+
+   '<div class="field"><label>Activo</label><select id="cppExAsset">'+opts(initialDir==='crx_to_asset'?assetsFromCrx:assetsToCrx)+'</select></div>'+
+   '<div class="field"><label>Cantidad</label><input id="cppExAmount" type="number" min="0.00000001" step="0.00000001" inputmode="decimal" placeholder="0.00"></div>'+
+   '<button id="cppExQuote" class="btn secondary full">Cotizar</button>'+
+   '<div id="cppExQuoteOut" class="notice" style="margin-top:8px">La cotización se consulta al backend real.</div>'+
+   '<button id="cppExExec" class="btn full" disabled style="margin-top:8px">Confirmar conversión real</button>'+
+   '<div id="cppExMsg" class="msg hidden"></div>'+
+   '<div class="notice" style="margin-top:10px">Las tasas y la ejecución se consultan en Supabase/financial-exchange-gateway. No se crean saldos ficticios.</div>';
+  let quote=null;
+  const msg=(t,ok)=>{const x=q('cppExMsg');x.textContent=t;x.className='msg '+(ok?'ok':'error');x.classList.remove('hidden')};
+  const syncAssets=()=>{
+   const d=q('cppExDir').value,list=d==='crx_to_asset'?assetsFromCrx:assetsToCrx,sel=q('cppExAsset');
+   sel.innerHTML=opts(list);
+   quote=null;q('cppExExec').disabled=true;
+   q('cppExQuoteOut').textContent=list.length?'La cotización se consulta al backend real.':'No existe una tasa configurada para esta dirección.';
+  };
+  q('cppExDir').onchange=syncAssets;
+  q('cppExQuote').onclick=async()=>{
+   const direction=q('cppExDir').value,currency=q('cppExAsset').value,amount=Number(q('cppExAmount').value);
+   if(!Number.isFinite(amount)||amount<=0)return msg('La cantidad debe ser mayor que cero.',false);
+   if(!currency)return msg('No hay un activo habilitado para esta dirección.',false);
+   q('cppExQuote').disabled=true;
+   try{
+    const r=await call({operation:'quote_exchange',direction,currency,amount});
+    if(!r?.ok)throw Error(r?.message||r?.code||'Cotización rechazada');
+    quote=r;
+    q('cppExQuoteOut').innerHTML='<b>'+fmt(r.amount||amount)+' '+esc(r.from_currency||currency)+'</b> → <b>'+fmt(r.quoted_output??r.output_amount??0)+' '+esc(r.to_currency||'')+'</b><br><small>Tasa '+fmt(r.rate)+' · comisión '+fmt(r.fee)+' '+esc(r.from_currency||'')+'</small>';
+    q('cppExExec').disabled=false;
+   }catch(e){quote=null;q('cppExExec').disabled=true;msg('No se pudo cotizar: '+(e?.message||e),false)}
+   finally{q('cppExQuote').disabled=false}
+  };
+  q('cppExExec').onclick=async()=>{
+   if(!quote)return;
+   if(!confirm('CONFIRMAR CONVERSIÓN REAL\n\n'+fmt(quote.amount)+' '+quote.from_currency+' → '+fmt(quote.quoted_output??quote.output_amount)+' '+quote.to_currency+'\n\nSe moverán fondos internos y se registrará ledger/journal.'))return;
+   q('cppExExec').disabled=true;
+   try{
+    const idem=crypto?.randomUUID?crypto.randomUUID():('EX-'+Date.now()+'-'+Math.random().toString(36).slice(2));
+    const body=quote.direction==='crx_to_asset'?{operation:'exchange_crx',to_currency:quote.to_currency,amount:Number(quote.amount),p_idempotency:idem}:{operation:'exchange_asset_to_crx',from_currency:quote.from_currency,amount:Number(quote.amount),p_idempotency:idem};
+    const r=await call(body);
+    if(!r?.ok)throw Error(r?.message||r?.code||'Exchange rechazado');
+    msg('Conversión realizada y registrada. ID: '+(r?.result?.transaction_id||r?.transaction_id||'—'),true);
+    if(typeof window.CORE?.loadData==='function')await window.CORE.loadData(); else if(typeof window.loadData==='function')await window.loadData();
+   }catch(e){msg('No se realizó la conversión: '+(e?.message||e),false)}
+   finally{q('cppExExec').disabled=false}
+  };
+ }catch(e){box.innerHTML='<div class="msg error">No se pudo cargar el intercambio: '+esc(e?.message||e)+'</div>'}
+}
+window.__CPP_EXCHANGE_HARDENED__=openExchange;
+})();</script>
