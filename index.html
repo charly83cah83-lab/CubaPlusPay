@@ -1267,7 +1267,9 @@ window.__CPP_CUP_QR_PANEL__=async function(){
  modal('Fondos CUP · QR personal y recargas','<div id="cppQrStatus" class="notice">Consultando configuración segura…</div><div id="cppQrBody"></div>');
  const status=$('cppQrStatus'),body=$('cppQrBody');
  try{
-  const [cfg,pr]=await Promise.all([call({operation:'config_status'}),call({operation:'profile_get_or_create'})]);
+  const pr=await call({operation:'profile_get_or_create'});
+  let cfg={features:{wallet_topup_qr:false}};
+  try{cfg=await call({operation:'config_status'})}catch(e){console.warn('CUP config_status no disponible:',e?.message||e)}
   const p=pr.profile||{},features=cfg.features||{};
   status.innerHTML='<b>Estado del módulo</b><br>QR personal: <span class="ok-text">disponible</span><br>Recarga a la wallet con cuenta central: <b class="'+(features.wallet_topup_qr?'ok-text':'warn-text')+'">'+(features.wallet_topup_qr?'destino configurado':'destino pendiente de configurar')+'</b><br><small>Transfermóvil/BANMET no notifican automáticamente por este QR. No se acredita saldo hasta una conciliación bancaria real.</small>';
   body.innerHTML=
