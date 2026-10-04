@@ -250,15 +250,18 @@ async function deposit(){
   const button=(id,title,sub,cls='secondary')=>'<button id="'+id+'" class="btn '+cls+'" style="width:100%;text-align:left"><b>'+title+'</b><br><small>'+sub+'</small></button>';
 
   try{
-    const [qva,tm,enz,cubo]=await Promise.all([
+    const [qva, qvaCoins, tm, enz, cubo]=await Promise.all([
       call('qvapay-gateway',{operation:'financial_bridge_status'}).catch(e=>({ok:false,code:'QVA_UNAVAILABLE',message:e?.message||String(e)})),
+      call('qvapay-gateway',{operation:'coins'}).catch(e=>({ok:false,code:'QVA_COINS_UNAVAILABLE',message:e?.message||String(e)})),
       call('cup-funding-gateway',{operation:'config_status'}).catch(e=>({ok:false,code:'TM_UNAVAILABLE',message:e?.message||String(e)})),
       call('enzona-cup-gateway',{operation:'config_status'}).catch(e=>({ok:false,code:'ENZONA_UNAVAILABLE',message:e?.message||String(e)})),
       call('cup-funding-gateway',{operation:'config_status'}).catch(e=>({ok:false,code:'CUBO_UNAVAILABLE',message:e?.message||String(e)}))
     ]);
+    const qvaInGroups=Array.isArray(qvaCoins?.result)?qvaCoins.result:[];
+    const qvaInCoins=qvaInGroups.flatMap(g=>Array.isArray(g?.Coins)?g.Coins:[]).filter(c=>c?.enabled_in===true);
     const caps=tm?.capabilities||{};
     const methods=[];
-    if(qva?.ok&&qva?.provider==='qvapay')methods.push(button('depQva','QvaPay · TopUp','Depósito real · selecciona el activo de pago del catálogo oficial · acredita USD tras conciliación'));
+    if(qva?.ok&&qva?.provider==='qvapay'&&qvaInCoins.length)methods.push(button('depQva','QvaPay · TopUp','Solo activos que QvaPay confirme como entrada (enabled_in=true); acredita USD tras conciliación'));
     if(caps.transfermovil?.enabled)methods.push(button('depTM','Transfermóvil','Depósito CUP · directo o manual según configuración'));
     if(caps.classic_usd?.enabled)methods.push(button('depClassicUsd','Tarjeta Clásica · Transfermóvil','Depósito USD · pago en línea real mediante MiTransfer/Clásica'));
     if(enz?.configured===true||enz?.ok===true)methods.push(button('depEnzona','EnZona','Depósito CUP mediante comercio EnZona'));
