@@ -260,6 +260,7 @@ async function deposit(){
     const methods=[];
     if(qva?.ok&&qva?.provider==='qvapay')methods.push(button('depQva','QvaPay · TopUp','Depósito real · selecciona el activo de pago del catálogo oficial · acredita USD tras conciliación'));
     if(caps.transfermovil?.enabled)methods.push(button('depTM','Transfermóvil','Depósito CUP · directo o manual según configuración'));
+    if(caps.classic_usd?.enabled)methods.push(button('depClassicUsd','Tarjeta Clásica · Transfermóvil','Depósito USD · pago en línea real mediante MiTransfer/Clásica'));
     if(enz?.configured===true||enz?.ok===true)methods.push(button('depEnzona','EnZona','Depósito CUP mediante comercio EnZona'));
     if(caps.cubopago?.api_credentials&&String(caps.cubopago?.configured_currency||'').toUpperCase()==='CUP')methods.push(button('depCubo','Tarjeta · CuboPago','CUP · enlace de pago del proveedor'));
     methods.push(button('depCrypto','Wallet / cripto','Consultar rieles de entrada reales disponibles','secondary'));
@@ -267,6 +268,7 @@ async function deposit(){
 
     $('depQva')?.addEventListener('click',()=>qvaDeposit());
     $('depTM')?.addEventListener('click',()=>tmDeposit());
+    $('depClassicUsd')?.addEventListener('click',()=>classicUsdDeposit());
     $('depEnzona')?.addEventListener('click',()=>enzonaDeposit());
     $('depCubo')?.addEventListener('click',()=>cuboDeposit());
     $('depCrypto')?.addEventListener('click',()=>cryptoDeposit());
@@ -312,6 +314,23 @@ async function deposit(){
         }catch(e){
           msg('qvaDepMsg','No se creó el depósito TopUp: '+(e?.message||e),'error');
         }finally{b.disabled=false;b.textContent='Crear depósito TopUp real'}
+      };
+    }
+
+    async function classicUsdDeposit(){
+      showFlow('<div class="card"><h3>Tarjeta Clásica · Transfermóvil · USD</h3><div class="notice">Pago en línea real mediante MiTransfer/Transfermóvil. Cuba Plus Pay no acredita USD al crear la solicitud: el saldo cambia únicamente después de la confirmación y conciliación del proveedor.</div><div class="field"><label>Monto USD</label><input id="classicUsdAmt" type="number" min="0.01" step="0.01" placeholder="0.00"></div><button id="classicUsdGo" class="btn full">Continuar al pago real</button><div id="classicUsdMsg" class="msg hidden"></div></div>');
+      $('classicUsdGo').onclick=async()=>{
+        const amount=Number($('classicUsdAmt').value),b=$('classicUsdGo');
+        if(!Number.isFinite(amount)||amount<=0)return msg('classicUsdMsg','Monto USD inválido.','error');
+        b.disabled=true;b.textContent='Creando pago real…';
+        try{
+          const r=await call('cup-funding-gateway',{operation:'create_classic_usd_payment',amount_usd:amount,idempotency_key:safeUUID()});
+          if(!r.ok)throw new Error(r.message||r.code||'Transfermóvil/Clásica rechazó la solicitud');
+          const url=r.checkout_url||r.result?.checkout_url||r.result?.payment_url||r.result?.url;
+          const detail='<b>Pago USD creado</b><br>Referencia: '+escLocal(r.reference||'—')+'<br>Estado: '+escLocal(r.status||'processing')+(url?'<div style="margin-top:8px"><a class="btn secondary" href="'+escLocal(url)+'" target="_blank" rel="noopener">Abrir pago Transfermóvil / MiTransfer</a></div>':'')+'<div class="notice" style="margin-top:8px">No se acreditará USD hasta que el proveedor confirme el pago y Cuba Plus Pay lo concilie.</div>';
+          showFlow('<div class="card">'+detail+'</div>');
+        }catch(e){msg('classicUsdMsg','No se creó el pago USD: '+(e?.message||e),'error')}
+        finally{b.disabled=false;b.textContent='Continuar al pago real'}
       };
     }
 
