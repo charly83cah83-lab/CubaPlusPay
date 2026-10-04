@@ -1154,8 +1154,10 @@ async function openExchange(){
   if(error)throw error;
   const rows=Array.isArray(data)?data:[];
   if(!rows.length){box.innerHTML='<div class="msg error">No hay tasas de intercambio habilitadas. No se inventó ninguna tasa.</div>';return;}
+  // Both directions use the same currently-enabled canonical CRX -> asset rates.
+  // Reverse conversion is calculated with the reciprocal rate by the gateway.
   const assetsFromCrx=[...new Set(rows.filter(r=>String(r.from_currency)==='CRX'&&String(r.to_currency)!=='CRX').map(r=>String(r.to_currency)))];
-  const assetsToCrx=[...new Set(rows.filter(r=>String(r.to_currency)==='CRX'&&String(r.from_currency)!=='CRX').map(r=>String(r.from_currency)))];
+  const assetsToCrx=[...assetsFromCrx];
   const initialDir=assetsFromCrx.length?'crx_to_asset':'asset_to_crx';
   const opts=list=>list.map(a=>'<option value="'+esc(a)+'">'+esc(a)+'</option>').join('');
   box.innerHTML='<div class="field"><label>Dirección</label><select id="cppExDir"><option value="crx_to_asset"'+(initialDir==='crx_to_asset'?' selected':'')+'>CRX → Activo</option><option value="asset_to_crx"'+(initialDir==='asset_to_crx'?' selected':'')+'>Activo → CRX</option></select></div>'+
