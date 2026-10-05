@@ -1299,7 +1299,29 @@ window.__CPP_CUP_QR_PANEL__=async function(){
    }catch(e){target.innerHTML='<div class="msg error">'+esc(e?.message||e)+'</div>'}
   };
   $('cppQrPersonalReq').onclick=()=>createRequest('personal_receive');
-  $('cppQrTopup').onclick=()=>createRequest('wallet_topup');
+  $('cppQrTopup').onclick=async()=>{
+   const amount=Number($('cppQrAmount').value),target=$('cppQrRequestOut');
+   if(!Number.isFinite(amount)||amount<1){target.innerHTML='<div class="msg error">Introduce un importe CUP válido.</div>';return}
+   target.innerHTML='<div class="notice">Consultando los canales de depósito reales…</div>';
+   try{
+    const idem=(crypto?.randomUUID?crypto.randomUUID():'CPP-'+Date.now()+'-'+Math.random().toString(36).slice(2));
+    let r=null,errors=[];
+    try{const x=await CP.functions.invoke('enzona-cup-gateway',{body:{operation:'create_deposit',amount_cup:amount,idempotency_key:idem}});if(!x.error&&x.data?.ok)r={rail:'EnZona',data:x.data};else errors.push('EnZona: '+(x.data?.message||x.data?.code||x.error?.message||'no disponible'))}catch(e){errors.push('EnZona: '+(e?.message||e))}
+    if(!r){
+      try{const x=await CP.functions.invoke('cup-funding-gateway',{body:{operation:'create_transfermovil_deposit',amount_cup:amount,idempotency_key:idem}});if(!x.error&&x.data?.ok)r={rail:'Transfermóvil',data:x.data};else errors.push('Transfermóvil: '+(x.data?.message||x.data?.code||x.error?.message||'no disponible'))}catch(e){errors.push('Transfermóvil: '+(e?.message||e))}
+    }
+    if(!r){
+      target.innerHTML='<div class="msg error">No hay un canal automático de depósito configurado todavía.</div><div class="notice" style="margin-top:8px">'+esc(errors.join('\n'))+'<br><br>La solicitud bancaria personal sigue disponible abajo y no acredita saldo hasta conciliación real.</div>';
+      return;
+    }
+    const d=r.data,targetUrl=d.checkout_url||d.payment_url||d.confirmation_url;
+    target.innerHTML='<div class="msg ok"><b>Depósito iniciado por '+esc(r.rail)+'</b><br>Referencia: <b>'+esc(d.reference||'—')+'</b><br>Estado: '+esc(d.status||'processing')+'<br><small>El saldo no se acredita hasta que el proveedor confirme el pago.</small></div>'+
+      (targetUrl?'<button id="cppQrPayNow" class="btn full" style="margin-top:8px">Continuar al pago</button>':'')+
+      '<div class="notice" style="margin-top:8px">Protección financiera: la acreditación ocurre únicamente después de una confirmación verificable del proveedor y conciliación idempotente.</div>';
+    if(targetUrl)$('cppQrPayNow').onclick=()=>location.href=targetUrl;
+    await loadHistory();
+   }catch(e){target.innerHTML='<div class="msg error">No se pudo iniciar el depósito: '+esc(e?.message||e)+'</div>'}
+  };
   $('cppQrRefresh').onclick=loadHistory;await loadHistory();
  }catch(e){status.className='msg error';status.textContent='No se pudo cargar el QR: '+(e?.message||e);body.innerHTML='<div class="notice">No se ha movido ni acreditado ningún fondo.</div>'}
 };
