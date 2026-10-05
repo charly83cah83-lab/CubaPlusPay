@@ -1329,7 +1329,8 @@ setTimeout(resolveInbound,1800);
 <!-- CPP V30.6 referral bridge: isolated, non-financial fix -->
 <script id="cpp-v306-referrals-bridge">
 (()=>{'use strict';
-const open=()=>{const fn=window.__CPP_REFERRALS_OPEN__||window.referralsPanel||window.__CPP_CORE?.referralsPanel;if(typeof fn!=='function'){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(m&&t&&b){t.textContent='Referidos';b.innerHTML='<div class="msg error">El módulo de referidos no terminó de cargarse. Recarga la aplicación para volver a intentarlo.</div>';m.classList.remove('hidden')}return}return fn()};
+const original=window.__CPP_REFERRALS_OPEN__||window.referralsPanel||window.__CPP_CORE?.referralsPanel;
+const open=()=>{if(typeof original!=='function'){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(m&&t&&b){t.textContent='Referidos';b.innerHTML='<div class="msg error">El módulo de referidos no terminó de cargarse. Recarga la aplicación para volver a intentarlo.</div>';m.classList.remove('hidden')}return}return original()};
 window.__CPP_REFERRALS_OPEN__=open;
 window.referralsPanel=open;
 document.addEventListener('click',ev=>{const b=ev.target?.closest?.('[data-op="referrals"]');if(!b)return;ev.preventDefault();ev.stopImmediatePropagation();Promise.resolve().then(open).catch(e=>{const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),body=document.getElementById('modalBody');if(m&&t&&body){t.textContent='Referidos';body.textContent=String(e?.message||e);m.classList.remove('hidden')}})},true);
