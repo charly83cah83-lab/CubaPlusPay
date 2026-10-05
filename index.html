@@ -1481,20 +1481,61 @@ document.addEventListener('click',ev=>{const b=ev.target?.closest?.('[data-op="r
 (()=>{'use strict';if(typeof window.__CPP_WITHDRAW_HARDENED__==='function')window.openWithdraw=window.__CPP_WITHDRAW_HARDENED__;})();
 </script>
 
-<script id="cpp-v306-smart-layer">
+<script id="cpp-v307-smart-layer">
 (()=>{'use strict';
-const KEY='cpp_smart_v306',get=id=>document.getElementById(id);
-const state=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return{}}};
-const save=s=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}};
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const modal=(title,html)=>{const m=get('modal'),t=get('modalTitle'),b=get('modalBody');if(!m||!t||!b)return;t.textContent=title;b.innerHTML=html;m.classList.remove('hidden')};
-const data=()=>{const s=state(),done=s.done||{},checks=[['perfil','Completa y revisa tu perfil'],['seguridad','Revisa Seguridad y sesión'],['referido','Comparte tu código de referidos'],['juego','Juega CRX y mejora tu racha'],['movimientos','Consulta tus movimientos']];return{s,done,checks,completed:checks.filter(x=>done[x[0]]).length}};
-const open=()=>{const d=data(),pct=Math.round(d.completed/d.checks.length*100),missions=d.checks.map(([k,label])=>'<button type="button" class="smart-mission '+(d.done[k]?'done':'')+'" data-smart-mission="'+k+'"><span class="smart-check">'+(d.done[k]?'✓':'○')+'</span><span><b>'+esc(label)+'</b><small>'+(d.done[k]?'Completada':'Toca para empezar')+'</small></span><span>›</span></button>').join('');
-modal('CUBA PLUS SMART','<div class="smart-hero"><div class="smart-orb">✦</div><div><div class="smart-kicker">TU CENTRO INTELIGENTE</div><h3 style="margin:3px 0">Haz más. Controla mejor.</h3><p>Smart organiza tu actividad sin alterar saldos ni crear dinero ficticio.</p></div></div><div class="smart-progress"><div><b>Progreso</b><span>'+d.completed+'/'+d.checks.length+' misiones</span></div><div class="smart-bar"><i style="width:'+pct+'%"></i></div><small>'+pct+'% completado · experiencia de uso</small></div><div class="smart-grid">'+missions+'</div><div class="card" style="margin-top:10px"><h3 style="margin-top:0">Beneficios inteligentes</h3><div class="smart-benefits"><div>⚡ <b>Acceso rápido</b><small>Encuentra tus operaciones importantes desde un solo lugar.</small></div><div>🛡️ <b>Protección</b><small>Smart no inventa saldos ni ejecuta operaciones financieras por sorpresa.</small></div><div>🎮 <b>Progreso CRX</b><small>La experiencia de juego queda separada del dinero real.</small></div><div>👥 <b>Comunidad</b><small>Referidos y comisiones solo cuando exista una operación real y liquidada.</small></div></div></div><div class="notice" style="margin-top:10px">Las recompensas económicas solo pueden existir con reglas publicadas y liquidación real.</div>');
-document.querySelectorAll('[data-smart-mission]').forEach(b=>b.onclick=()=>{const k=b.dataset.smartMission,s=state();s.done=s.done||{};s.done[k]=true;s.updated_at=new Date().toISOString();save(s);if(k==='juego'&&typeof window.nav==='function')window.nav('game');else if(k==='perfil'&&typeof window.nav==='function')window.nav('profile');else if(k==='movimientos'&&typeof window.nav==='function')window.nav('transactions');else if(k==='referido'&&typeof window.referralsPanel==='function')window.referralsPanel();else if(k==='seguridad'&&typeof window.securityPanel==='function')window.securityPanel()})};
-const inject=()=>{const nav=document.querySelector('.nav');if(nav&&!document.querySelector('[data-smart-nav]')){const b=document.createElement('button');b.type='button';b.dataset.smartNav='1';b.innerHTML='<span class="ico">✦</span>Cuba Plus Smart';b.onclick=open;nav.appendChild(b)}const quick=document.querySelector('.quick');if(quick&&!quick.querySelector('[data-smart-quick]')){const b=document.createElement('button');b.type='button';b.dataset.smartQuick='1';b.innerHTML='<span class="qicon">✦</span><b>Smart</b><small>Tu asistente</small>';b.onclick=open;quick.appendChild(b)}};
-const css=document.createElement('style');css.textContent='.smart-hero{display:flex;gap:12px;align-items:center;padding:14px;border:1px solid #754cff88;border-radius:16px;background:linear-gradient(135deg,#122b67,#27104f)}.smart-orb{width:54px;height:54px;flex:0 0 54px;border-radius:18px;display:grid;place-items:center;font-size:27px;background:linear-gradient(145deg,#08d8ff,#754cff)}.smart-kicker{font-size:9px;letter-spacing:1.4px;color:#21dcff;font-weight:900}.smart-hero p{margin:4px 0 0;color:#9fc3e6;font-size:11px}.smart-progress{margin-top:10px;padding:12px;border:1px solid #145fb4;border-radius:14px;background:#041a3d}.smart-progress>div:first-child{display:flex;justify-content:space-between}.smart-progress span,.smart-progress small{color:#7ea9d1;font-size:10px}.smart-bar{height:8px;margin:9px 0 5px;border-radius:99px;background:#02102d;overflow:hidden}.smart-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#08d8ff,#754cff)}.smart-grid{display:grid;gap:7px;margin-top:10px}.smart-mission{width:100%;display:grid;grid-template-columns:28px 1fr 20px;align-items:center;gap:8px;text-align:left;padding:10px;border:1px solid #125cae;border-radius:13px;background:#041b42;color:#fff}.smart-mission.done{border-color:#0b9875;background:#062c2a}.smart-check{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#07366f}.smart-mission small{display:block;color:#78a4cc;font-size:9px;margin-top:2px}.smart-benefits{display:grid;grid-template-columns:1fr 1fr;gap:8px}.smart-benefits div{padding:10px;border:1px solid #103f78;border-radius:12px;background:#041a3b}.smart-benefits b{display:block}.smart-benefits small{display:block;color:#7fa8cf;font-size:9px;margin-top:3px}@media(max-width:600px){.smart-benefits{grid-template-columns:1fr}}';document.head.appendChild(css);
+const readBalances=()=>{
+ const out={CRX:0,USD:0,CUP:0,USDT:0,BTC:0};
+ const root=get('wallets');
+ if(root){
+  const txt=root.innerText||'';
+  Object.keys(out).forEach(k=>{
+   const re=new RegExp('([0-9][0-9.,]*)\\s*'+k+'\\b','i'),m=txt.match(re);
+   if(m)out[k]=Number(String(m[1]).replace(/\\./g,'').replace(',','.'))||0;
+  });
+ }
+ const home=document.body.innerText||'';
+ if(!out.CRX){const m=home.match(/([0-9][0-9.,]*)\\s*CRX\\b/);if(m)out.CRX=Number(String(m[1]).replace(/\\./g,'').replace(',','.'))||0}
+ return out;
+};
+const advice=b=>{
+ const a=[];
+ if(b.CRX>0)a.push(['🎮','CRX','Puedes usar tu CRX para participar en CRX Island, consultar el Exchange y, cuando una ruta esté habilitada, convertirlo a otro activo.']);
+ else a.push(['🎮','CRX','Tu saldo CRX es 0 o no está disponible en la vista actual. Puedes revisar CRX Island sin asumir ninguna recompensa hasta que el servidor liquide una partida.']);
+ if(b.USDT>0)a.push(['₮','USDT','Tu USDT puede servir como activo de intercambio dentro de las rutas habilitadas. Antes de convertir, Smart debe mostrarte la cotización y la comisión.']);
+ if(b.USD>0||b.CUP>0)a.push(['💱','Monedas','Puedes revisar Exchange para comparar las rutas habilitadas y ver la cotización antes de mover fondos.']);
+ a.push(['🛒','Marketplace','Si existe una oferta real, puedes usar el Marketplace para descubrir productos/servicios y pagar con una moneda admitida.']);
+ a.push(['🛡️','Seguridad','Smart nunca considera una cifra como dinero disponible si no procede de la cuenta autenticada y no ejecuta una operación financiera por sí solo.']);
+ return a;
+};
+const open=()=>{
+ const b=readBalances(),items=advice(b).map(x=>'<div class="smart-advice"><span class="smart-advice-icon">'+x[0]+'</span><div><b>'+esc(x[1])+'</b><small>'+esc(x[2])+'</small></div></div>').join('');
+ modal('CUBA PLUS SMART',
+ '<div class="smart-hero"><div class="smart-orb">✦</div><div><div class="smart-kicker">ASISTENTE FINANCIERO DE CUBA PLUS PAY</div><h3 style="margin:3px 0">¿Qué puedo hacer con mi saldo?</h3><p>Smart analiza lo que la aplicación muestra y te propone usos posibles sin inventar fondos.</p></div></div>'+
+ '<div class="smart-balance-grid"><div><small>CRX</small><b>'+esc(b.CRX.toLocaleString('es-ES'))+'</b></div><div><small>USD</small><b>'+esc(b.USD.toLocaleString('es-ES'))+'</b></div><div><small>CUP</small><b>'+esc(b.CUP.toLocaleString('es-ES'))+'</b></div><div><small>USDT</small><b>'+esc(b.USDT.toLocaleString('es-ES'))+'</b></div></div>'+
+ '<div class="card" style="margin-top:10px"><h3 style="margin-top:0">Ideas para tu saldo</h3><div class="smart-advice-grid">'+items+'</div></div>'+
+ '<div class="card" style="margin-top:10px"><h3 style="margin-top:0">Acciones rápidas</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-smart-action="market">🛒 Marketplace</button><button class="btn secondary" data-smart-action="exchange">💱 Exchange</button><button class="btn secondary" data-smart-action="game">🎮 Juego CRX</button><button class="btn secondary" data-smart-action="refresh">↻ Actualizar análisis</button></div></div>'+
+ '<div class="notice" style="margin-top:10px"><b>Regla de Smart:</b> las recomendaciones son informativas. Ninguna recomendación modifica balances, crea transacciones o simula pagos.</div>');
+ document.querySelectorAll('[data-smart-action]').forEach(x=>x.onclick=()=>{
+  const a=x.dataset.smartAction;
+  if(a==='market'&&typeof window.nav==='function')window.nav('market');
+  else if(a==='game'&&typeof window.nav==='function')window.nav('game');
+  else if(a==='exchange'&&typeof window.exchangePanel==='function')window.exchangePanel();
+  else if(a==='refresh')open();
+ });
+};
+const css=document.createElement('style');
+css.textContent='.smart-hero{display:flex;gap:12px;align-items:center;padding:14px;border:1px solid #754cff88;border-radius:16px;background:linear-gradient(135deg,#122b67,#27104f)}.smart-orb{width:54px;height:54px;flex:0 0 54px;border-radius:18px;display:grid;place-items:center;font-size:27px;background:linear-gradient(145deg,#08d8ff,#754cff)}.smart-kicker{font-size:9px;letter-spacing:1.3px;color:#21dcff;font-weight:900}.smart-hero p{margin:4px 0 0;color:#9fc3e6;font-size:11px}.smart-balance-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.smart-balance-grid>div{padding:10px;border:1px solid #145fb4;border-radius:12px;background:#041a3d}.smart-balance-grid small{display:block;color:#7ea9d1;font-size:9px}.smart-balance-grid b{font-size:16px}.smart-advice-grid{display:grid;gap:8px}.smart-advice{display:flex;gap:9px;padding:10px;border:1px solid #103f78;border-radius:12px;background:#041a3b}.smart-advice-icon{font-size:20px}.smart-advice b{display:block}.smart-advice small{display:block;color:#7fa8cf;font-size:10px;margin-top:2px}@media(max-width:600px){.smart-balance-grid{grid-template-columns:1fr 1fr}}';
+document.head.appendChild(css);
+const inject=()=>{
+ const nav=document.querySelector('.nav');
+ if(nav&&!document.querySelector('[data-smart-nav]')){const x=document.createElement('button');x.type='button';x.dataset.smartNav='1';x.innerHTML='<span class="ico">✦</span>Cuba Plus Smart';x.onclick=open;nav.appendChild(x)}
+ const quick=document.querySelector('.quick');
+ if(quick&&!quick.querySelector('[data-smart-quick]')){const x=document.createElement('button');x.type='button';x.dataset.smartQuick='1';x.innerHTML='<span class="qicon">✦</span><b>Smart</b><small>Tu asistente</small>';x.onclick=open;quick.appendChild(x)}
+};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',inject);else setTimeout(inject,300);
-window.__CPP_SMART__={open,version:'V30.6'};
+window.__CPP_SMART__={open,version:'V30.7'};
 })();
 </script>
