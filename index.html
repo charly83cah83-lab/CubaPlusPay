@@ -1305,17 +1305,14 @@ window.__CPP_CUP_QR_PANEL__=async function(){
    target.innerHTML='<div class="notice">Preparando depósito CUP en la cuenta central…</div>';
    try{
     const idem=(crypto?.randomUUID?crypto.randomUUID():'CPP-'+Date.now()+'-'+Math.random().toString(36).slice(2));
-    const req=await call({operation:'create_request',purpose:'wallet_topup',amount_cup:amount,idempotency_key:idem});
-    if(!req?.request?.id)throw new Error('No se pudo crear la solicitud de depósito.');
-    const dep=await CP.functions.invoke('cup-deposit-reconcile',{body:{operation:'create_deposit',request_id:req.request.id,amount_cup:amount,idempotency_key:idem}});
-    if(dep.error)throw dep.error;
-    if(!dep.data?.ok)throw new Error(dep.data?.message||dep.data?.code||'No se pudo registrar el depósito.');
-    const d=dep.data;
-    target.innerHTML='<div class="msg ok"><b>Depósito CUP preparado</b><br>Referencia: <b>'+esc(d.deposit?.reference||req.request.reference||'—')+'</b><br>Importe: <b>'+fmt(amount)+' CUP</b><br>Estado: <b>PENDIENTE DE CONCILIACIÓN</b></div>'+
-      qrBlock(req.qr_url,'QR de la solicitud de depósito')+
-      safeHtmlBank(d.central?.bank_label,d.central?.holder_name,d.central?.destination_ref||d.central?.destination_masked)+
-      '<div class="notice" style="margin-top:8px"><b>Importante:</b> realiza la transferencia real a la cuenta central indicada. El saldo CUP permanecerá sin acreditar hasta que una confirmación bancaria verificable sea conciliada. No hay acreditación simulada.</div>';
-    attachCopy(target);await loadHistory();
+    const x=await CP.functions.invoke('cup-funding-gateway',{body:{operation:'create_transfermovil_deposit',amount_cup:amount,idempotency_key:idem}});
+    if(x.error)throw x.error;
+    if(!x.data?.ok)throw new Error(x.data?.message||x.data?.code||'No se pudo iniciar el depósito CUP.');
+    const d=x.data,ins=d.instructions||{};
+    target.innerHTML='<div class="msg ok"><b>Solicitud de depósito CUP creada</b><br>Referencia: <b>'+esc(d.reference||'—')+'</b><br>Importe: <b>'+fmt(amount)+' CUP</b><br>Estado: <b>'+esc(d.status||'pending')+'</b></div>'+
+      (ins.destination||ins.destination_masked?safeHtmlBank(ins.bank_label||'Banco receptor',ins.holder_name||ins.merchant_name,ins.destination||ins.destination_masked):'')+
+      '<div class="notice" style="margin-top:8px"><b>Protección financiera:</b> realiza la transferencia real a la cuenta central indicada. El saldo CUP permanece sin acreditar hasta la confirmación bancaria y conciliación real.</div>';
+    await loadHistory();
    }catch(e){target.innerHTML='<div class="msg error">No se pudo iniciar el depósito: '+esc(e?.message||e)+'</div>'}
   };
   $('cppQrRefresh').onclick=loadHistory;await loadHistory();
