@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -26,6 +26,21 @@ jobs:
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
+
+      - name: Aplicar hotfix P2P V31 sin tocar funciones existentes
+        run: node tools/cpp-v31-p2p.js
+
+      - name: Guardar hotfix P2P
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "P2P V31 ya está aplicado."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add index.html
+            git commit -m "Apply CubaPlusPay P2P V31 complete hotfix"
+            git push
+          fi
 
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
