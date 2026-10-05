@@ -1354,3 +1354,7 @@ window.referralsPanel=open;
 document.addEventListener('click',ev=>{const b=ev.target?.closest?.('[data-op="referrals"]');if(!b)return;ev.preventDefault();ev.stopImmediatePropagation();Promise.resolve().then(open).catch(e=>{const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),body=document.getElementById('modalBody');if(m&&t&&body){t.textContent='Referidos';body.textContent=String(e?.message||e);m.classList.remove('hidden')}})},true);
 })();
 </script>
+<!-- CPP V30.6 withdraw bridge: isolated, non-financial fix -->
+<script id="cpp-v306-withdraw-global-bridge">
+(()=>{'use strict';if(typeof window.__CPP_WITHDRAW_HARDENED__==='function')window.openWithdraw=window.__CPP_WITHDRAW_HARDENED__;})();
+</script>
