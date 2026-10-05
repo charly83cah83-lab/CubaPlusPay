@@ -102,6 +102,62 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 }
 </style>
 
+<style id="cpp-v30-reference-home">
+.cpp-home-v30{display:grid;gap:12px}
+.cpp-welcome{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:18px;border:1px solid #0a72df;border-radius:22px;background:linear-gradient(135deg,#062d72 0%,#071a46 52%,#2a0e55 100%);overflow:hidden;box-shadow:0 18px 50px #0006}
+.cpp-welcome:after{content:'';position:absolute;width:230px;height:230px;right:-100px;top:-120px;border-radius:50%;background:radial-gradient(circle,#00dfff3c,transparent 68%)}
+.cpp-kicker{font-size:10px;letter-spacing:1.8px;font-weight:1000;color:#20dcff}
+.cpp-welcome h1{position:relative;margin:3px 0 3px;font-size:27px;letter-spacing:-.7px}
+.cpp-welcome p{position:relative;margin:0;color:#b1d0ec}
+.cpp-badges{position:relative;display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.cpp-live{position:relative;z-index:1;padding:7px 10px;border:1px solid #12e9a166;border-radius:999px;color:#79ffd5;background:#052d2b;font-size:9px;font-weight:900;white-space:nowrap}
+.cpp-live span{display:inline-block;width:7px;height:7px;border-radius:50%;background:#12e9a1;box-shadow:0 0 12px #12e9a1;margin-right:5px}
+.cpp-main-balance{padding:17px;border:1px solid #00baff;border-radius:22px;background:linear-gradient(145deg,#0a43aa,#06285f 54%,#17195c);box-shadow:0 0 34px #008cff2b}
+.cpp-balance-head{display:flex;justify-content:space-between;align-items:center}
+.cpp-balance-head small{color:#9bc4e8;font-size:10px}
+.cpp-balance-head h2{margin:2px 0 0;font-size:19px}
+.cpp-balance-number{margin-top:5px;font-size:34px;font-weight:1000;letter-spacing:-1px}
+.cpp-coin{width:62px;height:62px}
+.cpp-chart{height:78px;margin-top:7px;border-bottom:1px solid #1b8ee855;overflow:hidden}
+.cpp-chart svg{width:100%;height:100%}
+.cpp-assets{display:grid;grid-template-columns:repeat(4,1fr);margin-top:10px}
+.cpp-assets>div{text-align:center;border-right:1px solid #1b6fbd}
+.cpp-assets>div:last-child{border-right:0}
+.cpp-assets span{display:block;color:#8eb7dc;font-size:9px}
+.cpp-assets b{display:block;margin-top:2px;font-size:12px}
+.cpp-quick-title{display:flex;justify-content:space-between;align-items:center;padding:3px 2px 0}
+.cpp-quick-title b{font-size:14px}
+.cpp-quick-title span{font-size:9px;color:#6f9cc6}
+.cpp-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cpp-actions button{min-height:106px;border:1px solid #0a72d8;border-radius:17px;background:linear-gradient(145deg,#073d91,#051c48);color:#fff;padding:12px 8px;text-align:center;box-shadow:0 10px 28px #0004}
+.cpp-actions button>span{width:43px;height:43px;margin:0 auto 7px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#08d8ff,#2168ff 60%,#754cff);font-size:19px}
+.cpp-actions button b{display:block;font-size:11px}
+.cpp-actions button small{display:block;margin-top:3px;color:#7faad2;font-size:9px}
+.cpp-overview{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+.cpp-overview-card{min-height:132px}
+.cpp-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cpp-section-head b{font-size:12px}
+.cpp-section-head small{display:block;margin-top:2px;color:#6f9bc4;font-size:9px}
+.cpp-shield{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#07366f;border:1px solid #126dc4}
+.cpp-stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px}
+.cpp-stats>div{text-align:center;border-right:1px solid #0c417c}
+.cpp-stats>div:last-child{border:0}
+.cpp-stats span{display:block;color:#719bc4;font-size:9px}
+.cpp-stats strong{display:block;margin-top:4px;font-size:16px}
+.cpp-dashboard-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}
+.cpp-panel{min-height:210px}
+.cpp-discover{display:grid;gap:7px}
+.cpp-discover .cpp-section-head{margin-bottom:2px}
+.cpp-discover>button{display:grid;grid-template-columns:34px 1fr 16px;gap:8px;align-items:center;text-align:left;border:1px solid #104c91;border-radius:12px;background:#041a3c;color:#fff;padding:8px}
+.cpp-discover>button>span{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#07356d}
+.cpp-discover>button b{display:block;font-size:10px}
+.cpp-discover>button small{display:block;color:#719bc4;font-size:8px;margin-top:2px}
+.cpp-discover>button i{font-style:normal;color:#20ddff;font-size:17px}
+.cpp-trust{text-align:center;color:#5f89b3;font-size:9px;padding:3px 0 12px}
+@media(max-width:800px){.cpp-overview,.cpp-dashboard-grid{grid-template-columns:1fr}.cpp-actions{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:520px){.cpp-welcome{padding:15px}.cpp-welcome h1{font-size:22px}.cpp-live{font-size:8px}.cpp-main-balance{padding:14px}.cpp-balance-number{font-size:29px}.cpp-assets{grid-template-columns:repeat(2,1fr);row-gap:8px}.cpp-assets>div:nth-child(2){border-right:0}.cpp-actions{grid-template-columns:repeat(2,1fr);gap:8px}.cpp-actions button{min-height:96px}.cpp-stats{grid-template-columns:repeat(2,1fr);row-gap:9px}.cpp-stats>div:nth-child(2){border-right:0}.cpp-stats>div:nth-child(3){border-top:1px solid #0c417c;padding-top:8px}.cpp-stats>div:nth-child(4){border-top:1px solid #0c417c;padding-top:8px;border-right:0}}
+</style>
+
 </head>
 
 <script id="cpp-v18-global-runtime">
@@ -148,11 +204,74 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 <header class="topbar"><div class="top-left"><button id="openSide" class="mobile-menu">☰</button><div><div id="pageTitle" class="page-title">Inicio</div><div class="page-sub">CUBA PLUS PAY · V22</div></div></div><div class="top-actions"><button id="refresh" class="icon-btn">↻</button><div id="avatar" class="avatar">CP</div></div></header>
 <main class="content">
 <section id="page-home" class="page active">
-<div class="hero"><div class="eyebrow">CUBA PLUS PAY</div><h1 id="hello">Hola</h1><p>Tu centro financiero. Los datos de saldo y movimientos se consultan desde Supabase y no se inventan.</p><div style="margin-top:10px"><span id="kyc" class="pill">KYC · Consultando</span> <span id="role" class="pill">USER</span></div></div>
-<div class="grid stats"><div class="card stat"><small>Saldo disponible</small><strong id="totalAvailable">—</strong><em>desde billeteras reales</em></div><div class="card stat"><small>Pendiente</small><strong id="totalPending">—</strong><em>datos backend</em></div><div class="card stat"><small>Bloqueado</small><strong id="totalLocked">—</strong><em>datos backend</em></div><div class="card stat"><small>Billeteras</small><strong id="walletCount">—</strong><em>monedas registradas</em></div></div>
-<div class="card" style="margin-top:12px"><div class="balance-card"><div class="balance-top"><div><div class="balance-currency">CRX <span style="color:#83b5e5;font-size:10px">Moneda de la plataforma</span></div><div class="balance-number" id="crxBalance">— CRX</div></div><div class="coin">CRX</div></div><div class="chart"><svg viewBox="0 0 600 80" preserveAspectRatio="none"><path d="M0 52 C35 15,55 66,90 43 S140 20,175 47 S220 65,260 35 S305 23,340 46 S380 66,420 38 S470 20,505 46 S550 62,600 28" fill="none" stroke="#18dfff" stroke-width="4"/></svg></div><div class="currency-row"><div><b>USD</b><span id="usd">—</span></div><div><b>CUP</b><span id="cup">—</span></div><div><b>USDT TRC20</b><span id="usdt_trc20">—</span></div><div><b>BTC</b><span id="btc">—</span></div></div></div></div>
-<div class="grid quick"><button data-op="transfer"><span class="qicon">↗</span><b>Transferir</b><small>CRX</small></button><button data-op="receive"><span class="qicon">↓</span><b>Recibir</b><small>Datos</small></button><button data-op="exchange"><span class="qicon">⇄</span><b>Intercambiar</b><small>CRX ↔ Activo</small></button><button data-op="deposit"><span class="qicon">＋</span><b>Depositar</b><small>QvaPay</small></button><button data-op="cup_funding"><span class="qicon">₱</span><b>Depósito CUP</b><small>Transfermóvil / banco</small></button><button data-op="withdraw"><span class="qicon">↙</span><b>Retirar</b><small>Proveedor</small></button></div>
-<div class="grid two"><section class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Movimientos recientes</b><button class="btn secondary" data-page="history">Ver todos</button></div><div id="homeTx" style="margin-top:8px"><div class="empty">Consultando…</div></div></section><section class="card"><b>Estado de cuenta</b><div id="accountState" class="support" style="margin-top:10px">Consultando datos reales…</div></section></div>
+<div class="cpp-home-v30">
+  <div class="cpp-welcome">
+    <div>
+      <div class="cpp-kicker">CUBA PLUS PAY</div>
+      <h1 id="hello">Hola, Carlos</h1>
+      <p>Tu dinero. Tus pagos. Tu plataforma.</p>
+      <div class="cpp-badges"><span id="kyc" class="pill">KYC · Consultando</span><span id="role" class="pill">USER</span></div>
+    </div>
+    <div class="cpp-live"><span></span> CUENTA REAL</div>
+  </div>
+
+  <div class="cpp-main-balance">
+    <div class="cpp-balance-head">
+      <div><small>Saldo principal</small><h2>CRX</h2><div id="crxBalance" class="cpp-balance-number">— CRX</div></div>
+      <div class="coin cpp-coin">CRX</div>
+    </div>
+    <div class="cpp-chart"><svg viewBox="0 0 700 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 82 C42 34,65 100,112 62 S180 35,225 72 S285 105,330 56 S395 30,438 70 S500 100,545 52 S615 26,700 64" fill="none" stroke="#19ddff" stroke-width="5"/></svg></div>
+    <div class="cpp-assets">
+      <div><span>USD</span><b id="usd">—</b></div>
+      <div><span>CUP</span><b id="cup">—</b></div>
+      <div><span>USDT</span><b id="usdt_trc20">—</b></div>
+      <div><span>BTC</span><b id="btc">—</b></div>
+    </div>
+  </div>
+
+  <div class="cpp-quick-title"><b>¿Qué quieres hacer?</b><span>Operaciones reales</span></div>
+  <div class="cpp-actions">
+    <button data-op="transfer"><span>↗</span><b>Transferir</b><small>Enviar CRX</small></button>
+    <button data-op="receive"><span>↓</span><b>Recibir</b><small>Datos de pago</small></button>
+    <button data-op="deposit"><span>＋</span><b>Depositar</b><small>QvaPay</small></button>
+    <button data-op="cup_funding"><span>🇨🇺</span><b>Depósito CUP</b><small>Banco / Transfermóvil</small></button>
+    <button data-op="exchange"><span>⇄</span><b>Intercambiar</b><small>CRX ↔ activos</small></button>
+    <button data-op="withdraw"><span>↙</span><b>Retirar</b><small>Proveedor real</small></button>
+    <button data-page="market"><span>🛒</span><b>Marketplace</b><small>Comprar con CRX</small></button>
+    <button data-page="game"><span>🎮</span><b>Juego CRX</b><small>Juega y gana</small></button>
+  </div>
+
+  <div class="cpp-overview">
+    <div class="card cpp-overview-card">
+      <div class="cpp-section-head"><div><b>Resumen de tu cuenta</b><small>Datos consultados desde Supabase</small></div><span class="cpp-shield">✓</span></div>
+      <div class="cpp-stats">
+        <div><span>Disponible</span><strong id="totalAvailable">—</strong></div>
+        <div><span>Pendiente</span><strong id="totalPending">—</strong></div>
+        <div><span>Bloqueado</span><strong id="totalLocked">—</strong></div>
+        <div><span>Billeteras</span><strong id="walletCount">—</strong></div>
+      </div>
+    </div>
+    <div class="card cpp-overview-card">
+      <div class="cpp-section-head"><div><b>Estado de cuenta</b><small>Seguridad y disponibilidad</small></div><span class="cpp-shield">🛡</span></div>
+      <div id="accountState" class="support">Consultando datos reales…</div>
+    </div>
+  </div>
+
+  <div class="cpp-dashboard-grid">
+    <section class="card cpp-panel">
+      <div class="cpp-section-head"><div><b>Movimientos recientes</b><small>Últimas operaciones reales</small></div><button class="btn secondary" data-page="history">Ver todos</button></div>
+      <div id="homeTx" class="cpp-tx-list"><div class="empty">Consultando…</div></div>
+    </section>
+    <section class="card cpp-panel cpp-discover">
+      <div class="cpp-section-head"><div><b>Descubre Cuba Plus Pay</b><small>Todo desde una sola plataforma</small></div></div>
+      <button data-page="market"><span>🛒</span><div><b>Compra en Marketplace</b><small>Productos y servicios cuando existan ofertas reales.</small></div><i>›</i></button>
+      <button data-page="game"><span>🎮</span><div><b>Juego CRX</b><small>Obtén recompensas según las reglas reales del servidor.</small></div><i>›</i></button>
+      <button data-op="recharge"><span>📱</span><div><b>Recarga móvil</b><small>Solo cuando el proveedor real esté disponible.</small></div><i>›</i></button>
+      <button data-op="referrals"><span>👥</span><div><b>Referidos</b><small>Comisiones únicamente por operaciones reales y liquidadas.</small></div><i>›</i></button>
+    </section>
+  </div>
+  <div class="cpp-trust">Sin saldos ficticios · Sin pagos simulados · Supabase + proveedores autorizados</div>
+</div>
 </section>
 <section id="page-wallet" class="page"><div class="hero"><div class="eyebrow">BILLETERA</div><h1>Mis billeteras</h1><p>Solo aparecen monedas existentes en la cuenta autenticada.</p></div><div id="wallets" class="grid wallet-grid"></div></section>
 <section id="page-transfer" class="page"><div class="hero"><div class="eyebrow">TRANSFERIR CRX</div><h1>Envía CRX de forma segura</h1><p>La operación se ejecuta en el backend mediante <b>transfer_crx_secure</b>; el navegador nunca modifica balances directamente.</p></div><div class="card transfer-card"><div class="step-row"><div class="step active">1 · Destino</div><div class="step">2 · Monto</div><div class="step">3 · Revisión</div><div class="step">4 · Resultado</div></div><div class="field"><label>Destinatario · correo o UUID</label><input id="to" placeholder="usuario@email.com"></div><div class="field"><label>Monto CRX</label><input id="amt" type="number" min="0.00000001" step="0.00000001" placeholder="0.00"></div><div class="chips"><button class="chip" data-add="100">+100</button><button class="chip" data-add="500">+500</button><button class="chip" data-add="1000">+1,000</button><button class="chip" data-add="5000">+5,000</button></div><div class="field"><label>Referencia opcional</label><input id="ref" maxlength="120" placeholder="Pago, envío, etc."></div><div style="display:flex;justify-content:space-between;margin:14px 0;color:#88add4"><span>Comisión</span><b id="feePreview">—</b></div><button id="sendTransfer" class="btn full">Continuar</button><div id="transferMsg" class="msg hidden"></div></div></section>
