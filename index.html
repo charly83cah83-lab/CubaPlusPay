@@ -1440,22 +1440,6 @@ window.__CPP_CUP_QR_PANEL__=async function(){
    }catch(e){target.innerHTML='<div class="msg error">'+esc(e?.message||e)+'</div>'}
   };
   $('cppQrPersonalReq').onclick=()=>createRequest('personal_receive');
-  $('cppQrTopup').onclick=async()=>{ 
-   const amount=Number($('cppQrAmount').value),target=$('cppQrRequestOut');
-   if(!Number.isFinite(amount)||amount<1){target.innerHTML='<div class="msg error">Introduce un importe CUP válido.</div>';return}
-   target.innerHTML='<div class="notice">Preparando depósito CUP en la cuenta central…</div>';
-   try{
-    const idem=(crypto?.randomUUID?crypto.randomUUID():'CPP-'+Date.now()+'-'+Math.random().toString(36).slice(2));
-    const x=await CP.functions.invoke('cup-funding-gateway',{body:{operation:'create_transfermovil_deposit',amount_cup:amount,idempotency_key:idem}});
-    if(x.error)throw x.error;
-    if(!x.data?.ok)throw new Error(x.data?.message||x.data?.code||'No se pudo iniciar el depósito CUP.');
-    const d=x.data,ins=d.instructions||{};
-    target.innerHTML='<div class="msg ok"><b>Solicitud de depósito CUP creada</b><br>Referencia: <b>'+esc(d.reference||'—')+'</b><br>Importe: <b>'+fmt(amount)+' CUP</b><br>Estado: <b>'+esc(d.status||'pending')+'</b></div>'+
-      (ins.destination||ins.destination_masked?safeHtmlBank(ins.bank_label||'Banco receptor',ins.holder_name||ins.merchant_name,ins.destination||ins.destination_masked):'')+
-      '<div class="notice" style="margin-top:8px"><b>Protección financiera:</b> realiza la transferencia real a la cuenta central indicada. El saldo CUP permanece sin acreditar hasta la confirmación bancaria y conciliación real.</div>';
-    await loadHistory();
-   }catch(e){target.innerHTML='<div class="msg error">No se pudo iniciar el depósito: '+esc(e?.message||e)+'</div>'}
-  };
   $('cppQrRefresh').onclick=loadHistory;await loadHistory();
  }catch(e){status.className='msg error';status.textContent='No se pudo cargar el QR: '+(e?.message||e);body.innerHTML='<div class="notice">No se ha movido ni acreditado ningún fondo.</div>'}
 };
