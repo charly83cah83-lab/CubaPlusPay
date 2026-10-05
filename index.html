@@ -1575,10 +1575,45 @@ window.__CPP_SMART_AI_V308__={open,version:'V30.8'};setTimeout(()=>document.quer
 })();
 </script>
 
+<!-- CPP V31.3 FINAL MODULE BRIDGE: Smart + P2P isolated, additive, no other routes touched -->
+<script id="cpp-v313-final-smart-p2p-bridge">
+(()=>{'use strict';
+const db=()=>window.__CPP_DB||window.__CPP_CORE?.db;
+const modalDiag=(title,msg)=>{
+ const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');
+ if(m&&t&&b){t.textContent=title;b.innerHTML='<div class="msg error">'+String(msg).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div>';m.classList.remove('hidden')}
+};
+const smart=async()=>{
+ const fn=window.__CPP_SMART_AI_V308__?.open||window.__CPP_SMART__?.open||window.__CPP_SMART_AI_V307__?.open;
+ if(typeof fn!=='function')throw new Error('CUBA PLUS SMART no quedó registrado al cargar la página');
+ if(!db())throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
+ return await fn();
+};
+const p2p=async()=>{
+ const fn=window.__CPP_P2P_OPEN__||window.__CPP_P2P_V31__?.open||window.p2pPanel;
+ if(typeof fn!=='function')throw new Error('P2P V31 no quedó registrado al cargar la página');
+ if(!db())throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
+ return await fn();
+};
+window.CPP_OPEN_SMART=smart;
+window.CPP_OPEN_P2P=p2p;
+document.addEventListener('click',async e=>{
+ const b=e.target?.closest?.('[data-op="ai"],[data-op="p2p"]');
+ if(!b)return;
+ e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+ if(b.dataset.cppBusy==='1')return;
+ b.dataset.cppBusy='1';b.disabled=true;
+ try{await (b.dataset.op==='ai'?smart():p2p())}
+ catch(err){modalDiag(b.dataset.op==='ai'?'CUBA PLUS SMART':'P2P / Escrow · Transfermóvil',err?.message||String(err))}
+ finally{b.dataset.cppBusy='0';b.disabled=false}
+},true);
+})();
+</script>
+
 <!-- CPP V31 P2P COMPLETE HOTFIX: currentUser scope + marketplace + escrow + chat + ratings -->
 <script id="cpp-v31-p2p-complete">
 (()=>{'use strict';
-const CP31=window.__CPP_DB;
+const CP31={get auth(){return (window.__CPP_DB||window.__CPP_CORE?.db)?.auth},from:(...a)=>(window.__CPP_DB||window.__CPP_CORE?.db)?.from(...a),rpc:(...a)=>(window.__CPP_DB||window.__CPP_CORE?.db)?.rpc(...a)};
 const $31=id=>document.getElementById(id);
 const esc31=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money31=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
