@@ -1764,34 +1764,19 @@ window.__CPP_P2P_V32__=openP2P;
 <!-- CPP V33 P2P BUTTON BRIDGE: conecta cualquier botón P2P con el módulo V32 sin tocar otros módulos -->
 <script id="cpp-v33-p2p-button-bridge">
 (()=>{'use strict';
-const boot=()=>{
-  const open=window.__CPP_P2P_OPEN_FINAL__||window.__CPP_P2P_FINAL_V34__||window.__CPP_P2P_V32__||window.__CPP_P2P_V31__?.open||window.p2pPanel||window.__CPP_P2P_OPEN__;
-  if(typeof open!=='function')return;
-  window.p2pPanel=open;
-  window.__CPP_P2P_OPEN__=open;
-  window.__CPP_P2P_V33__={open,version:'V33-button-bridge'};
-  const isP2P=(el)=>{
-    if(!el)return false;
-    const txt=String(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-    const aria=String(el.getAttribute?.('aria-label')||'').trim().toLowerCase();
-    const data=String(el.getAttribute?.('data-action')||el.getAttribute?.('data-page')||el.getAttribute?.('data-module')||'').trim().toLowerCase();
-    return txt==='p2p'||txt.includes('p2p')||aria.includes('p2p')||data==='p2p'||data.includes('p2p');
+const bind=()=>{
+ const open=window.__CPP_P2P_FINAL_V34__||window.__CPP_P2P_V32__||window.p2pPanel||window.__CPP_P2P_OPEN__;
+ if(typeof open!=='function')return;
+ window.p2pPanel=open;window.__CPP_P2P_OPEN__=open;window.__CPP_P2P_V33__={open,version:'V33-safe-button-bridge'};
+ document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-page="p2p"],[data-module="p2p"]').forEach(el=>{
+  el.onclick=async ev=>{
+   ev.preventDefault();ev.stopPropagation();el.disabled=true;
+   try{await open()}catch(e){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),body=document.getElementById('modalBody');if(m&&t&&body){t.textContent='P2P / Escrow';body.innerHTML='<div class="msg error">'+String(e?.message||e).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>';m.classList.remove('hidden')}}finally{el.disabled=false}
   };
-  document.addEventListener('click',async ev=>{
-    const el=ev.target?.closest?.('button,a,[role="button"],[data-action],[data-page],[data-module]');
-    if(!isP2P(el))return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    if(typeof ev.stopImmediatePropagation==='function')ev.stopImmediatePropagation();
-    try{await open();}catch(e){
-      const msg=String(e?.message||e||'No se pudo abrir P2P');
-      const mb=document.getElementById('modalBody');
-      if(mb)mb.innerHTML='<div class="msg error">'+msg.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div>';
-    }
-  },true);
-  window.dispatchEvent(new CustomEvent('cpp:p2p-ready'));
+ });
 };
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+window.addEventListener('cpp:p2p-ready',bind);
 })();
 </script>
 <!-- CPP P2P FINAL FIX V34: mercado + escrow + Transfermóvil + chat + idempotencia -->
@@ -1898,9 +1883,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 <script id="cpp-final-mobile-recharge-rescue">
 (()=>{'use strict';
-const open=async()=>{const fn=window.CP_FINAL_AUDIT?.rechargePanel||window.rechargePanel||window.__CPP_CORE?.rechargePanel;if(typeof fn!=='function')throw new Error('MOBILE_RECHARGE_MODULE_NOT_READY');return fn();};
-const bind=()=>document.querySelectorAll('[data-op="recharge"],[data-action="recharge"],[data-module="recharge"]').forEach(el=>el.addEventListener('click',async ev=>{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();if(el.dataset.cppRechargeBusy==='1')return;el.dataset.cppRechargeBusy='1';el.disabled=true;try{await open()}catch(err){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(m&&t&&b){t.textContent='Recarga móvil';b.innerHTML='<div class="msg error">No se pudo abrir Recarga móvil: '+String(err?.message||err).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>';m.classList.remove('hidden')}}finally{el.dataset.cppRechargeBusy='0';el.disabled=false}},true));
+const bind=()=>{
+ const fn=window.CP_FINAL_AUDIT?.rechargePanel||window.rechargePanel||window.__CPP_CORE?.rechargePanel;
+ if(typeof fn!=='function')return;
+ document.querySelectorAll('[data-op="recharge"],[data-action="recharge"],[data-module="recharge"]').forEach(el=>{
+  el.onclick=async ev=>{
+   ev.preventDefault();ev.stopPropagation();el.disabled=true;
+   try{await fn()}catch(err){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(m&&t&&b){t.textContent='Recarga móvil';b.innerHTML='<div class="msg error">No se pudo abrir Recarga móvil: '+String(err?.message||err).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>';m.classList.remove('hidden')}}finally{el.disabled=false}
+  };
+ });
+};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+window.addEventListener('cpp:p2p-ready',bind);
 })();
 </script>
 <!-- CPP V35 FINAL: P2P dinámico + chat seguro por orden + recarga wallet/settlement -->
