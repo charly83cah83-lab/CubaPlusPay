@@ -30,15 +30,18 @@ jobs:
       - name: Aplicar hotfix P2P V31 sin tocar funciones existentes
         run: node tools/cpp-v31-p2p.js
 
+      - name: Conectar botón P2P con módulo P2P V32 sin tocar otros módulos
+        run: node tools/cpp-v33-p2p-button.js
+
       - name: Guardar hotfix P2P
         run: |
           if git diff --quiet -- index.html; then
-            echo "P2P V31 ya está aplicado."
+            echo "P2P hotfixes ya están aplicados."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add index.html
-            git commit -m "Apply CubaPlusPay P2P V31 complete hotfix"
+            git commit -m "Apply CubaPlusPay P2P V33 button bridge"
             git push
           fi
 
