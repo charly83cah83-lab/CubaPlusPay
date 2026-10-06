@@ -1589,11 +1589,50 @@ const smart=async()=>{
  if(!db())throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
  return await fn();
 };
+const p2pFallback=async()=>{
+ const client=db();
+ if(!client)throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
+ const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');
+ if(!m||!t||!b)throw new Error('INTERFACE_MODAL_NOT_FOUND');
+ t.textContent='P2P / Escrow · Transfermóvil';
+ b.innerHTML='<div class="notice">Cargando mercado P2P seguro…</div>';
+ m.classList.remove('hidden');
+ const {data:{user},error:ue}=await client.auth.getUser();
+ if(ue)throw ue;
+ if(!user){b.innerHTML='<div class="msg error">Debes iniciar sesión para usar P2P.</div>';return}
+ const [offersR,ordersR,methodsR]=await Promise.all([
+   client.from('cp_p2p_offers').select('id,owner_id,side,asset,price,min_amount,max_amount,available_amount,status,terms,created_at').eq('status','active').order('created_at',{ascending:false}).limit(50),
+   client.from('cp_p2p_orders').select('id,offer_id,buyer_id,seller_id,asset,amount,fiat_amount,status,created_at').or('buyer_id.eq.'+user.id+',seller_id.eq.'+user.id).order('created_at',{ascending:false}).limit(50),
+   client.from('payment_methods').select('id,name,method_type,asset_code,provider,verified,verification_status').eq('user_id',user.id).order('created_at',{ascending:false})
+ ]);
+ const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const money=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
+ const err=[offersR,ordersR,methodsR].find(x=>x.error)?.error;
+ if(err)throw err;
+ const offers=offersR.data||[],orders=ordersR.data||[],methods=methodsR.data||[];
+ b.innerHTML='<div class="notice">P2P está conectado al mercado real de Supabase. El saldo no se inventa y las operaciones financieras pasan por RPC/escrow.</div>'+
+ '<div class="card"><b>Ofertas activas</b><div style="margin-top:8px">'+(offers.length?offers.map(o=>'<div class="card" style="margin:8px 0"><b>'+esc(o.side==='sell'?'Vende':'Compra')+' '+esc(o.asset)+'</b><div class="p31-meta">Precio: '+money(o.price)+' CUP · Disponible: '+money(o.available_amount)+'</div><div class="p31-meta">Mín: '+money(o.min_amount)+' · Máx: '+money(o.max_amount)+'</div><div class="notice">'+esc(o.terms||'Sin condiciones adicionales.')+'</div>'+(o.owner_id===user.id?'<span class="pill">Tu oferta</span>':'<button class="btn full" data-cpp-fb-order="'+esc(o.id)+'">Continuar con esta oferta</button>')+'</div>').join(''):'<div class="empty">No hay ofertas P2P activas en este momento.</div>')+'</div></div>'+
+ '<div class="card"><b>Mis órdenes</b><div style="margin-top:8px">'+(orders.length?orders.map(o=>'<div class="tx"><div class="tx-icon">⇄</div><div><b>'+esc(o.asset)+' · '+esc(o.status)+'</b><small>'+money(o.amount)+' · '+money(o.fiat_amount)+' CUP</small></div><div class="amount">'+esc(String(o.id).slice(0,8))+'</div></div>').join(''):'<div class="empty">Todavía no tienes órdenes P2P.</div>')+'</div></div>'+
+ '<div class="card"><b>Métodos de pago</b><div class="p31-meta">'+(methods.length?methods.map(x=>esc(x.name||x.method_type||'Método de pago')).join(' · '):'No tienes métodos de pago verificados. Puedes consultar el mercado, pero para publicar/operar se necesita el método real verificado.')+'</div></div>';
+ b.querySelectorAll('[data-cpp-fb-order]').forEach(btn=>btn.onclick=async()=>{
+   const amount=prompt('Cantidad del activo que deseas operar:');
+   const n=Number(amount);
+   if(!Number.isFinite(n)||n<=0)return;
+   btn.disabled=true;
+   try{
+     const r=await client.rpc('cp_create_p2p_order',{p_offer_id:btn.dataset.cppFbOrder,p_amount:n,p_idempotency_key:(crypto.randomUUID?crypto.randomUUID():'P2P-'+Date.now())});
+     if(r.error)throw r.error;
+     b.insertAdjacentHTML('afterbegin','<div class="msg ok">Orden P2P creada. Estado: '+esc(r.data?.status||'procesando')+'</div>');
+   }catch(e){btn.disabled=false;b.insertAdjacentHTML('afterbegin','<div class="msg error">'+esc(e.message||e)+'</div>')}
+ });
+};
 const p2p=async()=>{
- const fn=window.__CPP_P2P_OPEN__||window.__CPP_P2P_V31__?.open||window.p2pPanel;
- if(typeof fn!=='function')throw new Error('P2P V31 no quedó registrado al cargar la página');
  if(!db())throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
- return await fn();
+ const fn=window.__CPP_P2P_OPEN__||window.__CPP_P2P_V31__?.open||window.p2pPanel;
+ if(typeof fn==='function'){
+   try{return await fn()}catch(err){return await p2pFallback().catch(()=>{throw err})}
+ }
+ return await p2pFallback();
 };
 window.CPP_OPEN_SMART=smart;
 window.CPP_OPEN_P2P=p2p;
