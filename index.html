@@ -1576,335 +1576,45 @@ window.__CPP_SMART_AI_V308__={open,version:'V30.8'};setTimeout(()=>document.quer
 </script>
 
 <!-- CPP V31.3 FINAL MODULE BRIDGE: Smart + P2P isolated, additive, no other routes touched -->
-<script id="cpp-v313-final-smart-p2p-bridge">
-(()=>{'use strict';
-const db=()=>window.__CPP_DB||window.__CPP_CORE?.db;
-const modalDiag=(title,msg)=>{
- const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');
- if(m&&t&&b){t.textContent=title;b.innerHTML='<div class="msg error">'+String(msg).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div>';m.classList.remove('hidden')}
-};
-const smart=async()=>{
- const fn=window.__CPP_SMART_AI_V308__?.open||window.__CPP_SMART__?.open||window.__CPP_SMART_AI_V307__?.open;
- if(typeof fn!=='function')throw new Error('CUBA PLUS SMART no quedó registrado al cargar la página');
- if(!db())throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
- return await fn();
-};
-const p2pFallback=async()=>{
- const client=db();
- if(!client)throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
- const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');
- if(!m||!t||!b)throw new Error('INTERFACE_MODAL_NOT_FOUND');
- t.textContent='P2P / Escrow · Transfermóvil';
- b.innerHTML='<div class="notice">Cargando mercado P2P seguro…</div>';
- m.classList.remove('hidden');
- const {data:{user},error:ue}=await client.auth.getUser();
- if(ue)throw ue;
- if(!user){b.innerHTML='<div class="msg error">Debes iniciar sesión para usar P2P.</div>';return}
- const [offersR,ordersR,methodsR]=await Promise.all([
-   client.from('cp_p2p_offers').select('id,owner_id,side,asset,price,min_amount,max_amount,available_amount,status,terms,created_at').eq('status','active').order('created_at',{ascending:false}).limit(50),
-   client.from('cp_p2p_orders').select('id,offer_id,buyer_id,seller_id,asset,amount,fiat_amount,status,created_at').or('buyer_id.eq.'+user.id+',seller_id.eq.'+user.id).order('created_at',{ascending:false}).limit(50),
-   client.from('payment_methods').select('id,name,method_type,asset_code,provider,verified,verification_status').eq('user_id',user.id).order('created_at',{ascending:false})
- ]);
- const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
- const money=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
- const err=[offersR,ordersR,methodsR].find(x=>x.error)?.error;
- if(err)throw err;
- const offers=offersR.data||[],orders=ordersR.data||[],methods=methodsR.data||[];
- b.innerHTML='<div class="notice">P2P está conectado al mercado real de Supabase. El saldo no se inventa y las operaciones financieras pasan por RPC/escrow.</div>'+
- '<div class="card"><b>Ofertas activas</b><div style="margin-top:8px">'+(offers.length?offers.map(o=>'<div class="card" style="margin:8px 0"><b>'+esc(o.side==='sell'?'Vende':'Compra')+' '+esc(o.asset)+'</b><div class="p31-meta">Precio: '+money(o.price)+' CUP · Disponible: '+money(o.available_amount)+'</div><div class="p31-meta">Mín: '+money(o.min_amount)+' · Máx: '+money(o.max_amount)+'</div><div class="notice">'+esc(o.terms||'Sin condiciones adicionales.')+'</div>'+(o.owner_id===user.id?'<span class="pill">Tu oferta</span>':'<button class="btn full" data-cpp-fb-order="'+esc(o.id)+'">Continuar con esta oferta</button>')+'</div>').join(''):'<div class="empty">No hay ofertas P2P activas en este momento.</div>')+'</div></div>'+
- '<div class="card"><b>Mis órdenes</b><div style="margin-top:8px">'+(orders.length?orders.map(o=>'<div class="tx"><div class="tx-icon">⇄</div><div><b>'+esc(o.asset)+' · '+esc(o.status)+'</b><small>'+money(o.amount)+' · '+money(o.fiat_amount)+' CUP</small></div><div class="amount">'+esc(String(o.id).slice(0,8))+'</div></div>').join(''):'<div class="empty">Todavía no tienes órdenes P2P.</div>')+'</div></div>'+
- '<div class="card"><b>Métodos de pago</b><div class="p31-meta">'+(methods.length?methods.map(x=>esc(x.name||x.method_type||'Método de pago')).join(' · '):'No tienes métodos de pago verificados. Puedes consultar el mercado, pero para publicar/operar se necesita el método real verificado.')+'</div></div>';
- b.querySelectorAll('[data-cpp-fb-order]').forEach(btn=>btn.onclick=async()=>{
-   const amount=prompt('Cantidad del activo que deseas operar:');
-   const n=Number(amount);
-   if(!Number.isFinite(n)||n<=0)return;
-   btn.disabled=true;
-   try{
-     const r=await client.rpc('cp_create_p2p_order',{p_offer_id:btn.dataset.cppFbOrder,p_amount:n,p_idempotency_key:(crypto.randomUUID?crypto.randomUUID():'P2P-'+Date.now())});
-     if(r.error)throw r.error;
-     b.insertAdjacentHTML('afterbegin','<div class="msg ok">Orden P2P creada. Estado: '+esc(r.data?.status||'procesando')+'</div>');
-   }catch(e){btn.disabled=false;b.insertAdjacentHTML('afterbegin','<div class="msg error">'+esc(e.message||e)+'</div>')}
- });
-};
-const p2p=async()=>{
- if(!db())throw new Error('Supabase no está disponible todavía; vuelve a intentarlo en un instante');
- const fn=window.__CPP_P2P_V32__||window.__CPP_P2P_OPEN__||window.__CPP_P2P_V31__?.open||window.p2pPanel;
- if(typeof fn==='function'){
-   try{return await fn()}catch(err){return await p2pFallback().catch(()=>{throw err})}
- }
- return await p2pFallback();
-};
-window.CPP_OPEN_SMART=smart;
-window.CPP_OPEN_P2P=p2p;
-document.addEventListener('click',async e=>{
- const b=e.target?.closest?.('[data-op="ai"],[data-op="p2p"]');
- if(!b)return;
- e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
- if(b.dataset.cppBusy==='1')return;
- b.dataset.cppBusy='1';b.disabled=true;
- try{await (b.dataset.op==='ai'?smart():p2p())}
- catch(err){modalDiag(b.dataset.op==='ai'?'CUBA PLUS SMART':'P2P / Escrow · Transfermóvil',err?.message||String(err))}
- finally{b.dataset.cppBusy='0';b.disabled=false}
-},true);
-})();
-</script>
 
-<!-- CPP V31 P2P COMPLETE HOTFIX: currentUser scope + marketplace + escrow + chat + ratings -->
-<script id="cpp-v31-p2p-complete">
+
+<!-- CPP V36 FINAL CLICK ROUTER: P2P + RECARGA MÓVIL, sin interceptores de captura -->
+<script id="cpp-v36-final-click-router">
 (()=>{'use strict';
-const CP31={get auth(){return (window.__CPP_DB||window.__CPP_CORE?.db)?.auth},from:(...a)=>(window.__CPP_DB||window.__CPP_CORE?.db)?.from(...a),rpc:(...a)=>(window.__CPP_DB||window.__CPP_CORE?.db)?.rpc(...a)};
-const $31=id=>document.getElementById(id);
-const esc31=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money31=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
-const uid31=async()=>{const r=await CP31?.auth?.getUser?.();return r?.data?.user||null};
-const toast31=(t,ok=false)=>{const m=$31('modalBody');if(m)m.insertAdjacentHTML('afterbegin','<div class="msg '+(ok?'ok':'error')+'">'+esc31(t)+'</div>')};
-const rpc31=async(fn,args)=>{if(!CP31)throw new Error('Supabase no está disponible');const r=await CP31.rpc(fn,args||{});if(r.error)throw r.error;return r.data};
-async function panel31() {
- const m=$31('modal'),title=$31('modalTitle'),body=$31('modalBody');if(!m||!title||!body)return;
- title.textContent='P2P / Escrow · Transfermóvil';
- body.innerHTML='<div class="notice">Cargando mercado P2P seguro…</div>';m.classList.remove('hidden');
- try{
-  const u=await uid31();if(!u){body.innerHTML='<div class="msg error">Debes iniciar sesión para usar P2P.</div>';return}
-  const [offers,orders,pms]=await Promise.all([
-   CP31.from('cp_p2p_offers').select('id,owner_id,side,asset,payment_method_id,price,min_amount,max_amount,available_amount,status,terms,created_at').eq('status','active').order('created_at',{ascending:false}).limit(50),
-   CP31.from('cp_p2p_orders').select('id,offer_id,buyer_id,seller_id,asset,amount,fiat_amount,status,created_at,escrow_locked_at,paid_at,released_at,cancelled_at,disputed_at,external_payment_reference,dispute_reason,payment_method_id,payment_provider,payment_method_snapshot').or('buyer_id.eq.'+u.id+',seller_id.eq.'+u.id).order('created_at',{ascending:false}).limit(50),
-   CP31.from('payment_methods').select('id,method_type,asset_code,provider,name,details,metadata,verified,verification_status').eq('user_id',u.id).order('created_at',{ascending:false})
-  ]);
-  if(offers.error)throw offers.error;if(orders.error)throw orders.error;if(pms.error)throw pms.error;
-  const methods=pms.data||[], os=offers.data||[], od=orders.data||[];  body.innerHTML='<div class="p31-tabs"><button class="btn" data-p31-tab="market">Mercado</button><button class="btn secondary" data-p31-tab="orders">Mis órdenes</button><button class="btn secondary" data-p31-tab="create">Publicar</button></div>'+
-   '<div id="p31-market"></div><div id="p31-orders" class="hidden"></div><div id="p31-create" class="hidden"></div>';  const market=$31('p31-market'),ord=$31('p31-orders'),create=$31('p31-create');
-  market.innerHTML='<div class="notice">Escrow: el activo queda bloqueado antes de completar la operación. Nunca se acredita por una captura de pantalla ni por un mensaje del chat.</div>'+
-   (os.length?os.map(o=>{const mine=o.owner_id===u.id;return '<div class="card p31-offer"><div class="p31-line"><b>'+esc31(o.side==='sell'?'Vende':'Compra')+' '+esc31(o.asset)+'</b><span class="pill">'+esc31(o.status)+'</span></div><div class="p31-price">'+money31(o.price)+' CUP / '+esc31(o.asset)+'</div><div class="p31-meta">Disponible: '+money31(o.available_amount)+' · Min: '+money31(o.min_amount)+' · Max: '+money31(o.max_amount)+'</div><div class="p31-meta">Pago: '+esc31((methods.find(x=>x.id===o.payment_method_id)?.name)||'Método verificado del anunciante')+'</div><div class="notice">'+esc31(o.terms||'Condiciones no especificadas.')+'</div><div class="p31-actions">'+(mine?'<span class="pill">Tu oferta</span>':'<input class="p31-amount" data-p31-amt="'+o.id+'" type="number" min="'+o.min_amount+'" max="'+o.max_amount+'" step="any" placeholder="Cantidad '+o.asset+'"><button class="btn" data-p31-apply="'+o.id+'">'+(o.side==='sell'?'Comprar':'Vender')+'</button>')+'</div></div>'}).join(''):'<div class="empty">No hay ofertas P2P activas todavía.</div>');
-  ord.innerHTML='<div class="notice">Solo tú y la contraparte pueden ver la orden y su chat. Acciones financieras pasan por RPCs protegidas e idempotentes.</div>'+
-   (od.length?od.map(o=>'<div class="card p31-order" data-p31-order="'+o.id+'"><div class="p31-line"><b>Orden '+esc31(o.id.slice(0,8))+'</b><span class="pill">'+esc31(o.status)+'</span></div><div class="p31-meta">'+money31(o.amount)+' '+esc31(o.asset)+' · '+money31(o.fiat_amount)+' CUP · '+esc31(o.payment_provider||'Transfermóvil')+'</div><div class="p31-meta">Creada: '+esc31(o.created_at)+'</div><div class="notice">'+(o.payment_method_snapshot?esc31(JSON.stringify(o.payment_method_snapshot)): 'Datos de pago protegidos por la orden.')+'</div><div class="p31-actions">'+
-    (['pending','processing','escrow_locked'].includes(o.status)?'<button class="btn secondary" data-p31-chat="'+o.id+'">💬 Chat</button>':'')+
-    (['pending','processing','escrow_locked'].includes(o.status)?'<button class="btn secondary" data-p31-paid="'+o.id+'">✓ Marcar pagado</button>':'')+
-    (['paid','escrow_locked'].includes(o.status)?'<button class="btn" data-p31-release="'+o.id+'">🔐 Liberar escrow</button>':'')+
-    (['pending','processing','escrow_locked','paid'].includes(o.status)?'<button class="btn danger" data-p31-cancel="'+o.id+'">Cancelar</button>':'')+
-    (!['released','cancelled','disputed'].includes(o.status)?'<button class="btn secondary" data-p31-dispute="'+o.id+'">⚠️ Disputa</button>':'')+
-    (o.status==='released'?'<button class="btn secondary" data-p31-rate="'+o.id+'">⭐ Valorar</button>':'')+
-   '</div><div id="p31-extra-'+o.id+'"></div></div>').join(''):'<div class="empty">Todavía no tienes órdenes P2P.</div>');
-  create.innerHTML='<div class="notice">Publicar exige autenticación, KYC aprobado, método de pago verificado y saldo disponible cuando corresponda.</div><div class="p31-form"><label>Operación<select id="p31-side"><option value="sell">Vender activo</option><option value="buy">Comprar activo</option></select></label><label>Activo<input id="p31-asset" value="CRX"></label><label>Método de pago<select id="p31-pm">'+methods.map(x=>'<option value="'+x.id+'">'+esc31(x.name||x.method_type)+' · '+esc31(x.asset_code||'')+'</option>').join('')+'</select></label><label>Precio CUP<input id="p31-price" type="number" min="0.00000001" step="any"></label><label>Mínimo<input id="p31-min" type="number" min="0.00000001" step="any"></label><label>Máximo<input id="p31-max" type="number" min="0.00000001" step="any"></label><label>Cantidad disponible<input id="p31-avail" type="number" min="0.00000001" step="any"></label><label>Condiciones<textarea id="p31-terms" maxlength="1000" placeholder="Horario, confirmación, referencia de Transfermóvil, etc."></textarea></label><button class="btn full" id="p31-create-btn">Publicar oferta segura</button><div id="p31-create-msg"></div></div>';
-  const tab=(name)=>{['market','orders','create'].forEach(x=>{$31('p31-'+x)?.classList.toggle('hidden',x!==name)});document.querySelectorAll('[data-p31-tab]').forEach(b=>b.classList.toggle('secondary',b.dataset.p31Tab!==name))};
-  body.querySelectorAll('[data-p31-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.p31Tab));tab('market');
-  body.querySelectorAll('[data-p31-apply]').forEach(b=>b.onclick=async()=>{const amount=Number(body.querySelector('[data-p31-amt="'+b.dataset.p31Apply+'"]')?.value);if(!Number.isFinite(amount)||amount<=0){toast31('Introduce una cantidad válida.');return}b.disabled=true;try{const r=await rpc31('cp_create_p2p_order',{p_offer_id:b.dataset.p31Apply,p_amount:amount,p_idempotency_key:(crypto.randomUUID?crypto.randomUUID():'P2P-'+Date.now())});toast31('Orden creada. Escrow y estado: '+((r&&r.status)||'procesando'),true);await panel31()}catch(e){b.disabled=false;toast31(e.message||e)}})
-  body.querySelectorAll('[data-p31-paid]').forEach(b=>b.onclick=async()=>{const ref=prompt('Referencia real de Transfermóvil (obligatoria):');if(!ref)return;b.disabled=true;try{await rpc31('cp_p2p_mark_paid',{p_order_id:b.dataset.p31Paid,p_external_reference:ref.trim()});await panel31()}catch(e){b.disabled=false;toast31(e.message||e)}})
-  body.querySelectorAll('[data-p31-release]').forEach(b=>b.onclick=async()=>{if(!confirm('Confirma que recibiste el pago fiat y deseas liberar el escrow.'))return;b.disabled=true;try{await rpc31('cp_p2p_release',{p_order_id:b.dataset.p31Release});await panel31()}catch(e){b.disabled=false;toast31(e.message||e)}})
-  body.querySelectorAll('[data-p31-cancel]').forEach(b=>b.onclick=async()=>{if(!confirm('Cancelar esta orden? El servidor validará el estado y liberará el bloqueo si corresponde.'))return;b.disabled=true;try{await rpc31('cp_p2p_cancel',{p_order_id:b.dataset.p31Cancel});await panel31()}catch(e){b.disabled=false;toast31(e.message||e)}})
-  body.querySelectorAll('[data-p31-dispute]').forEach(b=>b.onclick=async()=>{const reason=prompt('Describe brevemente la disputa (sin contraseñas ni códigos):');if(!reason)return;b.disabled=true;try{await rpc31('cp_p2p_open_dispute',{p_order_id:b.dataset.p31Dispute,p_reason:reason.slice(0,500)});await panel31()}catch(e){b.disabled=false;toast31(e.message||e)}})
-  body.querySelectorAll('[data-p31-rate]').forEach(b=>b.onclick=async()=>{const rating=Number(prompt('Valoración 1-5:','5'));if(!Number.isInteger(rating)||rating<1||rating>5)return;const comment=(prompt('Comentario opcional (máx. 500):','')||'').slice(0,500);try{const order=od.find(x=>x.id===b.dataset.p31Rate),rated=order.buyer_id===u.id?order.seller_id:order.buyer_id;const ins=await CP31.from('cp_p2p_ratings').insert({order_id:order.id,rater_id:u.id,rated_id:rated,rating,comment,tags:[]});if(ins.error)throw ins.error;toast31('Valoración registrada.',true);await panel31()}catch(e){toast31(e.message||e)}})
-  body.querySelectorAll('[data-p31-chat]').forEach(b=>b.onclick=()=>openChat31(b.dataset.p31Chat,body));
-  $31('p31-create-btn').onclick=async()=>{const msg=$31('p31-create-msg');try{const p={p_side:$31('p31-side').value,p_asset:$31('p31-asset').value.trim().toUpperCase(),p_payment_method_id:$31('p31-pm').value,p_price:Number($31('p31-price').value),p_min_amount:Number($31('p31-min').value),p_max_amount:Number($31('p31-max').value),p_available_amount:Number($31('p31-avail').value),p_terms:$31('p31-terms').value.trim()};msg.innerHTML='<div class="notice">Validando y publicando…</div>';const r=await rpc31('cp_create_p2p_offer',p);msg.innerHTML='<div class="msg ok">Oferta publicada de forma segura. ID: '+esc31(r?.id||r?.offer_id||'creada')+'</div>';setTimeout(panel31,700)}catch(e){msg.innerHTML='<div class="msg error">'+esc31(e.message||e)+'</div>'}};
- }catch(e){body.innerHTML='<div class="msg error">No se pudo cargar P2P: '+esc31(e.message||e)+'</div><div class="notice">Corrección aplicada: el panel ya no depende de la variable privada <b>currentUser</b>; obtiene el usuario desde la sesión Supabase.</div>'}
-};
-async function openChat31(orderId,root){
- const u=await uid31();if(!u)return;const box=$31('p31-extra-'+orderId);if(!box)return;
- box.innerHTML='<div class="card p31-chatbox"><b>Chat P2P</b><div id="p31-log-'+orderId+'" class="p31-chatlog">Cargando…</div><div class="p31-chat-send"><input id="p31-in-'+orderId+'" maxlength="599" placeholder="Mensaje (máx. 599 caracteres)"><button class="btn" id="p31-send-'+orderId+'">Enviar</button></div><small>Chat privado entre los participantes. No envíes contraseñas, códigos 2FA ni claves.</small></div>';
- const load=async()=>{const r=await CP31.from('cp_p2p_chat_messages').select('id,sender_id,message,created_at').eq('order_id',orderId).order('created_at',{ascending:true}).limit(200);const log=$31('p31-log-'+orderId);if(r.error){log.innerHTML='<div class="msg error">'+esc31(r.error.message)+'</div>';return}log.innerHTML=(r.data||[]).map(x=>'<div class="p31-chatmsg '+(x.sender_id===u.id?'me':'them')+'"><b>'+(x.sender_id===u.id?'Tú':'Contraparte')+':</b> '+esc31(x.message)+'<small>'+esc31(x.created_at)+'</small></div>').join('')||'<div class="empty">Sin mensajes.</div>';log.scrollTop=log.scrollHeight};
- await load();const send=$31('p31-send-'+orderId),input=$31('p31-in-'+orderId);send.onclick=async()=>{const message=input.value.trim();if(!message)return;send.disabled=true;const r=await CP31.from('cp_p2p_chat_messages').insert({order_id:orderId,sender_id:u.id,message});send.disabled=false;if(r.error){toast31(r.error.message);return}input.value='';await load()};input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send.click()}};clearInterval(window.__CPP_P2P_CHAT_POLL__);window.__CPP_P2P_CHAT_POLL__=setInterval(load,5000);
-}
-const css=document.createElement('style');css.textContent='.p31-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}.p31-offer,.p31-order{margin:9px 0}.p31-line{display:flex;justify-content:space-between;gap:8px;align-items:center}.p31-price{font-size:20px;font-weight:1000;margin:8px 0}.p31-meta{font-size:10px;color:#8eb7dc;margin:4px 0}.p31-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.p31-amount{min-width:130px;flex:1;padding:11px;border:1px solid #155fb7;border-radius:12px;background:#031638;color:#fff}.p31-form{display:grid;gap:9px}.p31-form label{font-size:10px;color:#8fb8df}.p31-form input,.p31-form select,.p31-form textarea{display:block;width:100%;margin-top:4px;padding:11px;border:1px solid #155fb7;border-radius:12px;background:#031638;color:#fff}.p31-form textarea{min-height:90px;resize:vertical}.p31-chatbox{margin-top:10px}.p31-chatlog{max-height:230px;overflow:auto;display:grid;gap:6px;margin:8px 0}.p31-chatmsg{padding:8px;border-radius:10px;background:#062451;border:1px solid #0d4d91;font-size:11px}.p31-chatmsg.me{background:#153361}.p31-chatmsg small{display:block;color:#7098c1;font-size:8px;margin-top:3px}.p31-chat-send{display:flex;gap:7px}.p31-chat-send input{flex:1;min-width:0;padding:11px;border:1px solid #155fb7;border-radius:11px;background:#031638;color:#fff}@media(max-width:600px){.p31-tabs{grid-template-columns:1fr}.p31-chat-send{flex-direction:column}}';document.head.appendChild(css);
-window.p2pPanel=panel31;if(window.CP_FINAL_AUDIT)window.CP_FINAL_AUDIT.p2pPanel=panel31;window.__CPP_P2P_V31__=panel31;window.__CPP_P2P_V31__.open=panel31;window.__CPP_P2P_V31__.version='V31.2-complete';window.__CPP_P2P_OPEN__=panel31;
-})();
-</script>
-<!-- CPP V32 P2P ISOLATED: CPP V32 P2P ISOLATED; no toca Smart ni otros módulos -->
-<script id="cpp-v32-p2p-isolated">
-(()=>{'use strict';
-const C=()=>window.__CPP_DB||window.__CPP_CORE?.db;
-const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const $=id=>document.getElementById(id);
-const money=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
-const uid=async()=>{const c=C();if(!c)throw Error('Supabase no está disponible');const r=await c.auth.getUser();if(r.error)throw r.error;return r.data.user||null};
-const rpc=async(fn,args)=>{const c=C();if(!c)throw Error('Supabase no está disponible');const r=await c.rpc(fn,args||{});if(r.error)throw r.error;return r.data};
-async function openP2P(){
- const c=C(),m=$('modal'),t=$('modalTitle'),b=$('modalBody');
- if(!c)throw Error('Supabase no está disponible todavía. Recarga la aplicación e inténtalo de nuevo.');
- if(!m||!t||!b)throw Error('INTERFACE_MODAL_NOT_FOUND');
- t.textContent='P2P / Escrow · Transfermóvil'; b.innerHTML='<div class="notice">Cargando mercado P2P real…</div>';m.classList.remove('hidden');
- const u=await uid(); if(!u){b.innerHTML='<div class="msg error">Debes iniciar sesión para usar P2P.</div>';return}
- const [or,rr,pr]=await Promise.all([
-  c.from('cp_p2p_offers').select('id,owner_id,side,asset,payment_method_id,price,min_amount,max_amount,available_amount,status,terms,created_at').eq('status','active').order('created_at',{ascending:false}).limit(50),
-  c.from('cp_p2p_orders').select('id,offer_id,buyer_id,seller_id,asset,amount,fiat_amount,status,created_at,escrow_locked_at,paid_at,released_at,cancelled_at,disputed_at,external_payment_reference,dispute_reason,payment_method_id,payment_provider,payment_method_snapshot').or('buyer_id.eq.'+u.id+',seller_id.eq.'+u.id).order('created_at',{ascending:false}).limit(50),
-  c.from('payment_methods').select('id,method_type,asset_code,provider,name,details,metadata,verified,verification_status').eq('user_id',u.id).order('created_at',{ascending:false})
- ]);
- const er=[or,rr,pr].find(x=>x.error)?.error;if(er)throw er;
- const offers=or.data||[],orders=rr.data||[],methods=pr.data||[];
- const methodName=id=>(methods.find(x=>x.id===id)?.name)||'Método verificado del anunciante';
- const offerHtml=offers.length?offers.map(o=>{
-  const mine=o.owner_id===u.id;
-  return '<div class="card" style="margin:9px 0"><div class="p31-line"><b>'+E(o.side==='sell'?'Vende':'Compra')+' '+E(o.asset)+'</b><span class="pill">'+E(o.status)+'</span></div><div class="p31-price">'+money(o.price)+' CUP / '+E(o.asset)+'</div><div class="p31-meta">Disponible '+money(o.available_amount)+' · Min '+money(o.min_amount)+' · Max '+money(o.max_amount)+'</div><div class="p31-meta">Pago: '+E(methodName(o.payment_method_id))+'</div><div class="notice">'+E(o.terms||'Sin condiciones adicionales.')+'</div>'+(mine?'<span class="pill">Tu oferta</span>':'<div class="p31-actions"><input class="p31-amount" data-v32-amt="'+o.id+'" type="number" min="'+o.min_amount+'" max="'+o.max_amount+'" step="any" placeholder="Cantidad '+o.asset+'"><button class="btn" data-v32-buy="'+o.id+'">'+(o.side==='sell'?'Comprar':'Vender')+'</button></div>')+'</div>';
- }).join(''):'<div class="empty">No hay ofertas P2P activas todavía.</div>';
- const orderHtml=orders.length?orders.map(o=>{
-  const buyer=o.buyer_id===u.id,st=String(o.status).toLowerCase();
-  let a='';
-  if(st==='pending'&&buyer)a+='<button class="btn secondary" data-v32-paid="'+o.id+'">✓ Ya pagué</button>';
-  if(st==='pending')a+='<button class="btn danger" data-v32-cancel="'+o.id+'">Cancelar</button>';
-  if(st==='paid'&&!buyer)a+='<button class="btn" data-v32-release="'+o.id+'">🔐 Liberar escrow</button>';
-  if(['pending','paid'].includes(st))a+='<button class="btn secondary" data-v32-dispute="'+o.id+'">⚠️ Disputa</button>';
-  return '<div class="card" style="margin:9px 0"><div class="p31-line"><b>Orden '+E(o.id.slice(0,8))+'</b><span class="pill">'+E(o.status)+'</span></div><div class="p31-meta">'+money(o.amount)+' '+E(o.asset)+' · '+money(o.fiat_amount)+' CUP · '+E(o.payment_provider||'Transfermóvil')+'</div><div class="p31-meta">'+E(o.created_at||'')+'</div><div class="p31-actions">'+a+'</div></div>';
- }).join(''):'<div class="empty">Todavía no tienes órdenes P2P.</div>';
- const assets=[...new Set(methods.map(x=>String(x.asset_code||'').toUpperCase()).filter(Boolean))]; 
- b.innerHTML='<div class="notice">P2P real: mercado, órdenes y escrow se ejecutan en Supabase. No se inventan saldos ni pagos.</div>'+
- '<div class="p31-tabs"><button class="btn" data-v32-tab="market">Mercado</button><button class="btn secondary" data-v32-tab="orders">Mis órdenes</button><button class="btn secondary" data-v32-tab="create">Publicar</button></div>'+
- '<section id="v32-market"><h3>Ofertas activas</h3>'+offerHtml+'</section>'+
- '<section id="v32-orders" class="hidden"><h3>Mis órdenes</h3>'+orderHtml+'</section>'+
- '<section id="v32-create" class="hidden"><div class="notice">Publicar requiere KYC aprobado, método de pago verificado y saldo disponible cuando corresponda.</div><div class="p31-form"><label>Operación<select id="v32-side"><option value="sell">Vender activo</option><option value="buy">Comprar activo</option></select></label><label>Activo<select id="v32-asset">'+(assets.length?assets:['CRX','USDT','USD','CUP','BTC']).map(x=>'<option>'+E(x)+'</option>').join('')+'</select></label><label>Método de pago<select id="v32-pm">'+methods.map(x=>'<option value="'+x.id+'">'+E(x.name||x.method_type)+' · '+E(x.asset_code||'')+'</option>').join('')+'</select></label><label>Precio CUP<input id="v32-price" type="number" min="0.00000001" step="any"></label><label>Mínimo<input id="v32-min" type="number" min="0.00000001" step="any"></label><label>Máximo<input id="v32-max" type="number" min="0.00000001" step="any"></label><label>Cantidad disponible<input id="v32-avail" type="number" min="0.00000001" step="any"></label><label>Condiciones<textarea id="v32-terms" maxlength="2000"></textarea></label><button class="btn full" id="v32-create">Publicar oferta segura</button><div id="v32-msg"></div></div></section>';
- const tab=n=>{['market','orders','create'].forEach(x=>$('v32-'+x)?.classList.toggle('hidden',x!==n));b.querySelectorAll('[data-v32-tab]').forEach(x=>x.classList.toggle('secondary',x.dataset.v32Tab!==n))};
- b.querySelectorAll('[data-v32-tab]').forEach(x=>x.onclick=()=>tab(x.dataset.v32Tab));tab('market');
- b.querySelectorAll('[data-v32-buy]').forEach(x=>x.onclick=async()=>{const n=Number(b.querySelector('[data-v32-amt="'+x.dataset.v32Buy+'"]')?.value);if(!Number.isFinite(n)||n<=0)return alert('Indica una cantidad válida.');x.disabled=true;try{await rpc('cp_create_p2p_order',{p_offer_id:x.dataset.v32Buy,p_amount:n,p_idempotency_key:crypto.randomUUID()});await openP2P();tab('orders')}catch(e){alert(e.message||e);x.disabled=false}});
- b.querySelectorAll('[data-v32-paid]').forEach(x=>x.onclick=async()=>{const ref=prompt('Referencia real de Transfermóvil:');if(!ref)return;try{await rpc('cp_p2p_mark_paid',{p_order_id:x.dataset.v32Paid,p_external_reference:ref.trim()});await openP2P();}catch(e){alert(e.message||e)}});
- b.querySelectorAll('[data-v32-release]').forEach(x=>x.onclick=async()=>{if(!confirm('Confirma que recibiste el pago fiat y deseas liberar el escrow.'))return;try{await rpc('cp_p2p_release',{p_order_id:x.dataset.v32Release});await openP2P();}catch(e){alert(e.message||e)}});
- b.querySelectorAll('[data-v32-cancel]').forEach(x=>x.onclick=async()=>{if(!confirm('Cancelar esta orden?'))return;try{await rpc('cp_p2p_cancel',{p_order_id:x.dataset.v32Cancel});await openP2P();}catch(e){alert(e.message||e)}});
- b.querySelectorAll('[data-v32-dispute]').forEach(x=>x.onclick=async()=>{const reason=prompt('Motivo de la disputa (mínimo 5 caracteres):');if(!reason)return;try{await rpc('cp_p2p_open_dispute',{p_order_id:x.dataset.v32Dispute,p_reason:reason.trim()});await openP2P();}catch(e){alert(e.message||e)}});
- $('v32-create').onclick=async()=>{const z=$('v32-msg');const p={p_side:$('v32-side').value,p_asset:$('v32-asset').value,p_payment_method_id:$('v32-pm').value||null,p_price:Number($('v32-price').value),p_min_amount:Number($('v32-min').value),p_max_amount:Number($('v32-max').value),p_available_amount:Number($('v32-avail').value),p_terms:$('v32-terms').value.trim()||null};z.innerHTML='<div class="notice">Validando…</div>';try{const r=await rpc('cp_create_p2p_offer',p);z.innerHTML='<div class="msg ok">Oferta publicada. ID: '+E(r?.offer_id||'creada')+'</div>';setTimeout(openP2P,500)}catch(e){z.innerHTML='<div class="msg error">'+E(e.message||e)+'</div>'}};
-}
-window.__CPP_P2P_V32__=openP2P;
-})();
-</script>
-<!-- CPP V33 P2P BUTTON BRIDGE: conecta cualquier botón P2P con el módulo V32 sin tocar otros módulos -->
-<script id="cpp-v33-p2p-button-bridge">
-(()=>{'use strict';
-const bind=()=>{
- const open=window.__CPP_P2P_FINAL_V34__||window.__CPP_P2P_V32__||window.p2pPanel||window.__CPP_P2P_OPEN__;
- if(typeof open!=='function')return;
- window.p2pPanel=open;window.__CPP_P2P_OPEN__=open;window.__CPP_P2P_V33__={open,version:'V33-safe-button-bridge'};
- document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-page="p2p"],[data-module="p2p"]').forEach(el=>{
-  el.onclick=async ev=>{
-   ev.preventDefault();ev.stopPropagation();el.disabled=true;
-   try{await open()}catch(e){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),body=document.getElementById('modalBody');if(m&&t&&body){t.textContent='P2P / Escrow';body.innerHTML='<div class="msg error">'+String(e?.message||e).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>';m.classList.remove('hidden')}}finally{el.disabled=false}
-  };
- });
-};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
-window.addEventListener('cpp:p2p-ready',bind);
-})();
-</script>
-<!-- CPP P2P FINAL FIX V34: mercado + escrow + Transfermóvil + chat + idempotencia -->
-<script id="cpp-p2p-final-v34">
-(()=>{'use strict';
-const db=()=>window.__CPP_DB||window.__CPP_CORE?.db;
-const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money=v=>Number(v||0).toLocaleString('es-ES',{maximumFractionDigits:8});
-const idem=()=>{try{if(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')return globalThis.crypto.randomUUID()}catch(_){}
-return 'P2P-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12)};
-
-async function user(){
- const c=db(); if(!c)throw Error('Supabase no está disponible todavía.');
- const r=await c.auth.getUser(); if(r.error)throw r.error; if(!r.data.user)throw Error('Debes iniciar sesión para usar P2P.'); return r.data.user;
-}
-async function rpc(fn,args){
- const c=db(); if(!c)throw Error('Supabase no está disponible.');
- const r=await c.rpc(fn,args||{}); if(r.error)throw r.error; return r.data;
-}
-function modalOpen(){
- const m=$('modal'),t=$('modalTitle'),b=$('modalBody'); if(!m||!t||!b)throw Error('INTERFACE_MODAL_NOT_FOUND');
- t.textContent='P2P / Escrow · Transfermóvil'; b.innerHTML='<div class="notice">Cargando mercado P2P real…</div>';m.classList.remove('hidden');return b;
-}
-function toast(b,msg,type='error'){
- const x=document.createElement('div');x.className='msg '+type;x.textContent=msg;b.prepend(x);
-}
-async function openP2PFinal(){
- const b=modalOpen(),c=db(),u=await user();
- const [offersR,ordersR,methodsR]=await Promise.all([
-  c.from('cp_p2p_offers').select('id,owner_id,side,asset,payment_method_id,price,min_amount,max_amount,available_amount,status,terms,created_at').eq('status','active').order('created_at',{ascending:false}).limit(50),
-  c.from('cp_p2p_orders').select('id,offer_id,buyer_id,seller_id,asset,amount,fiat_amount,status,created_at,escrow_locked_at,paid_at,released_at,cancelled_at,disputed_at,external_payment_reference,dispute_reason,payment_method_id,payment_provider,payment_method_snapshot').or('buyer_id.eq.'+u.id+',seller_id.eq.'+u.id).order('created_at',{ascending:false}).limit(50),
-  c.from('payment_methods').select('id,method_type,asset_code,provider,name,details,metadata,verified,verification_status').eq('user_id',u.id).order('created_at',{ascending:false})
- ]);
- const er=[offersR,ordersR,methodsR].find(x=>x.error)?.error;if(er)throw er;
- const offers=offersR.data||[],orders=ordersR.data||[],methods=methodsR.data||[];
- const verified=methods.filter(x=>x.verified===true&&String(x.verification_status||'').toLowerCase()==='verified');
- const methodName=id=>methods.find(x=>x.id===id)?.name||'Método verificado del anunciante';
- const market=offers.length?offers.map(o=>{
-  const mine=o.owner_id===u.id;
-  return '<div class="card" style="margin:9px 0"><div class="p31-line"><b>'+esc(o.side==='sell'?'Vende':'Compra')+' '+esc(o.asset)+'</b><span class="pill">'+esc(o.status)+'</span></div><div class="p31-price">'+money(o.price)+' CUP / '+esc(o.asset)+'</div><div class="p31-meta">Disponible '+money(o.available_amount)+' · Mín '+money(o.min_amount)+' · Máx '+money(o.max_amount)+'</div><div class="p31-meta">Pago: '+esc(methodName(o.payment_method_id))+'</div><div class="notice">'+esc(o.terms||'Sin condiciones adicionales.')+'</div>'+(mine?'<span class="pill">Tu oferta</span>':'<div class="p31-actions"><input class="p31-amount" data-v34-amount="'+o.id+'" type="number" min="'+o.min_amount+'" max="'+o.max_amount+'" step="any" placeholder="Cantidad '+esc(o.asset)+'"><button class="btn" data-v34-apply="'+o.id+'">'+(o.side==='sell'?'Comprar':'Vender')+'</button></div>')+'</div>'
- }).join(''):'<div class="empty">No hay ofertas P2P activas reales en este momento.</div>';
- const orderHtml=orders.length?orders.map(o=>{
-  const buyer=o.buyer_id===u.id,st=String(o.status||'').toLowerCase();
-  let a='';
-  if(['pending'].includes(st))a+='<button class="btn secondary" data-v34-paid="'+o.id+'">✓ Ya pagué</button>';
-  if(['pending'].includes(st))a+='<button class="btn danger" data-v34-cancel="'+o.id+'">Cancelar</button>';
-  if(st==='paid'&&!buyer)a+='<button class="btn" data-v34-release="'+o.id+'">🔐 Recibí el pago / liberar escrow</button>';
-  if(['pending','paid'].includes(st))a+='<button class="btn secondary" data-v34-dispute="'+o.id+'">⚠️ Disputa</button>';
-  const snap=o.payment_method_snapshot||{};
-  return '<div class="card" style="margin:9px 0"><div class="p31-line"><b>Orden '+esc(String(o.id).slice(0,8))+'</b><span class="pill">'+esc(o.status)+'</span></div><div class="p31-meta">'+money(o.amount)+' '+esc(o.asset)+' · '+money(o.fiat_amount)+' CUP · '+esc(o.payment_provider||'Transfermóvil')+'</div><div class="p31-meta">Creada: '+esc(o.created_at||'')+'</div>'+(snap.details||snap.name?'<div class="notice">Pago: '+esc(snap.name||snap.method_type||o.payment_provider||'Método')+(snap.details?' · '+esc(snap.details):'')+'</div>':'')+'<div class="p31-actions">'+a+'</div><div id="v34-extra-'+o.id+'"></div></div>';
- }).join(''):'<div class="empty">Todavía no tienes órdenes P2P.</div>';
- const assets=[...new Set(verified.map(x=>String(x.asset_code||'').toUpperCase()).filter(Boolean))];
- b.innerHTML='<div class="notice"><b>P2P real conectado.</b> Mercado, órdenes y escrow se ejecutan en Supabase. No se acreditan saldos por capturas ni por mensajes.</div>'+
- '<div class="p31-tabs"><button class="btn" data-v34-tab="market">Mercado</button><button class="btn secondary" data-v34-tab="orders">Mis órdenes</button><button class="btn secondary" data-v34-tab="create">Publicar</button></div>'+
- '<section id="v34-market"><h3>Ofertas activas</h3>'+market+'</section>'+
- '<section id="v34-orders" class="hidden"><h3>Mis órdenes</h3>'+orderHtml+'</section>'+
- '<section id="v34-create" class="hidden"><div class="notice">Publicar exige KYC aprobado, método de pago verificado y saldo disponible para ofertas de venta.</div><div class="p31-form"><label>Operación<select id="v34-side"><option value="sell">Vender activo</option><option value="buy">Comprar activo</option></select></label><label>Activo<select id="v34-asset">'+(assets.length?assets:['CRX','USDT','USD','CUP','BTC']).map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label><label>Método de pago<select id="v34-pm">'+(verified.length?verified.map(x=>'<option value="'+x.id+'">'+esc(x.name||x.method_type||'Método')+' · '+esc(x.asset_code||'')+'</option>').join(''):'<option value="">No tienes método verificado</option>')+'</select></label><label>Precio CUP<input id="v34-price" type="number" min="0.00000001" step="any"></label><label>Mínimo<input id="v34-min" type="number" min="0.00000001" step="any"></label><label>Máximo<input id="v34-max" type="number" min="0.00000001" step="any"></label><label>Cantidad disponible<input id="v34-avail" type="number" min="0.00000001" step="any"></label><label>Condiciones<textarea id="v34-terms" maxlength="2000" placeholder="Condiciones de la operación"></textarea></label><button class="btn full" id="v34-create">Publicar oferta segura</button><div id="v34-msg"></div></div></section>';
- const tab=n=>{['market','orders','create'].forEach(x=>$('v34-'+x)?.classList.toggle('hidden',x!==n));b.querySelectorAll('[data-v34-tab]').forEach(x=>x.classList.toggle('secondary',x.dataset.v34Tab!==n))};
- b.querySelectorAll('[data-v34-tab]').forEach(x=>x.onclick=()=>tab(x.dataset.v34Tab));tab('market');
- b.querySelectorAll('[data-v34-apply]').forEach(btn=>btn.onclick=async()=>{
-  const n=Number(b.querySelector('[data-v34-amount="'+btn.dataset.v34Apply+'"]')?.value);
-  if(!Number.isFinite(n)||n<=0)return toast(b,'Introduce una cantidad válida.','error');
-  btn.disabled=true;try{const r=await rpc('cp_create_p2p_order',{p_offer_id:btn.dataset.v34Apply,p_amount:n,p_idempotency_key:idem()});toast(b,'Orden creada correctamente. Escrow bloqueado: '+money(r?.amount||n)+' '+esc(r?.asset||'')+'.','ok');setTimeout(openP2PFinal,450)}catch(e){btn.disabled=false;toast(b,e.message||String(e),'error')}
+const modalError=(title,err)=>{
+ const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');
+ if(m&&t&&b){t.textContent=title;b.innerHTML='<div class="msg error">'+esc(err?.message||String(err))+'</div><div class="notice">El botón sí respondió; el fallo quedó expuesto para poder corregirlo. No se modificó ningún saldo.</div>';m.classList.remove('hidden')}
+};
+const getP2P=()=>window.__CPP_P2P_OPEN_FINAL__||window.__CPP_P2P_FINAL_V34__||window.__CPP_P2P_V32__||window.p2pPanel||window.__CPP_P2P_OPEN__;
+const getRecharge=()=>window.CP_FINAL_AUDIT?.rechargePanel||window.rechargePanel||window.__CPP_CORE?.rechargePanel;
+const bindDirect=()=>{
+ document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-module="p2p"]').forEach(el=>{
+   el.onclick=async ev=>{
+     ev.preventDefault();ev.stopPropagation();
+     if(el.dataset.cppV36Busy==='1')return;
+     el.dataset.cppV36Busy='1';el.disabled=true;
+     try{const fn=getP2P();if(typeof fn!=='function')throw new Error('P2P_MODULE_NOT_READY');await fn()}
+     catch(e){modalError('P2P / Escrow',e)}
+     finally{el.disabled=false;el.dataset.cppV36Busy='0'}
+   };
  });
- b.querySelectorAll('[data-v34-paid]').forEach(btn=>btn.onclick=async()=>{
-  const ref=prompt('Referencia real de Transfermóvil:');if(!ref||!ref.trim())return;
-  btn.disabled=true;try{await rpc('cp_p2p_mark_paid',{p_order_id:btn.dataset.v34Paid,p_external_reference:ref.trim()});await openP2PFinal()}catch(e){btn.disabled=false;toast(b,e.message||String(e),'error')}
- });
- b.querySelectorAll('[data-v34-release]').forEach(btn=>btn.onclick=async()=>{
-  if(!confirm('Confirma que recibiste el pago fiat y deseas liberar el activo bloqueado.'))return;
-  btn.disabled=true;try{await rpc('cp_p2p_release',{p_order_id:btn.dataset.v34Release});await openP2PFinal()}catch(e){btn.disabled=false;toast(b,e.message||String(e),'error')}
- });
- b.querySelectorAll('[data-v34-cancel]').forEach(btn=>btn.onclick=async()=>{
-  if(!confirm('¿Cancelar esta orden y devolver el escrow al vendedor?'))return;
-  btn.disabled=true;try{await rpc('cp_p2p_cancel',{p_order_id:btn.dataset.v34Cancel});await openP2PFinal()}catch(e){btn.disabled=false;toast(b,e.message||String(e),'error')}
- });
- b.querySelectorAll('[data-v34-dispute]').forEach(btn=>btn.onclick=async()=>{
-  const reason=prompt('Motivo de la disputa (mínimo 5 caracteres):');if(!reason||reason.trim().length<5)return;
-  btn.disabled=true;try{await rpc('cp_p2p_open_dispute',{p_order_id:btn.dataset.v34Dispute,p_reason:reason.trim().slice(0,2000)});await openP2PFinal()}catch(e){btn.disabled=false;toast(b,e.message||String(e),'error')}
- });
- const side=$('v34-side'),asset=$('v34-asset'),pm=$('v34-pm');
- const syncPm=()=>{if(!asset||!pm)return;const a=asset.value.toUpperCase();const rows=verified.filter(x=>String(x.asset_code||'').toUpperCase()===a);pm.innerHTML=rows.length?rows.map(x=>'<option value="'+x.id+'">'+esc(x.name||x.method_type||'Método')+' · '+esc(x.asset_code||'')+'</option>').join(''):'<option value="">No hay método verificado para '+esc(a)+'</option>'};
- asset?.addEventListener('change',syncPm);syncPm();
- $('v34-create').onclick=async()=>{
-  const z=$('v34-msg');const p={p_side:side.value,p_asset:asset.value,p_payment_method_id:pm.value||null,p_price:Number($('v34-price').value),p_min_amount:Number($('v34-min').value),p_max_amount:Number($('v34-max').value),p_available_amount:Number($('v34-avail').value),p_terms:$('v34-terms').value.trim()||null};
-  z.innerHTML='<div class="notice">Validando autenticación, KYC, riesgo, método y saldo…</div>';
-  try{const r=await rpc('cp_create_p2p_offer',p);z.innerHTML='<div class="msg ok">Oferta publicada correctamente. ID: '+esc(r?.offer_id||'creada')+'</div>';setTimeout(openP2PFinal,500)}catch(e){z.innerHTML='<div class="msg error">'+esc(e.message||String(e))+'</div>'}
- };
- window.__CPP_P2P_FINAL_V34__=openP2PFinal;
-window.__CPP_P2P_OPEN__=openP2PFinal;
-window.__CPP_P2P_V32__=openP2PFinal;
-window.__CPP_P2P_V33__={open:openP2PFinal,version:'V34-final'};
-window.p2pPanel=openP2PFinal;
- return true;
-}
-function bind(){
- const open=async ev=>{if(ev){ev.preventDefault();ev.stopPropagation();}try{await openP2PFinal()}catch(e){const b=$('modalBody');if(b){b.innerHTML='<div class="msg error">'+esc(e.message||String(e))+'</div><div class="notice">P2P no modifica otros módulos ni inventa fondos.</div>';$('modal')?.classList.remove('hidden')}}};
- document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-page="p2p"],[data-module="p2p"]').forEach(el=>{el.onclick=open});
- window.addEventListener('cpp:p2p-ready',()=>document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-page="p2p"],[data-module="p2p"]').forEach(el=>{el.onclick=open}));
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
-})();
-</script>
-<script id="cpp-final-mobile-recharge-rescue">
-(()=>{'use strict';
-const bind=()=>{
- const fn=window.CP_FINAL_AUDIT?.rechargePanel||window.rechargePanel||window.__CPP_CORE?.rechargePanel;
- if(typeof fn!=='function')return;
  document.querySelectorAll('[data-op="recharge"],[data-action="recharge"],[data-module="recharge"]').forEach(el=>{
-  el.onclick=async ev=>{
-   ev.preventDefault();ev.stopPropagation();el.disabled=true;
-   try{await fn()}catch(err){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(m&&t&&b){t.textContent='Recarga móvil';b.innerHTML='<div class="msg error">No se pudo abrir Recarga móvil: '+String(err?.message||err).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>';m.classList.remove('hidden')}}finally{el.disabled=false}
-  };
+   el.onclick=async ev=>{
+     ev.preventDefault();ev.stopPropagation();
+     if(el.dataset.cppV36Busy==='1')return;
+     el.dataset.cppV36Busy='1';el.disabled=true;
+     try{const fn=getRecharge();if(typeof fn!=='function')throw new Error('RECHARGE_MODULE_NOT_READY');await fn()}
+     catch(e){modalError('Recarga móvil',e)}
+     finally{el.disabled=false;el.dataset.cppV36Busy='0'}
+   };
  });
 };
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
-window.addEventListener('cpp:p2p-ready',bind);
-})();
-</script>
-<!-- CPP V35 FINAL: P2P dinámico + chat seguro por orden + recarga wallet/settlement -->
-<script id="cpp-v35-final-functional">
-(()=>{'use strict';
-const db=()=>window.__CPP_DB||window.__CPP_CORE?.db;
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function chatStyles(){if(document.getElementById('cpp-v35-chat-css'))return;const st=document.createElement('style');st.id='cpp-v35-chat-css';st.textContent='.cpp-p2p-chat{margin-top:10px;border:1px solid #155fb7;border-radius:14px;padding:10px;background:#031536}.cpp-p2p-chat-log{max-height:190px;overflow:auto;display:grid;gap:6px;margin:8px 0}.cpp-p2p-chat-msg{padding:7px 9px;border-radius:10px;background:#06285a;border:1px solid #0b5cae}.cpp-p2p-chat-msg.me{background:#063d52;border-color:#0c9fba}.cpp-p2p-chat-meta{font-size:8px;color:#78a5ce;margin-bottom:2px}.cpp-p2p-chat-form{display:flex;gap:6px}.cpp-p2p-chat-form input{flex:1;min-width:0;padding:9px;border-radius:10px;border:1px solid #0d65bb;background:#021333;color:#fff}';document.head.appendChild(st)}
-async function enhanceChat(){const c=db();if(!c)return;chatStyles();const ur=await c.auth.getUser(),uid=ur.data?.user?.id;if(!uid)return;for(const box of [...document.querySelectorAll('[id^="v34-extra-"]')]){const orderId=box.id.replace('v34-extra-','');if(!orderId)continue;box.innerHTML='<button class="btn secondary" data-v35-chat="'+esc(orderId)+'">💬 Chat de la operación</button><div class="cpp-p2p-chat hidden" data-v35-chatbox="'+esc(orderId)+'"><div class="cpp-p2p-chat-log"></div><div class="cpp-p2p-chat-form"><input maxlength="599" placeholder="Escribe al otro participante…"><button class="btn">Enviar</button></div></div>';const chat=box.querySelector('[data-v35-chatbox]'),toggle=box.querySelector('[data-v35-chat]'),log=chat.querySelector('.cpp-p2p-chat-log'),input=chat.querySelector('input'),send=chat.querySelector('.btn');const load=async()=>{const rr=await c.from('cp_p2p_chat_messages').select('id,sender_id,message,created_at').eq('order_id',orderId).order('created_at',{ascending:true}).limit(100);if(rr.error){log.innerHTML='<div class="msg error">'+esc(rr.error.message)+'</div>';return}log.innerHTML=(rr.data||[]).map(m=>'<div class="cpp-p2p-chat-msg '+(m.sender_id===uid?'me':'')+'"><div class="cpp-p2p-chat-meta">'+(m.sender_id===uid?'Tú':'Contraparte')+' · '+esc(new Date(m.created_at).toLocaleString('es-ES'))+'</div><div>'+esc(m.message)+'</div></div>').join('')||'<div class="empty">Todavía no hay mensajes.</div>';log.scrollTop=log.scrollHeight};toggle.onclick=async()=>{chat.classList.toggle('hidden');if(!chat.classList.contains('hidden')){await load();clearInterval(window.__CPP_P2P_CHAT_TIMER__);window.__CPP_P2P_CHAT_TIMER__=setInterval(load,5000)}};send.onclick=async()=>{const message=input.value.trim();if(!message||message.length>599)return;send.disabled=true;try{const rr=await c.from('cp_p2p_chat_messages').insert({order_id:orderId,sender_id:uid,message});if(rr.error)throw rr.error;input.value='';await load()}catch(e){alert(e.message||String(e))}finally{send.disabled=false}};input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send.click()}})}}
-const base=window.__CPP_P2P_FINAL_V34__;if(typeof base==='function'){const wrapped=async()=>{clearInterval(window.__CPP_P2P_CHAT_TIMER__);const r=await base();setTimeout(enhanceChat,0);return r};window.__CPP_P2P_OPEN_FINAL__=wrapped;window.p2pPanel=wrapped;window.__CPP_P2P_OPEN__=wrapped;}
-window.addEventListener('beforeunload',()=>clearInterval(window.__CPP_P2P_CHAT_TIMER__));
+const boot=()=>{
+ bindDirect();
+ window.__CPP_V36_READY__={version:'V36-final-click-router',p2p:typeof getP2P()==='function',recharge:typeof getRecharge()==='function'};
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+window.addEventListener('cpp:p2p-ready',bindDirect);
 })();
 </script>
