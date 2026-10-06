@@ -1586,7 +1586,7 @@ const modalError=(title,err)=>{
  const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');
  if(m&&t&&b){t.textContent=title;b.innerHTML='<div class="msg error">'+esc(err?.message||String(err))+'</div><div class="notice">El botón sí respondió; el fallo quedó expuesto para poder corregirlo. No se modificó ningún saldo.</div>';m.classList.remove('hidden')}
 };
-const getP2P=()=>window.__CPP_P2P_OPEN_FINAL__||window.__CPP_P2P_FINAL_V34__||window.__CPP_P2P_V32__||window.p2pPanel||window.__CPP_P2P_OPEN__;
+const getP2P=()=>window.__CPP_P2P_OPEN_FINAL__||window.__CPP_P2P_FINAL_V34__||window.__CPP_P2P_V32__||window.p2pPanel||window.CP_FINAL_AUDIT?.p2pPanel||window.__CPP_P2P_OPEN__;
 const getRecharge=()=>window.CP_FINAL_AUDIT?.rechargePanel||window.rechargePanel||window.__CPP_CORE?.rechargePanel;
 const bindDirect=()=>{
  document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-module="p2p"]').forEach(el=>{
@@ -1612,7 +1612,7 @@ const bindDirect=()=>{
 };
 const boot=()=>{
  bindDirect();
- window.__CPP_V36_READY__={version:'V36-final-click-router',p2p:typeof getP2P()==='function',recharge:typeof getRecharge()==='function'};
+ window.p2pPanel=getP2P();window.__CPP_P2P_OPEN__=getP2P();window.__CPP_V36_READY__={version:'V36-final-click-router',p2p:typeof getP2P()==='function',recharge:typeof getRecharge()==='function'};
 };
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.addEventListener('cpp:p2p-ready',bindDirect);
