@@ -944,6 +944,8 @@ async function financialIncidentsPanel(){
   }catch(x){box.innerHTML='<div class="msg error">No se pudo ejecutar el detector: '+e(x?.message||x)+'</div><p class="notice">No se realizó ninguna modificación financiera.</p>'}
 }
 window.CP_FINAL_AUDIT={providerPanel,cryptoPanel,p2pPanel,crmPanel,securityPanel,aiPanel,rechargePanel,integrityPanel,withdrawalAuditPanel,reconciliationPanel,financialIncidentsPanel};
+window.rechargePanel=rechargePanel;
+if(window.__CPP_CORE)window.__CPP_CORE.rechargePanel=rechargePanel;
 })();
 </script>
 <style id="cpp-click-crx-island-css">
@@ -1881,6 +1883,10 @@ async function openP2PFinal(){
   try{const r=await rpc('cp_create_p2p_offer',p);z.innerHTML='<div class="msg ok">Oferta publicada correctamente. ID: '+esc(r?.offer_id||'creada')+'</div>';setTimeout(openP2PFinal,500)}catch(e){z.innerHTML='<div class="msg error">'+esc(e.message||String(e))+'</div>'}
  };
  window.__CPP_P2P_FINAL_V34__=openP2PFinal;
+window.__CPP_P2P_OPEN__=openP2PFinal;
+window.__CPP_P2P_V32__=openP2PFinal;
+window.__CPP_P2P_V33__={open:openP2PFinal,version:'V34-final'};
+window.p2pPanel=openP2PFinal;
  return true;
 }
 function bind(){
@@ -1888,6 +1894,13 @@ function bind(){
  document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-page="p2p"],[data-module="p2p"]').forEach(el=>{el.onclick=open});
  window.addEventListener('cpp:p2p-ready',()=>document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-page="p2p"],[data-module="p2p"]').forEach(el=>{el.onclick=open}));
 }
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+})();
+</script>
+<script id="cpp-final-mobile-recharge-rescue">
+(()=>{'use strict';
+const open=async()=>{const fn=window.CP_FINAL_AUDIT?.rechargePanel||window.rechargePanel||window.__CPP_CORE?.rechargePanel;if(typeof fn!=='function')throw new Error('MOBILE_RECHARGE_MODULE_NOT_READY');return fn();};
+const bind=()=>document.querySelectorAll('[data-op="recharge"],[data-action="recharge"],[data-module="recharge"]').forEach(el=>el.addEventListener('click',async ev=>{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();if(el.dataset.cppRechargeBusy==='1')return;el.dataset.cppRechargeBusy='1';el.disabled=true;try{await open()}catch(err){const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(m&&t&&b){t.textContent='Recarga móvil';b.innerHTML='<div class="msg error">No se pudo abrir Recarga móvil: '+String(err?.message||err).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))+'</div>';m.classList.remove('hidden')}}finally{el.dataset.cppRechargeBusy='0';el.disabled=false}},true));
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
 </script>
