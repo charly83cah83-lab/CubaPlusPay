@@ -1578,46 +1578,7 @@ window.__CPP_SMART_AI_V308__={open,version:'V30.8'};setTimeout(()=>document.quer
 <!-- CPP V31.3 FINAL MODULE BRIDGE: Smart + P2P isolated, additive, no other routes touched -->
 
 
-<!-- CPP V36 FINAL CLICK ROUTER: P2P + RECARGA MÓVIL, sin interceptores de captura -->
-<script id="cpp-v36-final-click-router">
-(()=>{'use strict';
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const modalError=(title,err)=>{
- const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');
- if(m&&t&&b){t.textContent=title;b.innerHTML='<div class="msg error">'+esc(err?.message||String(err))+'</div><div class="notice">El botón sí respondió; el fallo quedó expuesto para poder corregirlo. No se modificó ningún saldo.</div>';m.classList.remove('hidden')}
-};
-const getP2P=()=>window.__CPP_P2P_OPEN_FINAL__||window.__CPP_P2P_FINAL_V34__||window.__CPP_P2P_V32__||window.p2pPanel||window.CP_FINAL_AUDIT?.p2pPanel||window.__CPP_P2P_OPEN__;
-const getRecharge=()=>window.CP_FINAL_AUDIT?.rechargePanel||window.rechargePanel||window.__CPP_CORE?.rechargePanel;
-const bindDirect=()=>{
- document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-module="p2p"]').forEach(el=>{
-   el.onclick=async ev=>{
-     ev.preventDefault();ev.stopPropagation();
-     if(el.dataset.cppV36Busy==='1')return;
-     el.dataset.cppV36Busy='1';el.disabled=true;
-     try{const fn=getP2P();if(typeof fn!=='function')throw new Error('P2P_MODULE_NOT_READY');await fn()}
-     catch(e){modalError('P2P / Escrow',e)}
-     finally{el.disabled=false;el.dataset.cppV36Busy='0'}
-   };
- });
- document.querySelectorAll('[data-op="recharge"],[data-action="recharge"],[data-module="recharge"]').forEach(el=>{
-   el.onclick=async ev=>{
-     ev.preventDefault();ev.stopPropagation();
-     if(el.dataset.cppV36Busy==='1')return;
-     el.dataset.cppV36Busy='1';el.disabled=true;
-     try{const fn=getRecharge();if(typeof fn!=='function')throw new Error('RECHARGE_MODULE_NOT_READY');await fn()}
-     catch(e){modalError('Recarga móvil',e)}
-     finally{el.disabled=false;el.dataset.cppV36Busy='0'}
-   };
- });
-};
-const boot=()=>{
- bindDirect();
- window.p2pPanel=getP2P();window.__CPP_P2P_OPEN__=getP2P();window.__CPP_V36_READY__={version:'V36-final-click-router',p2p:typeof getP2P()==='function',recharge:typeof getRecharge()==='function'};
-};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.addEventListener('cpp:p2p-ready',bindDirect);
-})();
-</script>
+
 
 <!-- CPP V31 P2P COMPLETE HOTFIX: currentUser scope + marketplace + escrow + chat + ratings -->
 <script id="cpp-v31-p2p-complete">
@@ -1650,11 +1611,11 @@ const panel31=async()=>{
   ord.innerHTML='<div class="notice">Solo tú y la contraparte pueden ver la orden y su chat. Acciones financieras pasan por RPCs protegidas e idempotentes.</div>'+
    (od.length?od.map(o=>'<div class="card p31-order" data-p31-order="'+o.id+'"><div class="p31-line"><b>Orden '+esc31(o.id.slice(0,8))+'</b><span class="pill">'+esc31(o.status)+'</span></div><div class="p31-meta">'+money31(o.amount)+' '+esc31(o.asset)+' · '+money31(o.fiat_amount)+' CUP · '+esc31(o.payment_provider||'Transfermóvil')+'</div><div class="p31-meta">Creada: '+esc31(o.created_at)+'</div><div class="notice">'+(o.payment_method_snapshot?esc31(JSON.stringify(o.payment_method_snapshot)): 'Datos de pago protegidos por la orden.')+'</div><div class="p31-actions">'+
     (['pending','processing','escrow_locked'].includes(o.status)?'<button class="btn secondary" data-p31-chat="'+o.id+'">💬 Chat</button>':'')+
-    (['pending','processing','escrow_locked'].includes(o.status)?'<button class="btn secondary" data-p31-paid="'+o.id+'">✓ Marcar pagado</button>':'')+
-    (['paid','escrow_locked'].includes(o.status)?'<button class="btn" data-p31-release="'+o.id+'">🔐 Liberar escrow</button>':'')+
-    (['pending','processing','escrow_locked','paid'].includes(o.status)?'<button class="btn danger" data-p31-cancel="'+o.id+'">Cancelar</button>':'')+
-    (!['released','cancelled','disputed'].includes(o.status)?'<button class="btn secondary" data-p31-dispute="'+o.id+'">⚠️ Disputa</button>':'')+
-    (o.status==='released'?'<button class="btn secondary" data-p31-rate="'+o.id+'">⭐ Valorar</button>':'')+
+    (['pending'].includes(o.status)?'<button class="btn secondary" data-p31-paid="'+o.id+'">✓ Marcar pagado</button>':'')+
+    (['paid'].includes(o.status)?'<button class="btn" data-p31-release="'+o.id+'">🔐 Liberar escrow</button>':'')+
+    (['pending'].includes(o.status)?'<button class="btn danger" data-p31-cancel="'+o.id+'">Cancelar</button>':'')+
+    (!['completed','cancelled','disputed'].includes(o.status)?'<button class="btn secondary" data-p31-dispute="'+o.id+'">⚠️ Disputa</button>':'')+
+    (o.status==='completed'?'<button class="btn secondary" data-p31-rate="'+o.id+'">⭐ Valorar</button>':'')+
    '</div><div id="p31-extra-'+o.id+'"></div></div>').join(''):'<div class="empty">Todavía no tienes órdenes P2P.</div>');
   create.innerHTML='<div class="notice">Publicar exige autenticación, KYC aprobado, método de pago verificado y saldo disponible cuando corresponda.</div><div class="p31-form"><label>Operación<select id="p31-side"><option value="sell">Vender activo</option><option value="buy">Comprar activo</option></select></label><label>Activo<input id="p31-asset" value="CRX"></label><label>Método de pago<select id="p31-pm">'+methods.map(x=>'<option value="'+x.id+'">'+esc31(x.name||x.method_type)+' · '+esc31(x.asset_code||'')+'</option>').join('')+'</select></label><label>Precio CUP<input id="p31-price" type="number" min="0.00000001" step="any"></label><label>Mínimo<input id="p31-min" type="number" min="0.00000001" step="any"></label><label>Máximo<input id="p31-max" type="number" min="0.00000001" step="any"></label><label>Cantidad disponible<input id="p31-avail" type="number" min="0.00000001" step="any"></label><label>Condiciones<textarea id="p31-terms" maxlength="1000" placeholder="Horario, confirmación, referencia de Transfermóvil, etc."></textarea></label><button class="btn full" id="p31-create-btn">Publicar oferta segura</button><div id="p31-create-msg"></div></div>';
   const tab=(name)=>{['market','orders','create'].forEach(x=>{$31('p31-'+x)?.classList.toggle('hidden',x!==name)});document.querySelectorAll('[data-p31-tab]').forEach(b=>b.classList.toggle('secondary',b.dataset.p31Tab!==name))};
@@ -1666,7 +1627,7 @@ const panel31=async()=>{
   body.querySelectorAll('[data-p31-dispute]').forEach(b=>b.onclick=async()=>{const reason=prompt('Describe brevemente la disputa (sin contraseñas ni códigos):');if(!reason)return;b.disabled=true;try{await rpc31('cp_p2p_open_dispute',{p_order_id:b.dataset.p31Dispute,p_reason:reason.slice(0,500)});await panel31()}catch(e){b.disabled=false;toast31(e.message||e)}})
   body.querySelectorAll('[data-p31-rate]').forEach(b=>b.onclick=async()=>{const rating=Number(prompt('Valoración 1-5:','5'));if(!Number.isInteger(rating)||rating<1||rating>5)return;const comment=(prompt('Comentario opcional (máx. 500):','')||'').slice(0,500);try{const order=od.find(x=>x.id===b.dataset.p31Rate),rated=order.buyer_id===u.id?order.seller_id:order.buyer_id;const ins=await CP31.from('cp_p2p_ratings').insert({order_id:order.id,rater_id:u.id,rated_id:rated,rating,comment,tags:[]});if(ins.error)throw ins.error;toast31('Valoración registrada.',true);await panel31()}catch(e){toast31(e.message||e)}})
   body.querySelectorAll('[data-p31-chat]').forEach(b=>b.onclick=()=>openChat31(b.dataset.p31Chat,body));
-  $('p31-create-btn').onclick=async()=>{const msg=$31('p31-create-msg');try{const p={p_side:$31('p31-side').value,p_asset:$31('p31-asset').value.trim().toUpperCase(),p_payment_method_id:$31('p31-pm').value,p_price:Number($31('p31-price').value),p_min_amount:Number($31('p31-min').value),p_max_amount:Number($31('p31-max').value),p_available_amount:Number($31('p31-avail').value),p_terms:$31('p31-terms').value.trim()};msg.innerHTML='<div class="notice">Validando y publicando…</div>';const r=await rpc31('cp_create_p2p_offer',p);msg.innerHTML='<div class="msg ok">Oferta publicada de forma segura. ID: '+esc31(r?.id||r?.offer_id||'creada')+'</div>';setTimeout(panel31,700)}catch(e){msg.innerHTML='<div class="msg error">'+esc31(e.message||e)+'</div>'}};
+  $31('p31-create-btn').onclick=async()=>{const msg=$31('p31-create-msg');try{const p={p_side:$31('p31-side').value,p_asset:$31('p31-asset').value.trim().toUpperCase(),p_payment_method_id:$31('p31-pm').value,p_price:Number($31('p31-price').value),p_min_amount:Number($31('p31-min').value),p_max_amount:Number($31('p31-max').value),p_available_amount:Number($31('p31-avail').value),p_terms:$31('p31-terms').value.trim()};msg.innerHTML='<div class="notice">Validando y publicando…</div>';const r=await rpc31('cp_create_p2p_offer',p);msg.innerHTML='<div class="msg ok">Oferta publicada de forma segura. ID: '+esc31(r?.id||r?.offer_id||'creada')+'</div>';setTimeout(panel31,700)}catch(e){msg.innerHTML='<div class="msg error">'+esc31(e.message||e)+'</div>'}};
  }catch(e){body.innerHTML='<div class="msg error">No se pudo cargar P2P: '+esc31(e.message||e)+'</div><div class="notice">Corrección aplicada: el panel ya no depende de la variable privada <b>currentUser</b>; obtiene el usuario desde la sesión Supabase.</div>'}
 };
 async function openChat31(orderId,root){
@@ -1679,37 +1640,13 @@ const css=document.createElement('style');css.textContent='.p31-tabs{display:gri
 window.p2pPanel=panel31;if(window.CP_FINAL_AUDIT)window.CP_FINAL_AUDIT.p2pPanel=panel31;window.__CPP_P2P_V31__={open:panel31,version:'V31-complete'};
 })();
 </script>
-
-<!-- CPP V33 P2P BUTTON BRIDGE: conecta cualquier botón P2P con el módulo V32 sin tocar otros módulos -->
-<script id="cpp-v33-p2p-button-bridge">
+<!-- CPP P2P FINAL ROUTER V37 -->
+<script id="cpp-p2p-final-router-v37">
 (()=>{'use strict';
-const boot=()=>{
-  const open=window.__CPP_P2P_V32__||window.__CPP_P2P_V31__?.open||window.p2pPanel||window.__CPP_P2P_OPEN__;
-  if(typeof open!=='function')return;
-  window.p2pPanel=open;
-  window.__CPP_P2P_OPEN__=open;
-  window.__CPP_P2P_V33__={open,version:'V33-button-bridge'};
-  const isP2P=(el)=>{
-    if(!el)return false;
-    const txt=String(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-    const aria=String(el.getAttribute?.('aria-label')||'').trim().toLowerCase();
-    const data=String(el.getAttribute?.('data-action')||el.getAttribute?.('data-page')||el.getAttribute?.('data-module')||'').trim().toLowerCase();
-    return txt==='p2p'||txt.includes('p2p')||aria.includes('p2p')||data==='p2p'||data.includes('p2p');
-  };
-  document.addEventListener('click',async ev=>{
-    const el=ev.target?.closest?.('button,a,[role="button"],[data-action],[data-page],[data-module]');
-    if(!isP2P(el))return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    if(typeof ev.stopImmediatePropagation==='function')ev.stopImmediatePropagation();
-    try{await open();}catch(e){
-      const msg=String(e?.message||e||'No se pudo abrir P2P');
-      const mb=document.getElementById('modalBody');
-      if(mb)mb.innerHTML='<div class="msg error">'+msg.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</div>';
-    }
-  },true);
-  window.dispatchEvent(new CustomEvent('cpp:p2p-ready'));
-};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+const esc37=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const resolveP2P=()=>[window.__CPP_P2P_V31__?.open,window.p2pPanel,window.CP_FINAL_AUDIT?.p2pPanel,window.__CPP_P2P_OPEN__].find(x=>typeof x==='function')||null;
+const showErr=e=>{const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(m&&t&&b){t.textContent='P2P / Escrow';b.innerHTML='<div class="msg error">No se pudo abrir P2P: '+esc37(e?.message||String(e))+'</div><div class="notice">No se modificó ningún saldo.</div>';m.classList.remove('hidden')}};
+const bind=()=>{document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-module="p2p"]').forEach(el=>{if(el.dataset.cppP2pV37)return;el.dataset.cppP2pV37='1';el.addEventListener('click',async ev=>{ev.preventDefault();ev.stopPropagation();if(el.dataset.cppP2pBusy)return;const fn=resolveP2P();if(typeof fn!=='function'){showErr(new Error('P2P_MODULE_NOT_READY'));return}el.dataset.cppP2pBusy='1';const d=el.disabled;el.disabled=true;try{await fn()}catch(e){showErr(e)}finally{el.disabled=d;el.dataset.cppP2pBusy=''}})});const fn=resolveP2P();if(fn){window.p2pPanel=fn;window.__CPP_P2P_OPEN__=fn;window.__CPP_P2P_OPEN_FINAL__=fn;window.__CPP_P2P_FINAL_V37__={open:fn,version:'V37-final-router'}}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
 </script>
