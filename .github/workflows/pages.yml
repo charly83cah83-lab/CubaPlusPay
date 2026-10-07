@@ -30,20 +30,6 @@ jobs:
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Verificar corrección de runtime de Referidos
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("index.html")
-          s = p.read_text(encoding="utf-8")
-          bad = "window.referralsPanel=referralsPanel;\\n\\nasync function advanced(op)"
-          good = "window.referralsPanel=window.__CPP_REFERRALS_OPEN__||window.referralsPanel||window.__CPP_CORE?.referralsPanel;\\n\\nasync function advanced(op)"
-          if bad in s:
-              p.write_text(s.replace(bad, good, 1), encoding="utf-8")
-              print("Runtime referralsPanel corregido en el artefacto.")
-          else:
-              print("Runtime referralsPanel ya está corregido o no requiere parche.")
-
       - name: Preparar sitio
         uses: actions/upload-pages-artifact@v4
         with:
