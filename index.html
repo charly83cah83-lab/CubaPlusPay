@@ -1704,3 +1704,74 @@ document.addEventListener('click',e=>{const el=e.target?.closest?.('[data-op="ai
 window.__CPP_HAZLO_POR_MI_V34__={install:install34,ask:ask34,version:'V34'};
 })();
 </script>
+
+<!-- CPP V35 AI VOZ GLOBAL -->
+<style id="cpp-v35-voice-css">
+#cpp-v35-voice{position:fixed;right:14px;bottom:78px;z-index:99998;font-family:inherit}
+#cpp-v35-voice>button{border:1px solid #18cfff;background:#062e62;color:#fff;border-radius:999px;padding:12px 15px;font-weight:900;box-shadow:0 8px 28px #0008}
+#cpp-v35-panel{display:none;width:min(360px,calc(100vw - 28px));margin-top:8px;padding:12px;border:1px solid #1a67bd;border-radius:18px;background:#031638;color:#fff;box-shadow:0 16px 45px #000b}
+.cpp35-row{display:flex;gap:7px}.cpp35-input{flex:1;min-width:0;padding:11px;border:1px solid #155fb7;border-radius:12px;background:#020f2b;color:#fff}
+.cpp35-btn{border:1px solid #18cfff;background:#0a356c;color:#fff;border-radius:12px;padding:10px;font-weight:800}.cpp35-plan{margin-top:9px;padding:10px;border:1px solid #ffcf55;border-radius:13px;background:#302708;color:#ffe7a0}.cpp35-ok{border-color:#45e0a8;background:#083c30}
+</style>
+<script id="cpp-v35-voice-global">
+(()=>{'use strict';
+if(window.__CPP_V35_VOICE__)return;window.__CPP_V35_VOICE__=true;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const db=()=>window.__CPP_DB||window.supabaseClient||window.supabase;
+const speak=t=>{try{if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t));u.lang='es-ES';speechSynthesis.speak(u)}catch(_){}};
+const panel=()=>document.getElementById('cpp-v35-panel');
+const result=t=>{const x=panel();if(x)x.querySelector('.cpp35-result').innerHTML=t};
+const parse=q=>{
+ const n=norm(q);
+ let m=n.match(/(?:envia|enviar|manda|mandar|transfiere|transferir)\s+(\d+(?:[.,]\d+)?)\s*(crx)?\s*(?:a|para)\s+([^.!?]+)/i);
+ if(m)return{operation:'transfer_crx',amount:Number(m[1].replace(',','.')),currency:'CRX',recipient:m[3].trim(),reference:'Cuba Plus AI voz'};
+ m=n.match(/(?:cambia|cambiar|intercambia|intercambiar)\s+(\d+(?:[.,]\d+)?)\s*(crx|usd|cup|usdt|btc)\s*(?:a|por|en)\s*(crx|usd|cup|usdt|btc)/i);
+ if(m)return{operation:'exchange',amount:Number(m[1].replace(',','.')),from_currency:m[2].toUpperCase(),to_currency:m[3].toUpperCase()};
+ m=n.match(/(?:recarga|recargar)\s+(\d+(?:[.,]\d+)?)\s*(usd|cup|crx)?\s*(?:al|a|el)\s*(\d[\d\s-]{5,})\s*(?:cubacel|todas las redes|etel)?/i);
+ if(m)return{operation:'mobile_topup',amount:Number(m[1].replace(',','.')),currency:(m[2]||'USD').toUpperCase(),phone:m[3].replace(/\s|-/g,''),operator:/cubacel/i.test(n)?'CUBACEL':''};
+ m=n.match(/(?:retira|retirar|retiro)\s+(\d+(?:[.,]\d+)?)\s*(usd|crx)?\s+(?:a|para)\s+(T[1-9A-HJ-NP-Za-km-z]{33})/i);
+ if(m)return{operation:'withdrawal',amount:Number(m[1].replace(',','.')),currency:(m[2]||'USD').toUpperCase(),wallet_address:m[3]};
+ m=n.match(/(?:remesa|remesa a|envia remesa)\s+(\d+(?:[.,]\d+)?)\s*(usd|cup|crx)?\s+(?:a|para)\s+(.+?)\s+(?:en|a)\s+([A-Za-zÁÉÍÓÚáéíóúÑñ ]+)/i);
+ if(m)return{operation:'remittance',amount:Number(m[1].replace(',','.')),currency:(m[2]||'USD').toUpperCase(),beneficiary_name:m[3].trim(),destination_country:m[4].trim()};
+ return null;
+};
+const api=async(action,p)=>{
+ const d=db();if(!d?.auth?.getSession)throw Error('Sesión no disponible');
+ const s=await d.auth.getSession();if(!s?.data?.session)throw Error('Debes iniciar sesión.');
+ const id=crypto.randomUUID();
+ const r=await d.functions.invoke('cuba-plus-execute-intent',{body:{action,...p,idempotency:id}});
+ if(r.error)throw r.error;if(!r.data?.ok)throw Error(r.data?.message||r.data?.code||'El backend rechazó la operación.');
+ return r.data;
+};
+const ask=async q=>{
+ const p=parse(q);
+ if(p){
+   if(p.operation==='mobile_topup'&&!p.operator){result('<div class="cpp35-plan"><b>Falta un dato</b><div>Indica también el operador, por ejemplo: “recarga 5 USD al 53555555 Cubacel”.</div></div>');speak('Necesito el operador para preparar la recarga.');return}
+   const prep=await api('prepare',p);
+   result('<div class="cpp35-plan"><b>🛡️ Operación preparada</b><div style="margin-top:6px">'+esc(JSON.stringify(p))+'</div><div style="font-size:10px;margin-top:5px">No se ha movido dinero. Debes confirmar expresamente.</div><div class="cpp35-row" style="margin-top:8px"><button id="cpp35-confirm" class="cpp35-btn cpp35-ok">✓ Confirmar</button><button id="cpp35-cancel" class="cpp35-btn">Cancelar</button></div></div>');
+   const b=document.getElementById('cpp35-confirm');document.getElementById('cpp35-cancel').onclick=()=>{result('<div>Operación cancelada. No se movió dinero.</div>');speak('Operación cancelada.')};
+   b.onclick=async()=>{b.disabled=true;try{const out=await api('confirm',p);result('<div class="cpp35-plan cpp35-ok"><b>✓ Backend respondió</b><div style="margin-top:6px">'+esc(JSON.stringify(out.result??out))+'</div><div style="font-size:10px;margin-top:5px">No se muestra éxito ficticio: el resultado proviene de Supabase.</div></div>');speak('El backend procesó la operación.')}catch(e){result('<div class="cpp35-plan"><b>⚠️ No ejecutado</b><div>'+esc(e.message||e)+'</div></div>');speak('No se ejecutó la operación.')}};
+   return;
+ }
+ const d=db();if(d?.functions?.invoke){const r=await d.functions.invoke('cuba-plus-ai-v2',{body:{question:q}});if(r.error)throw r.error;const a=r?.data?.answer||'No encontré una respuesta verificada.';result('<div class="cpp35-plan"><b>CUBA PLUS AI</b><div style="margin-top:6px">'+esc(a)+'</div><div style="font-size:9px;margin-top:6px">Fuente: backend de Cuba Plus Pay</div></div>');speak(a);return}
+ throw Error('La IA no está disponible.');
+};
+const open=()=>{const p=panel();if(p)p.style.display=p.style.display==='block'?'none':'block'};
+const install=()=>{
+ if(document.getElementById('cpp-v35-voice'))return;
+ const w=document.createElement('div');w.id='cpp-v35-voice';w.innerHTML='<button id="cpp35-toggle">🎙️ Hablar con Cuba Plus AI</button><div id="cpp-v35-panel"><b>🧠 Cuba Plus AI · Voz global</b><div style="font-size:10px;color:#86add4;margin:4px 0 9px">Habla o escribe. Para operaciones financieras siempre tendrás una confirmación antes de ejecutar.</div><div class="cpp35-row"><input id="cpp35-input" class="cpp35-input" placeholder="Ej.: cambia 10 CRX a USD"><button id="cpp35-mic" class="cpp35-btn">🎙️</button></div><button id="cpp35-send" class="cpp35-btn" style="width:100%;margin-top:7px">Enviar a la IA</button><div class="cpp35-result" style="margin-top:8px"></div></div>';
+ document.body.appendChild(w);
+ document.getElementById('cpp35-toggle').onclick=open;
+ const input=document.getElementById('cpp35-input');
+ document.getElementById('cpp35-send').onclick=async()=>{const q=input.value.trim();if(!q)return;result('<div>Procesando…</div>');try{await ask(q)}catch(e){result('<div class="cpp35-plan"><b>Error</b><div>'+esc(e.message||e)+'</div></div>')}};
+ input.onkeydown=e=>{if(e.key==='Enter')document.getElementById('cpp35-send').click()};
+ document.getElementById('cpp35-mic').onclick=()=>{
+   const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+   if(!R){speak('El reconocimiento de voz no está disponible en este navegador.');result('<div>Este navegador no expone reconocimiento de voz. Prueba Chrome en Android.</div>');return}
+   const r=new R();r.lang='es-ES';r.interimResults=false;r.continuous=false;r.onstart=()=>result('<div>🎙️ Escuchando…</div>');r.onerror=e=>result('<div>No pude escuchar: '+esc(e.error)+'</div>');r.onresult=e=>{const q=e.results?.[0]?.[0]?.transcript?.trim()||'';input.value=q;if(q)ask(q).catch(x=>result('<div class="cpp35-plan"><b>Error</b><div>'+esc(x.message||x)+'</div></div>'))};try{r.start()}catch(e){result('<div>No se pudo iniciar el micrófono.</div>')};
+ };
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+})();
+</script>
