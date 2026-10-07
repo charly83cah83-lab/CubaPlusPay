@@ -1752,3 +1752,28 @@ window.addEventListener('beforeunload',()=>{const p=load();if(p)save(p)});
 setTimeout(()=>{if(load()&&!document.getElementById('cppV35Resume')){const shell=document.createElement('div');shell.id='cppV35Resume';shell.innerHTML='<button class="btn secondary" style="position:fixed;right:12px;bottom:76px;z-index:60;border-color:#12bfff">↩ Continuar solicitud</button>';document.body.appendChild(shell);shell.firstElementChild.onclick=resume}},700);
 })();
 </script>
+
+<!-- CPP V36 · SMART PROACTIVO · ATENCION SEGURA -->
+<style id="cpp-v36-proactive-css">
+.cpp-v36-alert{margin:12px 0;padding:13px;border:1px solid #168cff88;border-radius:16px;background:linear-gradient(145deg,#06285f,#041638);box-shadow:0 10px 30px #0004}.cpp-v36-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.cpp-v36-head b{font-size:13px}.cpp-v36-count{min-width:24px;height:24px;padding:0 7px;border-radius:999px;display:grid;place-items:center;background:#0b67c7;color:#fff;font-weight:900;font-size:10px}.cpp-v36-item{padding:10px 0;border-bottom:1px solid #123b70}.cpp-v36-item:last-child{border-bottom:0}.cpp-v36-item small{display:block;color:#7fa8d0;margin-top:2px}.cpp-v36-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.cpp-v36-muted{color:#6f99c3;font-size:10px}
+</style>
+<script id="cpp-v36-smart-proactive">
+(()=>{'use strict';
+const db=()=>window.__CPP_DB;const esc=v=>window.__CPP_V33__?.esc?window.__CPP_V33__.esc(v):String(v??'');
+const close=()=>typeof closeModal==='function'?closeModal():document.getElementById('modal')?.classList.add('hidden');
+const state={items:[],lastRun:0};
+async function inspect(){const d=db();if(!d)return[];const u=await d.auth.getUser();const uid=u?.data?.user?.id;if(!uid)return[];const out=[];
+try{const r=await d.from('transactions').select('id,type,status,amount,currency,created_at').eq('user_id',uid).in('status',['pending','processing','created']).order('created_at',{ascending:false}).limit(10);if(!r.error)(r.data||[]).forEach(x=>out.push({key:'tx:'+x.id,title:'Operación pendiente',desc:String(x.type||'Movimiento')+' · '+Number(x.amount||0).toLocaleString('es-ES')+' '+String(x.currency||''),kind:'tx',data:x}))}catch(e){}
+try{const r=await d.from('cp_p2p_orders').select('*').eq('user_id',uid).in('status',['pending','awaiting_payment','paid','in_review','disputed']).order('created_at',{ascending:false}).limit(10);if(!r.error)(r.data||[]).forEach(x=>out.push({key:'p2p:'+x.id,title:'P2P necesita atención',desc:'Estado: '+String(x.status||'pendiente'),kind:'p2p',data:x}))}catch(e){}
+const mem=window.__CPP_V35__?.load?.();if(mem)out.push({key:'memory',title:'Tienes una solicitud preparada',desc:'Puedes continuar donde la dejaste.',kind:'memory',data:mem});
+state.items=out.slice(0,12);state.lastRun=Date.now();return state.items}
+function render(items){const box=document.getElementById('cppV36Attention');if(!box)return;box.innerHTML='<div class="cpp-v36-alert"><div class="cpp-v36-head"><b>⚡ Esto necesita tu atención</b><span class="cpp-v36-count">'+items.length+'</span></div>'+ (items.length?items.map((x,i)=>'<div class="cpp-v36-item"><b>'+esc(x.title)+'</b><small>'+esc(x.desc)+'</small><div class="cpp-v36-actions"><button class="btn secondary" data-v36="'+i+'">Revisar</button></div></div>').join(''):'<div class="cpp-v36-muted" style="margin-top:8px">No hay acciones pendientes detectadas con los datos disponibles.</div>')+'<div class="cpp-v36-muted" style="margin-top:8px">Lectura de estados reales. Esta capa no modifica saldos ni ejecuta operaciones.</div></div>';box.querySelectorAll('[data-v36]').forEach(b=>b.onclick=()=>act(items[Number(b.dataset.v36)]));}
+async function act(x){if(!x)return;if(x.kind==='memory')return window.__CPP_V35__?.resume?.();if(x.kind==='p2p'){close();const f=window.__CPP_P2P_FINAL_V37__?.open||window.__CPP_P2P_V31__?.open||window.p2pPanel||window.__CPP_P2P_OPEN__;if(typeof f==='function')return f();return window.unavailable?.('P2P seguro','El módulo P2P no está listo.')}if(x.kind==='tx'){close();if(typeof nav==='function')nav('wallet');return}close()}
+async function open(){const items=await inspect();const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(!m||!t||!b)return;t.textContent='CUBA BLUE SMART · ATENCIÓN';b.innerHTML='<div id="cppV36Attention"></div>';m.classList.remove('hidden');render(items)}
+function mount(){if(document.getElementById('cppV36Bell'))return;const top=document.querySelector('.top-actions');if(!top)return;const b=document.createElement('button');b.id='cppV36Bell';b.className='icon-btn';b.title='Lo que necesita tu atención';b.textContent='⚡';b.onclick=open;top.prepend(b)}
+async function homeScan(){const items=await inspect();const home=document.querySelector('.content .page.active');if(!home||home.id!=='page-home')return;let box=document.getElementById('cppV36Attention');if(!box){box=document.createElement('div');box.id='cppV36Attention';const anchor=home.querySelector('.hero,.cpp-welcome');(anchor||home.firstElementChild)?.after(box)}render(items)}
+window.__CPP_V36__={inspect,open,state,refresh:homeScan};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{mount();homeScan()},1200),{once:true}});else setTimeout(()=>{mount();homeScan()},1200);
+setInterval(()=>{if(document.visibilityState==='visible')homeScan()},60000);
+})();
+</script>
