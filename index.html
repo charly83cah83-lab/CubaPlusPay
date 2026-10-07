@@ -1777,3 +1777,24 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 setInterval(()=>{if(document.visibilityState==='visible')homeScan()},60000);
 })();
 </script>
+
+<!-- CPP V37 · SMART PERSONALIZADO · CONTINUIDAD INTELIGENTE -->
+<style id="cpp-v37-personal-css">
+.cpp-v37{margin:12px 0;padding:13px;border:1px solid #7b61ff66;border-radius:16px;background:linear-gradient(145deg,#160d3d,#071936)}.cpp-v37 h4{margin:0 0 5px}.cpp-v37 small{color:#86a8d1}.cpp-v37-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.cpp-v37-chip{border:1px solid #31558a;border-radius:999px;padding:7px 10px;background:#081d3c;color:#d8e7ff;cursor:pointer;font-size:11px}.cpp-v37-note{font-size:10px;color:#7196bd;margin-top:9px}
+</style>
+<script id="cpp-v37-smart-personal">
+(()=>{'use strict';
+const KEY='cpp_v37_preferences_v1',MAX=6;const safeIntents=['smart','p2p','recharge','market','work','finance','referrals','transfer','wallet'];
+function read(){try{const x=JSON.parse(localStorage.getItem(KEY)||'{}');return x&&typeof x==='object'?x:{}}catch(e){return {}}}
+function write(x){try{localStorage.setItem(KEY,JSON.stringify(x))}catch(e){}}
+function record(intent){if(!safeIntents.includes(intent))return;const x=read();x.counts=x.counts||{};x.counts[intent]=Math.min(50,Number(x.counts[intent]||0)+1);x.last=intent;x.updatedAt=Date.now();write(x)}
+function top(){const x=read(),c=x.counts||{};return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,MAX).map(([intent])=>intent)}
+const labels={smart:'Cuba Blue Smart',p2p:'P2P + Escrow',recharge:'Recargas',market:'Marketplace',work:'Trabajar',finance:'Mis finanzas',referrals:'Referidos',transfer:'Transferir',wallet:'Billetera'};
+function go(i){record(i);if(i==='smart')return window.__CPP_V36__?.open?.();if(i==='p2p')return (window.__CPP_P2P_FINAL_V37__?.open||window.__CPP_P2P_V31__?.open||window.p2pPanel||window.__CPP_P2P_OPEN__)?.();if(i==='recharge')return typeof rechargePanel==='function'&&rechargePanel();if(i==='market')return typeof nav==='function'&&nav('market');if(i==='work')return typeof workLife==='function'&&workLife();if(i==='finance')return typeof financeLife==='function'&&financeLife(false);if(i==='referrals')return typeof referralsPanel==='function'&&referralsPanel();if(i==='transfer')return typeof nav==='function'&&nav('transfer');if(i==='wallet')return typeof nav==='function'&&nav('wallet')}
+function render(){const host=document.getElementById('cppV37Personal');if(!host)return;const prefs=top();if(!prefs.length){host.innerHTML='<div class="cpp-v37"><h4>✨ Tu acceso inteligente</h4><small>Cuba Plus Pay irá aprendiendo qué herramientas usas más para ponértelas a mano.</small><div class="cpp-v37-row"><button class="cpp-v37-chip" data-v37="smart">Cuba Blue Smart</button><button class="cpp-v37-chip" data-v37="p2p">P2P + Escrow</button><button class="cpp-v37-chip" data-v37="recharge">Recargas</button></div><div class="cpp-v37-note">Preferencias guardadas solo en este dispositivo. Sin contraseñas, tokens ni saldos.</div></div>'}else{host.innerHTML='<div class="cpp-v37"><h4>✨ Para ti</h4><small>Accesos según tu uso reciente.</small><div class="cpp-v37-row">'+prefs.map(i=>'<button class="cpp-v37-chip" data-v37="'+i+'">'+labels[i]+'</button>').join('')+'</div><div class="cpp-v37-note">Personalización local. Puedes limpiar estos accesos desde “Borrar preferencias”.</div><div class="cpp-v37-row"><button class="cpp-v37-chip" data-v37-clear="1">Borrar preferencias</button></div></div>'}host.querySelectorAll('[data-v37]').forEach(b=>b.onclick=()=>go(b.dataset.v37));host.querySelector('[data-v37-clear]')?.addEventListener('click',()=>{localStorage.removeItem(KEY);render()})}
+function mount(){let h=document.getElementById('cppV37Personal');if(h)return h;const page=document.querySelector('#page-home')||document.querySelector('.content .page.active');if(!page)return;h=document.createElement('div');h.id='cppV37Personal';const a=page.querySelector('#cppV36Attention');(a||page.firstElementChild)?.after(h);render();return h}
+function hook(){const oldNav=window.nav;if(typeof oldNav==='function'&&!oldNav.__v37){const n=function(p){const map={home:'smart',resolver:'smart',market:'market',transfer:'transfer',wallet:'wallet'};if(map[p])record(map[p]);return oldNav.apply(this,arguments)};n.__v37=true;window.nav=n}}
+window.__CPP_V37__={read,record,top,render,mount,clear:()=>{localStorage.removeItem(KEY);render()}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{hook();mount()},1500),{once:true});else setTimeout(()=>{hook();mount()},1500);
+})();
+</script>
