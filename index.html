@@ -261,6 +261,16 @@ a[data-page="resolver"],
 .op[data-op="ai"]{display:none!important}
 #page-home .cpp-ai-main[data-op="ai"]{display:flex!important}
 #page-home .cpp-ai-main{width:100%;min-height:145px;cursor:pointer}
+</style>
+<style id="cpp-blue-smart-single-entry-final-v2">
+/* ÚNICO acceso visible de inteligencia artificial: CUBA PLUS SMART en Inicio. */
+#page-home button.cpp-ai-main[data-op="ai"]{display:flex!important;visibility:visible!important;opacity:1!important}
+#page-home .cpp-ai-main[data-op="ai"]{pointer-events:auto!important}
+.cpp-home-account{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 2px}
+.cpp-home-account>div{padding:10px 12px;border:1px solid #0b5cae;border-radius:13px;background:#041a3d;text-align:left;min-width:0}
+.cpp-home-account span{display:block;color:#719bc5;font-size:9px;text-transform:uppercase;letter-spacing:.8px}
+.cpp-home-account b{display:block;margin-top:3px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:520px){.cpp-home-account{grid-template-columns:1fr}.cpp-home-account>div{padding:9px 11px}}
 </style></head>
 
 <script id="cpp-v18-global-runtime">
@@ -304,6 +314,11 @@ a[data-page="resolver"],
       <div class="cpp-ai-kicker">CUBA PLUS PAY</div>
       <h1 id="hello">Hola</h1>
       <p>Tu dinero. Tus pagos. Tu vida digital.</p>
+    </div>
+
+    <div class="cpp-home-account" aria-label="Datos de la cuenta">
+      <div><span>Correo</span><b id="homeEmail">—</b></div>
+      <div><span>Cuenta</span><b id="homeAccountId">—</b></div>
     </div>
 
     <section class="cpp-balance-only" aria-label="Saldos y monedas">
@@ -382,6 +397,15 @@ const statusText=s=>({pending:'Pendiente',processing:'Procesando',completed:'Com
 const kycText=s=>({unverified:'No verificado',pending:'Pendiente',approved:'Aprobado',rejected:'Rechazado',expired:'Expirado',NOT_STARTED:'No iniciado'}[s]||s||'No iniciado');
 let signup=false,recovery=false,currentUser=null,gameSession=null;
 function user(){return currentUser;}
+
+// CUBA PLUS SMART · datos reales de cuenta en Inicio (sin inventar un número de cuenta).
+function renderHomeAccount(){
+  const u=window.__CPP_CURRENT_USER||window.currentUser||null;
+  const email=document.getElementById('homeEmail');
+  const account=document.getElementById('homeAccountId');
+  if(email) email.textContent=u?.email||'—';
+  if(account) account.textContent=u?.id ? String(u.id).slice(0,8).toUpperCase() : '—';
+}
 function nav(page){if(!currentUser&&page!=='home')return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page)?.classList.add('active');document.getElementById('shell')?.classList.toggle('cpp-home-only-mode',page==='home');if(page==='market'&&currentUser)loadMarketplace().catch(()=>{});if(page==='history'&&currentUser)loadData().catch(()=>{});document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const names={home:'Inicio',resolver:'Resolver mi día',wallet:'Billetera',transfer:'Transferir CRX',market:'Marketplace',game:'Juego CRX',profile:'Mi perfil',more:'Más',history:'Movimientos'};$('pageTitle').textContent=names[page]||'Inicio';$('side').classList.remove('open');scrollTo({top:0,behavior:'smooth'})}
 function setAuth(){if(recovery)return;$('authTitle').textContent=signup?'Crear cuenta':'Iniciar sesión';$('authHint').textContent=signup?'Crea una cuenta real con correo y contraseña.':'Accede a tu cuenta real.';$('authBtn').textContent=signup?'Crear cuenta':'Entrar';$('modeBtn').textContent=signup?'Ya tengo cuenta':'Crear cuenta';show('newPassWrap',false);show('modeBtn',true);show('resetBtn',true);msg('authMsg','')}
 function renderTx(rows,target){const box=$(target);if(!box)return;box.innerHTML='';if(!rows?.length){box.innerHTML='<div class="empty">No hay movimientos registrados para esta cuenta.</div>';return}rows.forEach(x=>{const d=document.createElement('div');d.className='tx';const st=x.status;d.innerHTML='<div class="tx-icon">'+(x.type==='deposit'?'＋':x.type==='transfer'?'↗':x.type==='withdrawal'?'↙':'◈')+'</div><div><b>'+esc(x.type||'operación')+'</b><small>'+esc(x.created_at?new Date(x.created_at).toLocaleString('es-ES'):'')+' · '+esc(x.rail||'interno')+(x.reference?' · '+esc(x.reference):'')+'</small></div><div class="amount"><span class="'+(st==='completed'?'ok':st==='pending'||st==='processing'?'wait':'bad')+'">'+esc(statusText(st))+'</span><div>'+fmt(x.amount)+' '+esc(x.currency||'')+'</div></div>';box.appendChild(d)})}
@@ -1216,6 +1240,7 @@ window.referralsPanel=window.__CPP_REFERRALS_OPEN__||window.__CPP_CORE?.referral
 async function advanced(op){if(op==='p2p'){const x=window.__CPP_P2P_V31__;const fn=typeof x==='function'?x:x?.open||window.p2pPanel||window.CP_FINAL_AUDIT?.p2pPanel;if(typeof fn!=='function')throw new Error('El módulo P2P V31 no está cargado');return fn()}const a=audit();const map={p2p:'p2pPanel',crypto:'cryptoPanel',crm:'crmPanel',integrity:'integrityPanel',withdrawal_audit:'withdrawalAuditPanel',reconciliation:'reconciliationPanel',incidents:'financialIncidentsPanel',recharge:'rechargePanel'};if(map[op]&&typeof a[map[op]]==='function')return a[map[op]]();if(op==='provider')return providerPanel();if(op==='security')return securityPanel();if(op==='financial_audit')return financialAudit();if(op==='diagnostics'||op==='performance')return diagnostics();if(op==='system_audit')return systemAuditPanel();if(op==='preflight')return preflight();if(op==='financial_lab')return financialLabPanel();if(op==='transaction_verify'||op==='e2e_full_test')return e2e();if(op==='state_machine'||op==='orchestrator')return readiness();if(op==='execution_kernel')return executionKernel();if(op==='financial_center')return financialCenter();if(op==='cup_funding')return cupFunding();modal('Módulo', '<div class="notice">'+esc(op)+' conectado al router V27.</div>')}
 
 const routes={
+ ai:()=>window.__CPP_V36__?.open?.(),
  transfer:()=>CORE.nav?.('transfer'),receive:()=>CORE.receive?.(),deposit:()=>CORE.deposit?.(),withdraw:()=>CORE.withdrawFor?.('USD'),recharge:()=>advanced('recharge'),orders:()=>CORE.loadOrders?.(),invoices:()=>CORE.loadInvoices?.(),links:()=>CORE.loadPaymentLinks?.(),pay:()=>CORE.payInvoice?.(),admin:()=>CORE.adminPanel?.(),payment_methods:()=>CORE.paymentMethods?.(),referrals:()=>{const fn=window.__CPP_REFERRALS_OPEN__||window.referralsPanel||CORE.referralsPanel;if(typeof fn!=='function')throw new Error('El módulo de referidos no está cargado');return fn();},exchange:exchangePanel,
  p2p:()=>{const x=window.__CPP_P2P_OPEN__||window.__CPP_P2P_V31__;const fn=typeof x==='function'?x:x?.open||window.p2pPanel||window.CP_FINAL_AUDIT?.p2pPanel;if(typeof fn!=='function')throw new Error('El módulo P2P no está cargado');return fn();},crypto:()=>advanced('crypto'),crm:()=>advanced('crm'),provider:()=>advanced('provider'),security:()=>advanced('security'),financial_audit:()=>advanced('financial_audit'),sync_rates:()=>invoke('financial-exchange-gateway',{operation:'rates'}).then(r=>modal('Tasas sincronizadas','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),diagnostics:()=>advanced('diagnostics'),system_audit:()=>advanced('system_audit'),integrity:()=>advanced('integrity'),withdrawal_audit:()=>advanced('withdrawal_audit'),reconciliation:()=>advanced('reconciliation'),incidents:()=>advanced('incidents'),usdt_gateway:()=>invoke('usdt-onchain-gateway',{operation:'capabilities'}).then(r=>modal('USDT On-Chain','<pre style="white-space:pre-wrap;overflow:auto">'+esc(JSON.stringify(r,null,2))+'</pre>')),performance:()=>advanced('performance'),preflight:()=>advanced('preflight'),financial_lab:()=>advanced('financial_lab'),transaction_verify:()=>advanced('transaction_verify'),state_machine:()=>advanced('state_machine'),orchestrator:()=>advanced('orchestrator'),execution_kernel:()=>advanced('execution_kernel'),e2e_full_test:()=>advanced('e2e_full_test'),financial_center:()=>advanced('financial_center'),cup_funding:()=>advanced('cup_funding')
 };
