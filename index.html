@@ -1226,7 +1226,7 @@ const boot=$('cppBootStatus');if(boot)boot.textContent='CUBA PLUS PAY V30.5 list
 <script id="cpp-referrals-runtime-fix">
 (()=>{
 'use strict';
-const CP=window.__CPP_DB;
+const CP0=()=>window.__CPP_DB;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=v=>{const n=Number(v);return Number.isFinite(n)?n.toLocaleString('es-ES',{maximumFractionDigits:8}):'—'};
 function setModal(title,html){
@@ -1234,18 +1234,19 @@ function setModal(title,html){
  if(!m||!t||!b) throw new Error('INTERFACE_MODAL_NOT_FOUND');
  t.textContent=title;b.innerHTML=html;m.classList.remove('hidden');
 }
+async function waitDB(ms=5000){const t=Date.now();while(!window.__CPP_DB&&Date.now()-t<ms)await new Promise(r=>setTimeout(r,100));return window.__CPP_DB}
+async function rpcSafe(fn,args){const d=await waitDB();if(!d?.rpc)throw new Error('SUPABASE_CLIENT_NOT_READY');let last=null;for(let i=0;i<2;i++){try{const out=await d.rpc(fn,args||{});if(!out?.error)return out;last=out.error;if(!/Failed to fetch|NetworkError|fetch/i.test(String(out.error?.message||'')))throw out.error}catch(e){last=e;if(i===1)throw e;await new Promise(r=>setTimeout(r,700))}}throw last||new Error('REFERRAL_NETWORK_ERROR')}
 async function openReferrals(){
- if(!CP) throw new Error('SUPABASE_CLIENT_NOT_READY');
- const {data:{user},error:ue}=await CP.auth.getUser();
- if(ue)throw ue;
+ const CP=await waitDB();if(!CP)throw new Error('SUPABASE_CLIENT_NOT_READY');
+ const {data:{session},error:se}=await CP.auth.getSession();
+ if(se)throw se;
+ const user=session?.user||null;
  if(!user) return setModal('Referidos','<div class="msg error">Debes iniciar sesión para usar Referidos.</div>');
  setModal('Programa de referidos · CUBA PLUS PAY','<div id="cppRefRuntimeBox" class="notice">Creando/verificando tu cuenta de referidos…</div>');
  const box=document.getElementById('cppRefRuntimeBox');
  try{
-  const ensured=await CP.rpc('ensure_my_referral_account');
-  if(ensured.error)throw ensured.error;
-  const snap=await CP.rpc('referral_snapshot');
-  if(snap.error)throw snap.error;
+  const ensured=await rpcSafe('ensure_my_referral_account');
+  const snap=await rpcSafe('referral_snapshot');
   const r=snap.data||{},code=String(r.referral_code||'').trim().toUpperCase();
   if(!code)throw new Error('REFERRAL_ACCOUNT_NOT_FOUND');
   const base=location.href.split('?')[0].split('#')[0],link=base+'?ref='+encodeURIComponent(code);
@@ -1265,15 +1266,15 @@ async function openReferrals(){
    if(!claim)return say('cppRefClaimMsg','Introduce un código válido.',false);
    const b=document.getElementById('cppRefClaimBtn');b.disabled=true;
    try{
-    const out=await CP.rpc('claim_referral_code',{p_code:claim});
-    if(out.error)throw out.error;
+    const out=await rpcSafe('claim_referral_code',{p_code:claim});
     say('cppRefClaimMsg','Código vinculado correctamente.',true);
     setTimeout(openReferrals,400);
    }catch(e){say('cppRefClaimMsg','No se pudo vincular el código: '+(e?.message||e),false)}
    finally{b.disabled=false}
   };
  }catch(e){
-  box.innerHTML='<div class="msg error"><b>No se pudo abrir Referidos.</b><br>'+esc(e?.message||e)+'</div><div class="notice">El sistema no inventó código, enlace ni comisión. Puedes cerrar y volver a intentarlo.</div>';
+  const raw=String(e?.message||e||'Error desconocido');const net=/Failed to fetch|NetworkError|fetch/i.test(raw);
+  box.innerHTML='<div class="msg error"><b>No se pudo abrir Referidos.</b><br>'+esc(net?'No se pudo conectar temporalmente con Supabase. Se reintentó automáticamente.':raw)+'</div><div class="notice">'+esc(net?'Comprueba tu conexión y vuelve a abrir Referidos. No se creó ni modificó ningún código, enlace, saldo o comisión.':'El sistema no inventó código, enlace ni comisión.')+'</div>';
  }
 }
 window.__CPP_REFERRALS_OPEN__=openReferrals;
