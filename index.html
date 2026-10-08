@@ -2091,3 +2091,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
+<script id="cpp-blue-smart-orchestrator">
+window.cppBlueSmartGo=async function(action){
+ if(!action)return;
+ try{
+  if(action.action==="p2p"&&typeof window.p2pPanel==="function")return await window.p2pPanel();
+  if(action.action==="support"&&typeof window.supportPanel==="function")return await window.supportPanel();
+  if(action.page){const b=document.querySelector('[data-page="'+action.page+'"]');if(b)b.click();}
+  if(action.module){setTimeout(()=>{const k=action.module;const sels=['[data-module="'+k+'"]','[data-op="'+k+'"]','#'+k,'[data-action="'+k+'"]'];for(const s of sels){const el=document.querySelector(s);if(el){el.click();break;}}},150);}
+ }catch(e){console.error("CUBA BLUE SMART navigation",e);}
+};
+</script>
