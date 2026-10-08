@@ -2113,3 +2113,13 @@ window.cppBlueSmartGo=async function(action){
  }catch(e){console.error("CUBA BLUE SMART navigation",e);}
 };
 </script>
+
+<!-- CPP BLUE SMART · FULL SUPERAPP ORCHESTRATOR CAPABILITY MAP · V41 -->
+<script id="cpp-blue-smart-superapp-v41">
+(()=>{'use strict';
+const caps={p2p:['P2P','p2p','P2P y escrow'],deposit:['deposit','deposito','Depósitos'],withdrawal:['withdrawal','retiro','Retiros'],exchange:['exchange','cambio','Exchange'],mobile_topup:['mobile-recharge','recarga','Recargas móviles'],referrals:['referrals','referidos','Referidos'],kyc:['kyc','KYC'],security:['security','seguridad','Seguridad'],marketplace:['market','marketplace','Marketplace'],payments:['payments','Pagos'],remittance:['remittance','remesa','Remesas'],qr:['qr','QR'],crypto:['crypto','Crypto'],support:['support','Soporte'],wallet:['wallet','Billetera'],movements:['wallet','Billetera']};
+function clickFirst(keys){for(const k of keys){const sels=['[data-module="'+k+'"]','[data-op="'+k+'"]','[data-action="'+k+'"]','[data-page="'+k+'"]','#'+k];for(const s of sels){try{const el=document.querySelector(s);if(el){el.click();return true}}catch{}}}return false}
+async function open(cap){if(cap==='p2p'&&typeof window.p2pPanel==='function')return window.p2pPanel();if(cap==='support'&&typeof window.supportPanel==='function')return window.supportPanel();if(cap==='kyc'&&typeof window.kycPanel==='function')return window.kycPanel();if(cap==='security'&&typeof window.securityPanel==='function')return window.securityPanel();const ok=clickFirst(caps[cap]||[cap]);if(!ok&&cap==='wallet'&&typeof window.nav==='function')return window.nav('wallet');if(!ok&&cap==='marketplace'&&typeof window.nav==='function')return window.nav('market');return ok}
+window.__CPP_BLUE_SMART_CAPABILITIES__={version:'V41',caps,open,all:Object.keys(caps)};const old=window.cppBlueSmartGo;window.cppBlueSmartGo=async function(action){if(!action)return;const key=String(action.capability||action.intent||action.action||action.module||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');if(caps[key])return open(key);if(action.action==='p2p')return open('p2p');if(action.action==='support')return open('support');return old?.(action)};
+})();
+</script>
