@@ -2041,10 +2041,7 @@ async function request(){
 }
 function mount(){
  page();
- if(!document.querySelector('[data-page="earn"]')){
-   document.querySelectorAll('.nav').forEach(n=>{const b=document.createElement('button');b.setAttribute('data-page','earn');b.innerHTML='<span class="ico">💰</span>Ganar dinero';b.onclick=()=>nav('earn');n.appendChild(b)});
 
- }
  document.getElementById('cppEarnPublish')?.addEventListener('click',publish);
  document.getElementById('cppEarnMarket')?.addEventListener('click',()=>nav('market'));
  document.getElementById('cppEarnRequest')?.addEventListener('click',request);
