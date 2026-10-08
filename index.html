@@ -174,6 +174,15 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 .cpp-ai-hint{color:#668fb9;font-size:10px;line-height:1.6;max-width:600px}
 @media(max-width:600px){.cpp-home-ai-only{min-height:calc(100vh - 120px);padding:18px 2px}.cpp-ai-welcome{padding:18px 14px}.cpp-ai-welcome h1{font-size:23px}.cpp-ai-main{min-height:135px}.cpp-ai-hint{font-size:9px}}
 </style>
+
+<style id="cpp-home-balance-smart-v2">
+.cpp-balance-only{width:min(650px,100%);padding:18px;border:1px solid #126bc8;border-radius:22px;background:linear-gradient(145deg,#061d4b,#07142f);box-shadow:0 14px 38px #0006;text-align:left}
+.cpp-balance-title{display:flex;justify-content:space-between;align-items:center;color:#86b3da;font-size:11px}.cpp-balance-title b{color:#20dcff;font-size:12px}
+.cpp-crx-total{font-size:31px;font-weight:1000;margin:5px 0 12px}
+.cpp-balance-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px}.cpp-balance-meta div{padding:9px 10px;border-radius:12px;background:#ffffff08}.cpp-balance-meta span,.cpp-assets span{display:block;color:#7198bd;font-size:9px}.cpp-balance-meta b{display:block;margin-top:3px;font-size:12px}
+.cpp-assets{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #ffffff12;padding-top:11px}.cpp-assets>div{text-align:center;border-right:1px solid #ffffff12}.cpp-assets>div:last-child{border-right:0}.cpp-assets b{display:block;margin-top:3px;font-size:11px}
+.cpp-ai-main{margin-top:2px}
+</style>
 </head>
 
 <script id="cpp-v18-global-runtime">
@@ -217,14 +226,34 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
       <div class="cpp-ai-kicker">CUBA PLUS PAY</div>
       <h1 id="hello">Hola</h1>
       <p>Tu dinero. Tus pagos. Tu vida digital.</p>
-      <small>Todo lo que necesitas de la aplicación puede comenzar desde aquí.</small>
     </div>
-    <button class="cpp-ai-main" data-op="ai" type="button" aria-label="Abrir Cuba Plus Smart">
+
+    <section class="cpp-balance-only" aria-label="Saldos y monedas">
+      <div class="cpp-balance-title"><span>Saldo principal</span><b>CRX</b></div>
+      <div id="crxBalance" class="cpp-crx-total">— CRX</div>
+      <div class="cpp-balance-meta">
+        <div><span>Disponible</span><b id="totalAvailable">— CRX</b></div>
+        <div><span>Bloqueado</span><b id="totalLocked">— CRX</b></div>
+      </div>
+      <div class="cpp-assets">
+        <div><span>USD</span><b id="usd">—</b></div>
+        <div><span>CUP</span><b id="cup">—</b></div>
+        <div><span>USDT</span><b id="usdt">—</b></div>
+        <div><span>BTC</span><b id="btc">—</b></div>
+      </div>
+    </section>
+
+    <button class="cpp-ai-main" data-op="ai" type="button" aria-label="Abrir Cuba Blue Smart">
       <span class="cpp-ai-orb">✦</span>
-      <b>CUBA PLUS SMART</b>
-      <small>Pregúntame qué necesitas y buscaré la función dentro de Cuba Plus Pay.</small>
+      <b>CUBA BLUE SMART</b>
+      <small>Escribe lo que necesitas. Buscaré y abriré la función correspondiente dentro de Cuba Plus Pay.</small>
     </button>
-    <div class="cpp-ai-hint">Ejemplos: “quiero hacer una recarga”, “muéstrame mi billetera”, “quiero usar P2P”, “¿dónde están mis movimientos?”</div>
+
+    <div class="cpp-ai-hint">Un solo acceso: pregunta por P2P, recargas, billetera, movimientos, Marketplace, referidos o cualquier otra función.</div>
+
+    <div style="display:none" aria-hidden="true">
+      <span id="role"></span><span id="kyc"></span><span id="walletCount"></span><span id="accountState"></span><span id="totalPending"></span>
+    </div>
   </div>
 </section>
     <section class="card cpp-panel cpp-discover">
