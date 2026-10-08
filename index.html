@@ -2139,3 +2139,71 @@ async function open(cap){if(cap==='p2p'&&typeof window.p2pPanel==='function')ret
 window.__CPP_BLUE_SMART_CAPABILITIES__={version:'V41',caps,open,all:Object.keys(caps)};const old=window.cppBlueSmartGo;window.cppBlueSmartGo=async function(action){if(!action)return;const key=String(action.capability||action.intent||action.action||action.module||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');if(caps[key])return open(key);if(action.action==='p2p')return open('p2p');if(action.action==='support')return open('support');return old?.(action)};
 })();
 </script>
+
+<!-- CPP FINAL · CUBA BLUE SMART SINGLE ENTRY + LOGIN LOGO · 2026-10-08 -->
+<style id="cpp-final-smart-single-entry">
+#page-home [data-cuba-smart="1"]{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+[data-action="smart"],[data-op="ai"],[data-page="resolver"],[data-smart-nav],[data-smart-quick],#cppV37Personal,#cppV38Box,#cppV39Box,#cppV40Box,#cppV36Bell{display:none!important}
+.brand-logo{
+  overflow:hidden!important;position:relative!important;
+  background:linear-gradient(0deg,#1f5fa8 0 20%,#fff 20% 40%,#1f5fa8 40% 60%,#fff 60% 80%,#1f5fa8 80% 100%)!important;
+  border:3px solid #fff!important;box-shadow:0 0 0 2px #0a72df,0 0 35px #168cff88,0 0 75px #168cff44!important;
+}
+.brand-logo:before{content:""!important;position:absolute!important;left:0;top:0;bottom:0;width:43%;background:#d81e3f!important;clip-path:polygon(0 0,100% 50%,0 100%)!important}
+.brand-logo:after{content:""!important}
+.cpp-login-mark{position:relative;z-index:2;display:grid;place-items:center;width:70px;height:70px;border-radius:50%;background:rgba(2,20,55,.72);border:2px solid rgba(255,255,255,.82);color:#fff;font-size:28px;font-weight:1000;letter-spacing:-2px;text-shadow:0 2px 8px #000b}
+.cpp-login-star{position:absolute;z-index:3;left:15px;top:37px;color:#fff4a8;font-size:14px;text-shadow:0 1px 5px #000}
+.cpp-balance-only{border-color:#e9c65a!important}
+.cpp-assets>div{border:1px solid #ffffff10!important;border-radius:12px!important}
+.cpp-assets>div:first-child{border-color:#e9c65a55!important}.cpp-assets>div:nth-child(2){border-color:#168cff55!important}.cpp-assets>div:nth-child(3){border-color:#12e9a155!important}.cpp-assets>div:nth-child(4){border-color:#754cff66!important}
+.cpp-assets b{font-size:12px!important}
+#page-home [data-cuba-smart="1"]{min-height:158px!important;border-radius:26px!important;border:1px solid #ffe18a!important;background:linear-gradient(135deg,#063d99,#1659cb 48%,#5724a4 100%)!important;box-shadow:0 0 0 1px #ffffff12 inset,0 14px 42px #0008,0 0 34px #e3bb4b44!important}
+#page-home [data-cuba-smart="1"] .cpp-ai-orb{background:radial-gradient(circle at 35% 25%,#fff,#ffe58a 32%,#246cff 68%,#754cff)!important;color:#704100!important;box-shadow:0 0 32px #ffe18a99!important}
+#page-home [data-cuba-smart="1"] b{font-size:19px!important;letter-spacing:.6px!important}
+@media(max-width:430px){.brand-logo{width:104px;height:104px}.cpp-login-mark{width:64px;height:64px;font-size:25px}.cpp-login-star{left:14px;top:36px}}
+</style>
+<script id="cpp-final-blue-smart-runtime">
+(()=>{'use strict';
+const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+const removeLegacy=()=>{
+  document.querySelectorAll('[data-action="smart"],[data-op="ai"],[data-page="resolver"],[data-smart-nav],[data-smart-quick],#cppV37Personal,#cppV38Box,#cppV39Box,#cppV40Box,#cppV36Bell').forEach(el=>el.remove());
+};
+const open=async(initial='')=>{
+  const m=document.getElementById('modal'),t=document.getElementById('modalTitle'),b=document.getElementById('modalBody');if(!m||!t||!b)return;
+  t.textContent='CUBA BLUE SMART';
+  b.innerHTML='<div class="life-hero"><div class="life-kicker">CUBA PLUS PAY · INTELIGENCIA</div><h2 style="margin:5px 0">¿Qué necesitas resolver?</h2><p>Escribe tu pregunta o lo que quieres hacer. Smart consulta datos reales, te aconseja y puede llevarte al módulo correspondiente.</p><div class="life-ask"><input id="cppFinalSmartInput" placeholder="Ej.: ¿cuánto tengo?, necesito una recarga, quiero hacer P2P…" autocomplete="off" value="'+esc(initial)+'"><button class="btn" id="cppFinalSmartSend">Preguntar</button></div><div class="life-grid" style="margin-top:10px"><button class="life-action" data-final-smart-q="¿Cuánto dinero tengo disponible?"><div class="li">💰</div><b>Mi dinero</b><small>Consultar datos reales</small></button><button class="life-action" data-final-smart-q="¿Qué me recomiendas hacer hoy?"><div class="li">✨</div><b>Recomiéndame</b><small>Recibir sugerencias</small></button><button class="life-action" data-final-smart-q="¿Cómo hago P2P de forma segura?"><div class="li">⇄</div><b>P2P seguro</b><small>Guía y acceso</small></button><button class="life-action" data-final-smart-q="¿Cómo recargo un móvil?"><div class="li">📱</div><b>Recarga</b><small>Guía y acceso</small></button></div><div id="cppFinalSmartLog" class="life-list"></div></div>';
+  m.classList.remove('hidden');
+  const input=document.getElementById('cppFinalSmartInput'),send=document.getElementById('cppFinalSmartSend'),log=document.getElementById('cppFinalSmartLog');
+  const ask=async(q)=>{
+    q=String(q||'').trim();if(!q)return;
+    log.insertAdjacentHTML('beforeend','<div class="card"><b>Tú:</b> '+esc(q)+'</div><div class="card"><b>Smart:</b> Consultando…</div>');
+    const last=log.lastElementChild;send.disabled=true;
+    try{
+      const db=window.__CPP_DB;if(!db)throw new Error('La sesión inteligente no está disponible.');
+      const r=await db.functions.invoke('cuba-plus-ai-v2',{body:{question:q}});if(r.error)throw r.error;
+      const d=r.data||{};
+      last.innerHTML='<b>Smart:</b> '+esc(d.answer||'No encontré una respuesta verificada.')+(d.verified?' <span class="life-chip">DATOS VERIFICADOS</span>':'')+(d.orchestrated?'<div class="notice" style="margin-top:8px"><b>Siguiente paso:</b> Smart ha analizado tu solicitud y el flujo seguro correspondiente está listo para continuar.</div>':'');
+      const low=q.toLowerCase();
+      const action=(/p2p|escrow|comprar crx|vender crx|intercambiar/.test(low))?'p2p':(/recarg|nauta|saldo movil|saldo móvil|telefono|teléfono|celular/.test(low))?'recharge':(/marketplace|mercado|comprar producto|vender producto/.test(low))?'market':(/referid|comision|comisión|invitar/.test(low))?'referrals':(/transferir|transferencia|enviar dinero|mandar dinero/.test(low))?'transfer':(/billetera|wallet|depositar|retirar|retiro/.test(low))?'wallet':null;
+      if(action){
+        const go=document.createElement('button');go.className='btn secondary';go.textContent='Llevarme al módulo';
+        go.onclick=()=>{try{if(window.__CPP_V40__?.open)window.__CPP_V40__.open(q);else if(action==='market'&&typeof nav==='function')nav('market');else if(action==='wallet'&&typeof nav==='function')nav('wallet')}catch{}};
+        last.appendChild(document.createElement('br'));last.appendChild(go);
+      }
+    }catch(e){last.innerHTML='<b>Smart:</b> No pude consultar el servicio inteligente ahora. '+esc(e?.message||e)}
+    finally{send.disabled=false;log.scrollTop=log.scrollHeight}
+  };
+  send.onclick=()=>ask(input.value);input.onkeydown=e=>{if(e.key==='Enter')send.click()};
+  b.querySelectorAll('[data-final-smart-q]').forEach(x=>x.onclick=()=>ask(x.dataset.finalSmartQ));
+  if(initial)ask(initial);input.focus();
+};
+const wire=()=>{
+  removeLegacy();
+  const btn=document.querySelector('#page-home [data-cuba-smart="1"]');
+  if(btn&&btn.dataset.cppFinalSmart!=='1'){btn.dataset.cppFinalSmart='1';btn.onclick=e=>{e.preventDefault();e.stopPropagation();open('')}}
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
+new MutationObserver(wire).observe(document.body,{childList:true,subtree:true});
+window.__CPP_BLUE_SMART_FINAL__={open,removeLegacy,version:'FINAL-2026-10-08'};
+})();
+</script>
