@@ -2053,3 +2053,41 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 \n
+<!-- CPP E2E P2P FINAL HARDENING · 2026-10-08 -->
+<script id="cpp-e2e-p2p-final-hardening">
+(()=>{'use strict';
+  const boot=()=>{
+    const resolve=()=>window.__CPP_P2P_V31__?.open||window.p2pPanel||window.__CPP_P2P_OPEN__||null;
+    const wire=()=>{
+      const fn=resolve();
+      if(typeof fn!=='function')return;
+      window.p2pPanel=fn;
+      window.__CPP_P2P_OPEN__=fn;
+      window.__CPP_P2P_OPEN_FINAL__=fn;
+      window.__CPP_P2P_FINAL_V37__={open:fn,version:'E2E-final'};
+      document.querySelectorAll('[data-op="p2p"],[data-action="p2p"],[data-module="p2p"]').forEach(old=>{
+        if(old.dataset.cppE2eP2p==='1')return;
+        const el=old.cloneNode(true);
+        old.replaceWith(el);
+        el.dataset.cppE2eP2p='1';
+        el.addEventListener('click',async ev=>{
+          ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();
+          if(el.dataset.cppP2pBusy==='1')return;
+          el.dataset.cppP2pBusy='1';
+          const wasDisabled=el.disabled;el.disabled=true;
+          try{await fn();}
+          catch(err){
+            const b=document.getElementById('modalBody'),m=document.getElementById('modal'),t=document.getElementById('modalTitle');
+            if(b&&m&&t){t.textContent='P2P / Escrow';b.innerHTML='<div class="msg error">No se pudo abrir P2P: '+String(err?.message||err).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]))+'</div><div class="notice">No se modificó ningún saldo.</div>';m.classList.remove('hidden');}
+          } finally{el.disabled=wasDisabled;el.dataset.cppP2pBusy='0';}
+        });
+      });
+    };
+    wire();
+    setTimeout(wire,0);
+    setTimeout(wire,500);
+    setTimeout(wire,1500);
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
+</script>
