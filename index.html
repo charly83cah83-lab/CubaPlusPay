@@ -250,7 +250,18 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 .cpp-assets{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #ffffff12;padding-top:11px}.cpp-assets>div{text-align:center;border-right:1px solid #ffffff12}.cpp-assets>div:last-child{border-right:0}.cpp-assets b{display:block;margin-top:3px;font-size:11px}
 .cpp-ai-main{margin-top:2px}
 </style>
-</head>
+<style id="cpp-blue-smart-single-entry-v1">
+/* CUBA BLUE SMART: una sola puerta visible en toda la aplicación */
+button[data-action="smart"],
+button[data-op="ai"],
+button[data-page="resolver"],
+a[data-action="smart"],
+a[data-op="ai"],
+a[data-page="resolver"],
+.op[data-op="ai"]{display:none!important}
+#page-home .cpp-ai-main[data-op="ai"]{display:flex!important}
+#page-home .cpp-ai-main{width:100%;min-height:145px;cursor:pointer}
+</style></head>
 
 <script id="cpp-v18-global-runtime">
 (function(){
