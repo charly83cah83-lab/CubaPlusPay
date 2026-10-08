@@ -348,6 +348,7 @@ async function session(){
  if(session){
   try{
    await loadData();
+   nav('home');
    await claimPendingReferral();
    if(typeof loadExchangeOptions==='function')await loadExchangeOptions();
    if(typeof loadHomeOperationalSummary==='function')await loadHomeOperationalSummary();
