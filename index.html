@@ -2022,8 +2022,12 @@ async function load(){
  document.getElementById('cppEarnPending').textContent=pe?((ev||[]).filter(x=>x.status==='pending').map(x=>money(x.amount,x.currency)).slice(0,3).join(' · ')||'0'):'0';
  const box=document.getElementById('cppEarnEvents');
  box.innerHTML=(ev||[]).length?(ev||[]).map(x=>'<div class="cpp-earn-row"><div><b>'+esc(x.description||x.source)+'</b><small>'+esc(x.source)+' · '+new Date(x.created_at).toLocaleString('es-ES')+'</small></div><div class="'+(x.status==='available'?'cpp-earn-positive':'cpp-earn-pending')+'">'+money(x.amount,x.currency)+'</div></div>').join(''):'<div class="empty">Todavía no hay ganancias registradas.</div>';
- const rc=await d.rpc('cp_get_or_create_referral_code');
- if(!rc.error){document.getElementById('cppEarnReferral').textContent='ACTIVO';document.getElementById('cppEarnCode').textContent='Tu código: '+esc(rc.data);document.getElementById('cppEarnCopy').dataset.code=rc.data}
+ let rc=await d.from('cp_referral_accounts').select('referral_code').eq('user_id',uid).maybeSingle();
+ if(!rc.data?.referral_code){
+   const code=crypto.randomUUID().replace(/-/g,'').slice(0,10).toUpperCase();
+   rc=await d.from('cp_referral_accounts').insert({user_id:uid,referral_code:code}).select('referral_code').maybeSingle();
+ }
+ if(rc.data?.referral_code){document.getElementById('cppEarnReferral').textContent='ACTIVO';document.getElementById('cppEarnCode').textContent='Tu código: '+esc(rc.data.referral_code);document.getElementById('cppEarnCopy').dataset.code=rc.data.referral_code}
 }
 async function publish(){
  const d=db(); if(!d)return;
