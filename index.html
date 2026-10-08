@@ -199,7 +199,15 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 </style>
 
 <style id="cpp-home-balance-smart-v2">
-.cpp-balance-only{width:min(650px,100%);padding:18px;border:1px solid #126bc8;border-radius:22px;background:linear-gradient(145deg,#061d4b,#07142f);box-shadow:0 14px 38px #0006;text-align:left}
+.cpp-balance-only{width:min(650px,100%);padding:18px;border:1px solid #126bc8;border-radius:22px;background:radial-gradient(circle at 82% 18%,#1767c844,transparent 34%),linear-gradient(145deg,#061d4b,#07142f 62%,#160d3e);box-shadow:0 14px 38px #0006;text-align:left}
+.cpp-crx-hero{display:flex;align-items:center;gap:14px;margin:7px 0 12px}
+.cpp-crx-coin{flex:0 0 76px;width:76px;height:76px;border-radius:50%;display:grid;place-items:center;align-content:center;background:radial-gradient(circle at 35% 30%,#fff4a8 0%,#ffd84d 22%,#e8a914 58%,#9b5a00 100%);border:3px solid #ffe98a;box-shadow:0 0 0 4px #d18b1430,0 8px 28px #d9941f66,inset 0 2px 7px #fff8;transform:rotate(-8deg)}
+.cpp-crx-coin span{font-size:19px;font-weight:1000;color:#6c3b00;text-shadow:0 1px 0 #fff6}
+.cpp-crx-coin small{font-size:7px;font-weight:1000;letter-spacing:1.5px;color:#704000;margin-top:-2px}
+.cpp-crx-total{font-size:31px;font-weight:1000;margin:0}
+.cpp-crx-label{font-size:8px;letter-spacing:1.2px;color:#ffd96a;margin-top:3px;font-weight:900}
+.cpp-balance-title{display:flex;justify-content:space-between;align-items:center;color:#86b3da;font-size:11px}.cpp-balance-title b{color:#ffd34e;font-size:12px}
+.cpp-home-ai-only .cpp-assets>div:first-child{border-left:1px solid #ffffff08}
 .cpp-balance-title{display:flex;justify-content:space-between;align-items:center;color:#86b3da;font-size:11px}.cpp-balance-title b{color:#20dcff;font-size:12px}
 .cpp-crx-total{font-size:31px;font-weight:1000;margin:5px 0 12px}
 .cpp-balance-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px}.cpp-balance-meta div{padding:9px 10px;border-radius:12px;background:#ffffff08}.cpp-balance-meta span,.cpp-assets span{display:block;color:#7198bd;font-size:9px}.cpp-balance-meta b{display:block;margin-top:3px;font-size:12px}
@@ -253,7 +261,10 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 
     <section class="cpp-balance-only" aria-label="Saldos y monedas">
       <div class="cpp-balance-title"><span>Saldo principal</span><b>CRX</b></div>
-      <div id="crxBalance" class="cpp-crx-total">— CRX</div>
+      <div class="cpp-crx-hero">
+        <div class="cpp-crx-coin" aria-label="Moneda CRX"><span>CRX</span><small>PLUS</small></div>
+        <div><div id="crxBalance" class="cpp-crx-total">— CRX</div><div class="cpp-crx-label">MONEDA DIGITAL CUBA PLUS</div></div>
+      </div>
       <div class="cpp-balance-meta">
         <div><span>Disponible</span><b id="totalAvailable">— CRX</b></div>
         <div><span>Bloqueado</span><b id="totalLocked">— CRX</b></div>
