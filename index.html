@@ -1973,4 +1973,80 @@ window.__CPP_KIC_ADMIN__={open,status,list,review,mountButton};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(mountButton,1500),{once:true});else setTimeout(mountButton,1500);
 })();
 </script>
+<style id="cpp-superapp-earn-css">
+.cpp-earn-hero{background:linear-gradient(135deg,#073b86,#10104e 55%,#32105e);border:1px solid #168cff;border-radius:22px;padding:18px;box-shadow:0 18px 50px #0007}
+.cpp-earn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.cpp-earn-card{background:linear-gradient(145deg,#06245a,#031737);border:1px solid #0a55a8;border-radius:17px;padding:14px}
+.cpp-earn-card h3{margin:0 0 5px}.cpp-earn-card p{color:#8fb2d9;font-size:11px;margin:0 0 10px}
+.cpp-earn-stat{font-size:24px;font-weight:1000;color:#ffe18a}.cpp-earn-muted{color:#739ac1;font-size:10px}
+.cpp-earn-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.cpp-earn-list{max-height:260px;overflow:auto}.cpp-earn-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #123b70}
+.cpp-earn-row:last-child{border-bottom:0}.cpp-earn-row small{display:block;color:#7198bf}.cpp-earn-positive{color:#12e9a1;font-weight:900}.cpp-earn-pending{color:#ffd166;font-weight:900}
+.cpp-earn-form{display:grid;gap:8px}.cpp-earn-form input,.cpp-earn-form textarea,.cpp-earn-form select{width:100%;padding:11px;border-radius:12px;border:1px solid #155fb7;background:#031638;color:#fff}
+.cpp-earn-note{margin-top:9px;color:#7895ad;font-size:10px}
+@media(max-width:800px){.cpp-earn-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.cpp-earn-grid{grid-template-columns:1fr}}
+</style>
+<script id="cpp-superapp-earn-v1">
+(()=>{'use strict';
+const db=()=>window.__CPP_DB, esc=v=>window.__CPP_V33__?.esc?window.__CPP_V33__.esc(v):String(v??'');
+const money=(n,c)=>{const x=Number(n||0);return x.toLocaleString('es-ES',{maximumFractionDigits:8})+' '+(c||'CRX')};
+function page(){
+ if(document.getElementById('page-earn'))return;
+ const home=document.querySelector('#page-home'); if(!home)return;
+ const s=document.createElement('section'); s.id='page-earn'; s.className='page';
+ s.innerHTML='<div class="cpp-earn-hero"><div class="eyebrow">CUBA PLUS · ECONOMÍA</div><h1>💰 Gana dinero con CubaPlusPay</h1><p>Vende, ofrece servicios, consigue clientes y participa en referidos. Las ganancias solo aparecen cuando existe una operación real registrada.</p></div>'+
+ '<div class="cpp-earn-grid">'+
+ '<div class="cpp-earn-card"><h3>💵 Disponible</h3><div id="cppEarnAvailable" class="cpp-earn-stat">—</div><div class="cpp-earn-muted">Eventos disponibles registrados</div></div>'+
+ '<div class="cpp-earn-card"><h3>⏳ Pendiente</h3><div id="cppEarnPending" class="cpp-earn-stat">—</div><div class="cpp-earn-muted">Aún no disponible</div></div>'+
+ '<div class="cpp-earn-card"><h3>👥 Referidos</h3><div id="cppEarnReferral" class="cpp-earn-stat">—</div><div class="cpp-earn-muted">Tu código real de invitación</div></div></div>'+
+ '<div class="cpp-earn-grid">'+
+ '<div class="cpp-earn-card"><h3>🛍️ Vende</h3><p>Publica un producto o servicio en el marketplace.</p><div class="cpp-earn-actions"><button class="btn" id="cppEarnPublish">Publicar</button><button class="btn secondary" id="cppEarnMarket">Ver marketplace</button></div></div>'+
+ '<div class="cpp-earn-card"><h3>🧑‍🔧 Consigue trabajo</h3><p>Publica una necesidad cotidiana para encontrar a alguien que pueda resolverla.</p><div class="cpp-earn-actions"><button class="btn" id="cppEarnRequest">Publicar necesidad</button></div></div>'+
+ '<div class="cpp-earn-card"><h3>👥 Invita</h3><p>Comparte tu código. Las comisiones se acreditan únicamente por acciones válidas.</p><div id="cppEarnCode" class="notice">Cargando código…</div><div class="cpp-earn-actions"><button class="btn secondary" id="cppEarnCopy">Copiar código</button></div></div></div>'+
+ '<div class="two grid"><div class="card"><h3>📊 Mis ganancias</h3><div id="cppEarnEvents" class="cpp-earn-list"><div class="empty">Consultando libro de ganancias…</div></div></div>'+
+ '<div class="card"><h3>🎯 Cómo ganar</h3><div class="profile-list"><div class="profile-item"><small>Marketplace</small><b>Vende productos y servicios</b></div><div class="profile-item"><small>Servicios</small><b>Resuelve necesidades reales</b></div><div class="profile-item"><small>Referidos</small><b>Invita usuarios y recibe comisiones válidas</b></div><div class="profile-item"><small>P2P</small><b>Opera solo con KIC, escrow y confirmación segura</b></div></div></div></div>'+
+ '<div class="cpp-earn-note">CubaPlusPay no inventa ganancias ni saldos. Los eventos de ganancias son registros del backend y no sustituyen al wallet/ledger financiero.</div>';
+ home.parentNode.insertBefore(s,home.nextSibling);
+}
+async function load(){
+ const d=db(); if(!d?.from)return;
+ const s=await d.auth.getSession(); if(!s?.data?.session)return;
+ const uid=s.data.session.user.id;
+ const {data:ev,error}=await d.from('cp_earning_events').select('id,source,status,amount,currency,description,created_at').eq('user_id',uid).order('created_at',{ascending:false}).limit(100);
+ if(error)throw error;
+ let av=0,pe=0; (ev||[]).forEach(x=>{if(x.status==='available')av+=Number(x.amount||0);if(x.status==='pending')pe+=Number(x.amount||0)});
+ document.getElementById('cppEarnAvailable').textContent=money(av,'CRX*');
+ document.getElementById('cppEarnPending').textContent=money(pe,'CRX*');
+ const box=document.getElementById('cppEarnEvents');
+ box.innerHTML=(ev||[]).length?(ev||[]).map(x=>'<div class="cpp-earn-row"><div><b>'+esc(x.description||x.source)+'</b><small>'+esc(x.source)+' · '+new Date(x.created_at).toLocaleString('es-ES')+'</small></div><div class="'+(x.status==='available'?'cpp-earn-positive':'cpp-earn-pending')+'">'+money(x.amount,x.currency)+'</div></div>').join(''):'<div class="empty">Todavía no hay ganancias registradas.</div>';
+ const rc=await d.rpc('cp_get_or_create_referral_code');
+ if(!rc.error){document.getElementById('cppEarnReferral').textContent='ACTIVO';document.getElementById('cppEarnCode').textContent='Tu código: '+esc(rc.data);document.getElementById('cppEarnCopy').dataset.code=rc.data}
+}
+async function publish(){
+ const d=db(); if(!d)return;
+ modal('Publicar en CubaPlusPay','<div class="cpp-earn-form"><select id="cppListKind"><option value="product">Producto</option><option value="service">Servicio</option></select><input id="cppListTitle" placeholder="Título"><textarea id="cppListDesc" rows="3" placeholder="Describe lo que vendes u ofreces"></textarea><input id="cppListPrice" type="number" min="0" step="any" placeholder="Precio"><select id="cppListCurrency"><option>CRX</option><option>CUP</option><option>USD</option><option>USDT</option><option>BTC</option></select><input id="cppListCategory" placeholder="Categoría"><div class="cpp-earn-actions"><button id="cppListSave" class="btn">Guardar publicación</button><button onclick="closeModal()" class="btn secondary">Cancelar</button></div><div id="cppListMsg"></div></div>');
+ document.getElementById('cppListSave').onclick=async()=>{const b=document.getElementById('cppListSave'),msg=document.getElementById('cppListMsg');b.disabled=true;try{const s=await d.auth.getUser();if(!s.data.user)throw new Error('Sesión requerida.');const {error}=await d.from('cp_business_listings').insert({owner_id:s.data.user.id,kind:document.getElementById('cppListKind').value,title:document.getElementById('cppListTitle').value.trim(),description:document.getElementById('cppListDesc').value.trim(),price:Number(document.getElementById('cppListPrice').value),currency:document.getElementById('cppListCurrency').value,category:document.getElementById('cppListCategory').value.trim(),status:'active'});if(error)throw error;msg.innerHTML='<div class="msg ok">✓ Publicación creada.</div>';setTimeout(()=>{closeModal();load().catch(()=>{})},500)}catch(e){msg.innerHTML='<div class="msg error">'+esc(e.message||e)+'</div>'}finally{b.disabled=false}};
+}
+async function request(){
+ const d=db(); if(!d)return;
+ modal('Publicar una necesidad','<div class="cpp-earn-form"><input id="cppReqTitle" placeholder="¿Qué necesitas?"><textarea id="cppReqDesc" rows="4" placeholder="Describe el trabajo o servicio"></textarea><input id="cppReqBudget" type="number" min="0" step="any" placeholder="Presupuesto opcional"><select id="cppReqCurrency"><option>CUP</option><option>CRX</option><option>USD</option><option>USDT</option><option>BTC</option></select><div class="cpp-earn-actions"><button id="cppReqSave" class="btn">Publicar necesidad</button><button onclick="closeModal()" class="btn secondary">Cancelar</button></div><div id="cppReqMsg"></div></div>');
+ document.getElementById('cppReqSave').onclick=async()=>{const b=document.getElementById('cppReqSave'),msg=document.getElementById('cppReqMsg');b.disabled=true;try{const s=await d.auth.getUser();if(!s.data.user)throw new Error('Sesión requerida.');const budget=document.getElementById('cppReqBudget').value;const {error}=await d.from('cp_service_requests').insert({requester_id:s.data.user.id,title:document.getElementById('cppReqTitle').value.trim(),description:document.getElementById('cppReqDesc').value.trim(),budget:budget?Number(budget):null,currency:document.getElementById('cppReqCurrency').value,status:'open'});if(error)throw error;msg.innerHTML='<div class="msg ok">✓ Necesidad publicada.</div>';setTimeout(closeModal,600)}catch(e){msg.innerHTML='<div class="msg error">'+esc(e.message||e)+'</div>'}finally{b.disabled=false}};
+}
+function mount(){
+ page();
+ if(!document.querySelector('[data-page="earn"]')){
+   document.querySelectorAll('.nav').forEach(n=>{const b=document.createElement('button');b.setAttribute('data-page','earn');b.innerHTML='<span class="ico">💰</span>Ganar dinero';b.onclick=()=>nav('earn');n.appendChild(b)});
+   const bot=document.querySelector('.bottom');if(bot){const b=document.createElement('button');b.setAttribute('data-page','earn');b.innerHTML='<span class="bi">💰</span>Ganar';b.onclick=()=>nav('earn');bot.appendChild(b)}
+ }
+ document.getElementById('cppEarnPublish')?.addEventListener('click',publish);
+ document.getElementById('cppEarnMarket')?.addEventListener('click',()=>nav('market'));
+ document.getElementById('cppEarnRequest')?.addEventListener('click',request);
+ document.getElementById('cppEarnCopy')?.addEventListener('click',async()=>{const code=document.getElementById('cppEarnCopy').dataset.code;if(code){try{await navigator.clipboard.writeText(code)}catch{}document.getElementById('cppEarnCode').textContent='Código copiado: '+code}});
+}
+window.__CPP_EARN__={mount,load,publish,request};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(mount,1800),{once:true});else setTimeout(mount,1800);
+})();
+</script>
+
 \n
