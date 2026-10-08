@@ -101,6 +101,20 @@ pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
   .island-click-button{width:145px;height:145px}
 }
 </style>
+<style id="cpp-home-only-mode-v2">
+/* Inicio: una sola puerta visible. Los módulos siguen existiendo y se abren desde Cuba Blue Smart. */
+.cpp-home-only-mode .side,
+.cpp-home-only-mode .top-actions,
+.cpp-home-only-mode .mobile-menu,
+.cpp-home-only-mode #pageTitle,
+.cpp-home-only-mode .page-sub{display:none!important}
+.cpp-home-only-mode .main{margin-left:0!important;width:100%!important}
+.cpp-home-only-mode .topbar{height:8px!important;min-height:8px!important;padding:0!important;border:0!important}
+.cpp-home-only-mode .topbar>*{display:none!important}
+.cpp-home-only-mode .page.active button:not([data-op="ai"]){display:none!important}
+.cpp-home-only-mode .cpp-ai-main[data-op="ai"]{display:flex!important}
+.cpp-home-only-mode .content{padding-top:10px}
+</style>
 
 <style id="cpp-v30-reference-home">
 .cpp-home-v30{display:grid;gap:12px}
@@ -310,7 +324,7 @@ const statusText=s=>({pending:'Pendiente',processing:'Procesando',completed:'Com
 const kycText=s=>({unverified:'No verificado',pending:'Pendiente',approved:'Aprobado',rejected:'Rechazado',expired:'Expirado',NOT_STARTED:'No iniciado'}[s]||s||'No iniciado');
 let signup=false,recovery=false,currentUser=null,gameSession=null;
 function user(){return currentUser;}
-function nav(page){if(!currentUser&&page!=='home')return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page)?.classList.add('active');if(page==='market'&&currentUser)loadMarketplace().catch(()=>{});if(page==='history'&&currentUser)loadData().catch(()=>{});document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const names={home:'Inicio',resolver:'Resolver mi día',wallet:'Billetera',transfer:'Transferir CRX',market:'Marketplace',game:'Juego CRX',profile:'Mi perfil',more:'Más',history:'Movimientos'};$('pageTitle').textContent=names[page]||'Inicio';$('side').classList.remove('open');scrollTo({top:0,behavior:'smooth'})}
+function nav(page){if(!currentUser&&page!=='home')return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$('page-'+page)?.classList.add('active');document.getElementById('shell')?.classList.toggle('cpp-home-only-mode',page==='home');if(page==='market'&&currentUser)loadMarketplace().catch(()=>{});if(page==='history'&&currentUser)loadData().catch(()=>{});document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));const names={home:'Inicio',resolver:'Resolver mi día',wallet:'Billetera',transfer:'Transferir CRX',market:'Marketplace',game:'Juego CRX',profile:'Mi perfil',more:'Más',history:'Movimientos'};$('pageTitle').textContent=names[page]||'Inicio';$('side').classList.remove('open');scrollTo({top:0,behavior:'smooth'})}
 function setAuth(){if(recovery)return;$('authTitle').textContent=signup?'Crear cuenta':'Iniciar sesión';$('authHint').textContent=signup?'Crea una cuenta real con correo y contraseña.':'Accede a tu cuenta real.';$('authBtn').textContent=signup?'Crear cuenta':'Entrar';$('modeBtn').textContent=signup?'Ya tengo cuenta':'Crear cuenta';show('newPassWrap',false);show('modeBtn',true);show('resetBtn',true);msg('authMsg','')}
 function renderTx(rows,target){const box=$(target);if(!box)return;box.innerHTML='';if(!rows?.length){box.innerHTML='<div class="empty">No hay movimientos registrados para esta cuenta.</div>';return}rows.forEach(x=>{const d=document.createElement('div');d.className='tx';const st=x.status;d.innerHTML='<div class="tx-icon">'+(x.type==='deposit'?'＋':x.type==='transfer'?'↗':x.type==='withdrawal'?'↙':'◈')+'</div><div><b>'+esc(x.type||'operación')+'</b><small>'+esc(x.created_at?new Date(x.created_at).toLocaleString('es-ES'):'')+' · '+esc(x.rail||'interno')+(x.reference?' · '+esc(x.reference):'')+'</small></div><div class="amount"><span class="'+(st==='completed'?'ok':st==='pending'||st==='processing'?'wait':'bad')+'">'+esc(statusText(st))+'</span><div>'+fmt(x.amount)+' '+esc(x.currency||'')+'</div></div>';box.appendChild(d)})}
 function renderWallets(rows){const box=$('wallets');box.innerHTML='';if(!rows?.length){box.innerHTML='<div class="empty">No existe una billetera registrada para esta cuenta.</div>';return}rows.forEach(x=>{const b=Number(x.balance)||0,l=Number(x.locked)||0,d=document.createElement('article');d.className='card wallet';d.innerHTML='<div class="wallet-head"><b>'+esc(x.currency)+'</b><span class="pill">v'+esc(x.version??'—')+'</span></div><div class="amount">'+fmt(b)+' '+esc(x.currency)+'</div><div class="available">Disponible: '+fmt(Math.max(0,b-l))+' · Bloqueado: '+fmt(l)+'</div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn secondary" data-wallet-action="deposit" data-currency="'+esc(x.currency)+'">Depositar</button><button class="btn secondary" data-wallet-action="withdraw" data-currency="'+esc(x.currency)+'">Retirar</button></div>';box.appendChild(d)})}
