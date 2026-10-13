@@ -2184,10 +2184,17 @@ const open=async(initial='')=>{
       const d=r.data||{};
       last.innerHTML='<b>Smart:</b> '+esc(d.answer||'No encontré una respuesta verificada.')+(d.verified?' <span class="life-chip">DATOS VERIFICADOS</span>':'')+(d.orchestrated?'<div class="notice" style="margin-top:8px"><b>Siguiente paso:</b> Smart ha analizado tu solicitud y el flujo seguro correspondiente está listo para continuar.</div>':'');
       const low=q.toLowerCase();
-      const action=(/p2p|escrow|comprar crx|vender crx|intercambiar/.test(low))?'p2p':(/recarg|nauta|saldo movil|saldo móvil|telefono|teléfono|celular/.test(low))?'recharge':(/marketplace|mercado|comprar producto|vender producto/.test(low))?'market':(/referid|comision|comisión|invitar/.test(low))?'referrals':(/transferir|transferencia|enviar dinero|mandar dinero/.test(low))?'transfer':(/billetera|wallet|depositar|retirar|retiro/.test(low))?'wallet':null;
+      const action=(/p2p|escrow|comprar crx|vender crx|intercambiar/.test(low))?'p2p':(/recarg|nauta|saldo movil|saldo móvil|telefono|teléfono|celular/.test(low))?'recharge':(/marketplace|mercado|comprar producto|vender producto/.test(low))?'market':(/referid|comision|comisión|invitar/.test(low))?'referrals':(/transferir|transferencia|enviar dinero|mandar dinero/.test(low))?'transfer':(/billetera|wallet|depositar|retirar|retiro|saldo|movimientos|historial/.test(low))?'wallet':null;
       if(action){
         const go=document.createElement('button');go.className='btn secondary';go.textContent='Llevarme al módulo';
-        go.onclick=()=>{try{if(window.__CPP_V40__?.open)window.__CPP_V40__.open(q);else if(action==='market'&&typeof nav==='function')nav('market');else if(action==='wallet'&&typeof nav==='function')nav('wallet')}catch{}};
+        go.onclick=async()=>{go.disabled=true;try{
+          if(action==='p2p'){if(typeof window.p2pPanel!=='function')throw new Error('El módulo P2P no está disponible en esta sesión.');await window.p2pPanel();}
+          else if(action==='recharge'){const fn=window.__CPP_CORE__?.rechargePanel||window.rechargePanel;if(typeof fn!=='function')throw new Error('El módulo de recargas no está disponible en esta sesión.');await fn();}
+          else if(action==='market'){if(typeof window.nav==='function')window.nav('market');else throw new Error('No se pudo abrir Marketplace.');}
+          else if(action==='wallet'){if(typeof window.nav==='function')window.nav('wallet');else throw new Error('No se pudo abrir Billetera.');}
+          else if(action==='transfer'){if(typeof window.nav==='function')window.nav('transfer');else throw new Error('No se pudo abrir Transferir CRX.');}
+          else if(action==='referrals'){const fn=window.referralsPanel||window.__CPP_CORE__?.referralsPanel;if(typeof fn!=='function')throw new Error('El módulo de referidos no está disponible en esta sesión.');await fn();}
+        }catch(e){const note=document.createElement('div');note.className='msg error';note.textContent=e?.message||'No se pudo abrir el módulo.';last.appendChild(note);}finally{go.disabled=false}};
         last.appendChild(document.createElement('br'));last.appendChild(go);
       }
     }catch(e){last.innerHTML='<b>Smart:</b> No pude consultar el servicio inteligente ahora. '+esc(e?.message||e)}
@@ -2204,6 +2211,6 @@ const wire=()=>{
 };
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
 new MutationObserver(wire).observe(document.body,{childList:true,subtree:true});
-window.__CPP_BLUE_SMART_FINAL__={open,removeLegacy,version:'FINAL-2026-10-08'};
+window.__CPP_BLUE_SMART_FINAL__={open,removeLegacy,version:'FINAL-TEXT-ONLY-2026-10-12'};
 })();
 </script>
