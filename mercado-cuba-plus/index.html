@@ -178,4 +178,48 @@ el("storeTitle").textContent=settings.name;updateRateCard();drawCats();drawProdu
   document.getElementById("returnHome").addEventListener("click",function(){document.body.classList.remove("app-open");window.scrollTo(0,0)});
   document.querySelectorAll("[data-splash-action]").forEach(function(b){b.addEventListener("click",function(){openMarketView(b.getAttribute("data-splash-action"));});});
 })();
-</script></body></html>
+</script>
+
+<script>
+/* MCP recovery: navegación independiente para garantizar respuesta a los toques */
+(function(){
+  "use strict";
+  function byId(id){return document.getElementById(id);}
+  function openMarket(action){
+    var body=document.body;
+    if(action==="login"){
+      var emailModal=byId("emailLoginModal");
+      if(emailModal){if(byId("customerEmail"))byId("customerEmail").value=localStorage.getItem("mcp_customer_email")||"";emailModal.classList.add("open");emailModal.style.display="flex";return;}
+      body.classList.add("app-open");window.scrollTo(0,0);return;
+    }
+    if(action==="admin"){
+      var adminModal=byId("adminAuthModal");
+      if(adminModal){adminModal.classList.add("open");adminModal.style.display="flex";return;}
+      alert("El acceso de administrador no pudo cargarse. Recarga la página e inténtalo de nuevo.");return;
+    }
+    body.classList.add("app-open");
+    var target=null;
+    if(action==="products")target=byId("products");
+    else if(action==="search")target=byId("search");
+    else if(action==="cart")target=document.querySelector(".cart");
+    else if(action==="categories")target=byId("cats");
+    else if(action==="rate")target=document.querySelector(".ratecard");
+    else if(action==="orders"){
+      var ordersModal=byId("customerOrdersModal");
+      if(ordersModal){ordersModal.classList.add("open");ordersModal.style.display="flex";return;}
+      alert("La sección Mis pedidos se está cargando. Prueba nuevamente en unos segundos.");return;
+    } else if(action==="contact"){var call=byId("call");if(call){call.click();return;}}
+    if(target){target.scrollIntoView({behavior:"smooth",block:"start"});if(action==="search"&&byId("search"))setTimeout(function(){byId("search").focus();},250);}
+  }
+  document.addEventListener("click",function(ev){
+    var b=ev.target&&ev.target.closest?ev.target.closest("[data-splash-action]"):null;
+    if(!b)return;
+    ev.preventDefault();ev.stopPropagation();if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();
+    openMarket(b.getAttribute("data-splash-action"));
+  },true);
+  var home=byId("returnHome");
+  if(home)home.addEventListener("click",function(){document.body.classList.remove("app-open");window.scrollTo(0,0);});
+})();
+</script>
+
+</body></html>
