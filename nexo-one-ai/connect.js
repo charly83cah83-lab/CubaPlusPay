@@ -23,7 +23,7 @@ async function settings(){
  $('#nxLogout').onclick=async()=>{if(supa)await supa.auth.signOut();$('#nxStatus').textContent='Sesión cerrada.'};
  if(supa){const {data,error}=await supa.auth.getSession();$('#nxStatus').textContent=error?error.message:(data.session?'Sesión activa: '+data.session.user.email:'Conexión lista; falta iniciar sesión.')}
 }
-function wireButton(){if(!$('#settingsBtn')){const top=document.querySelector('.top');if(top){const b=document.createElement('button');b.id='settingsBtn';b.className='btn ghost';b.textContent='Conectar IA';b.style.padding='9px 11px';top.appendChild(b);b.addEventListener('click',settings)}}}
+function wireButton(){if(!$('#settingsBtn')){const top=document.querySelector('.top');if(top){const b=document.createElement('button');b.id='settingsBtn';b.className='btn ghost';b.textContent='Conectar IA';b.style.padding='9px 11px';top.appendChild(b)}}}
 function wrapRun(){
  if(typeof window.runIdea!=='function'||window.runIdea.__nexoRemote)return;
  const local=window.runIdea;
