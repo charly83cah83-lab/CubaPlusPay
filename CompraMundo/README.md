@@ -1,28 +1,35 @@
-# CompraMundo
+# CompraMundo — Auditoría V1
 
-Interfaz inicial futurista para compras globales y una futura billetera multimoneda.
+Plataforma en desarrollo para explorar comercios internacionales y, en fases posteriores, gestionar pedidos y una billetera multimoneda. La moneda interna propuesta se llama **CRX** (antes CMX).
 
 ## Publicación
-La interfaz está en `CompraMundo/index.html`. Si GitHub Pages está habilitado para la rama `main` y la raíz del repositorio, se puede abrir en:
-https://charly83cah83-lab.github.io/CubaPlusPay/CompraMundo/
+Interfaz: https://charly83cah83-lab.github.io/CubaPlusPay/CompraMundo/
 
-## Estado real
-- Los accesos de Temu, Amazon y eBay abren búsquedas en sus webs; no hay checkout unificado ni catálogo sincronizado.
-- CMX es una propuesta, no una criptomoneda emitida, no tiene valor de cambio garantizado y no es transferible.
-- No hay depósitos, retiros, conversiones, custodia ni pagos reales habilitados.
-- No hay autenticación conectada en esta página; el botón de acceso no solicita ni almacena contraseñas.
-- La tasa del convertidor es manual y solo hace cálculos locales.
+## Hallazgos de la auditoría del código
+- La página es una interfaz estática HTML/CSS/JavaScript.
+- Los botones de Temu, Amazon y eBay abren búsquedas externas; no hay catálogo unificado, carrito compartido ni checkout integrado.
+- La billetera, los saldos, la actividad y el acceso son marcadores visuales; no están conectados a autenticación ni a un backend financiero.
+- El convertidor usa una tasa introducida manualmente, sin cotización de mercado.
+- No se deben aceptar depósitos, retiros ni pagos desde esta versión.
+- `supabase/schema.sql` es un borrador no aplicado; no se ha confirmado el esquema real del proyecto Supabase.
+- Se actualizó el símbolo interno en la interfaz y el esquema de borrador de CMX a CRX. Si ya existen datos o restricciones con CMX en una base de datos, la migración debe ser revisada y ejecutada explícitamente; cambiar archivos de GitHub no modifica la base de datos.
 
-## Backend Supabase
-`supabase/schema.sql` es un borrador de esquema con RLS. No se ha aplicado a ningún proyecto. Antes de usarlo, revisar las tablas existentes y migraciones para evitar conflictos, aplicar en un proyecto de desarrollo y ejecutar pruebas de seguridad. La integración de Supabase no estaba disponible para este espacio de trabajo cuando se preparó este commit.
+## Arquitectura prevista
+1. Supabase Auth, confirmación de correo, recuperación de acceso y perfiles.
+2. Autorización de servidor y roles, incluido un rol de propietario/admin asignado de forma segura.
+3. Pedidos, catálogo autorizado e historial.
+4. Libro contable de doble entrada, movimientos inmutables e idempotencia.
+5. Integración de proveedores de pago con webhooks verificados y conciliación.
+6. Políticas RLS, auditoría, límites, prevención de fraude y pruebas.
+7. Integraciones comerciales solo mediante APIs/programas autorizados.
 
-## Próximas etapas antes de manejar dinero real
-1. Confirmar el proyecto Supabase correcto y aplicar migraciones revisadas en una rama/proyecto de pruebas.
-2. Implementar Auth, recuperación de cuenta y roles administrativos con privilegios definidos en servidor.
-3. Implementar libro contable de doble entrada e idempotencia; ningún cliente debe poder modificar saldos directamente.
-4. Integrar proveedores autorizados para pagos y comprobar webhooks firmados y conciliación antes de acreditar fondos.
-5. Integrar catálogos/checkout solo mediante API y programas autorizados de cada comercio.
-6. Revisar requisitos legales, KYC/AML, sanciones, impuestos y disponibilidad por país antes de emitir o intercambiar activos.
-7. Auditar y probar con fondos ficticios en entorno de pruebas antes de producción.
+## Bloqueos antes de producción
+- Confirmar acceso al proyecto Supabase correcto y revisar tablas, migraciones, funciones, RLS y asesores de seguridad.
+- No aplicar el esquema borrador a ciegas ni duplicar tablas existentes.
+- Definir la naturaleza jurídica y económica de CRX antes de emitirla, asignarle valor o permitir transferencias.
+- Confirmar proveedores disponibles para los países objetivo, sus requisitos y las condiciones legales.
+- Mantener secretos únicamente en variables seguras del servidor; nunca en HTML público ni en GitHub.
+- No activar dinero real hasta superar pruebas funcionales, de seguridad, conciliación y recuperación.
 
-Nunca almacenar claves secretas de proveedor, claves de servicio Supabase o claves privadas de criptomonedas en el frontend o en GitHub.
+## Próximo paso
+Completar la auditoría del backend Supabase con acceso autorizado. La integración directa no pudo verificarse en esta sesión; por ello no se afirma que el backend esté conectado ni que el esquema se haya desplegado.
