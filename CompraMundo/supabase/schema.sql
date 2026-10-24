@@ -13,7 +13,7 @@ create table if not exists public.cm_profiles (
 create table if not exists public.cm_wallets (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete restrict,
-  asset_code text not null check (asset_code in ('CMX','USD','CUP','EUR','USDT','USDC','BTC','ETH')),
+  asset_code text not null check (asset_code in ('CRX','USD','CUP','EUR','USDT','USDC','BTC','ETH')),
   status text not null default 'pending' check (status in ('pending','active','frozen','closed')),
   created_at timestamptz not null default now(),
   unique(user_id, asset_code)
@@ -39,7 +39,7 @@ create table if not exists public.cm_ledger_entries (
   transaction_id uuid not null,
   entry_kind text not null check (entry_kind in ('credit','debit','hold','release','reversal','fee')),
   amount numeric(20,8) not null check (amount > 0),
-  asset_code text not null check (asset_code in ('CMX','USD','CUP','EUR','USDT','USDC','BTC','ETH')),
+  asset_code text not null check (asset_code in ('CRX','USD','CUP','EUR','USDT','USDC','BTC','ETH')),
   status text not null default 'pending' check (status in ('pending','posted','reversed','failed')),
   reference text not null,
   created_at timestamptz not null default now(),
