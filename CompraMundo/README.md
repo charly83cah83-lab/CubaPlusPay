@@ -1,28 +1,45 @@
-# CompraMundo
+# CompraMundo — V2 en desarrollo
 
-Interfaz inicial futurista para compras globales y una futura billetera multimoneda.
+CompraMundo es una interfaz móvil para explorar tiendas, consultar una wallet CRX y registrar solicitudes de compra por enlace. CRX es una unidad interna propuesta; no es una criptomoneda pública ni tiene un valor de cambio garantizado.
 
-## Publicación
-La interfaz está en `CompraMundo/index.html`. Si GitHub Pages está habilitado para la rama `main` y la raíz del repositorio, se puede abrir en:
-https://charly83cah83-lab.github.io/CubaPlusPay/CompraMundo/
+## Código y vista previa
+- Frontend: `index.html` (HTML/CSS/JavaScript modular con Supabase JS).
+- Vista prevista en GitHub Pages: https://charly83cah83-lab.github.io/CubaPlusPay/CompraMundo/
+- Rama de trabajo: `feature/compramundo-supabase-auth-orders`.
+- PR de implementación: https://github.com/charly83cah83-lab/CubaPlusPay/pull/2
 
-## Estado real
-- Los accesos de Temu, Amazon y eBay abren búsquedas en sus webs; no hay checkout unificado ni catálogo sincronizado.
-- CMX es una propuesta, no una criptomoneda emitida, no tiene valor de cambio garantizado y no es transferible.
-- No hay depósitos, retiros, conversiones, custodia ni pagos reales habilitados.
-- No hay autenticación conectada en esta página; el botón de acceso no solicita ni almacena contraseñas.
-- La tasa del convertidor es manual y solo hace cálculos locales.
+## Backend verificado
+Proyecto Supabase: `zccgesqiztrtuapffevz`.
 
-## Backend Supabase
-`supabase/schema.sql` es un borrador de esquema con RLS. No se ha aplicado a ningún proyecto. Antes de usarlo, revisar las tablas existentes y migraciones para evitar conflictos, aplicar en un proyecto de desarrollo y ejecutar pruebas de seguridad. La integración de Supabase no estaba disponible para este espacio de trabajo cuando se preparó este commit.
+La migración `compramundo_v1_core_crx_wallet_orders` se aplicó y se verificaron estas tablas con RLS activado:
+- `cm_profiles`
+- `cm_wallets`
+- `cm_ledger_entries`
+- `cm_orders`
+- `cm_payment_intents`
+- `cm_provider_events`
+- `cm_admin_members`
 
-## Próximas etapas antes de manejar dinero real
-1. Confirmar el proyecto Supabase correcto y aplicar migraciones revisadas en una rama/proyecto de pruebas.
-2. Implementar Auth, recuperación de cuenta y roles administrativos con privilegios definidos en servidor.
-3. Implementar libro contable de doble entrada e idempotencia; ningún cliente debe poder modificar saldos directamente.
-4. Integrar proveedores autorizados para pagos y comprobar webhooks firmados y conciliación antes de acreditar fondos.
-5. Integrar catálogos/checkout solo mediante API y programas autorizados de cada comercio.
-6. Revisar requisitos legales, KYC/AML, sanciones, impuestos y disponibilidad por país antes de emitir o intercambiar activos.
-7. Auditar y probar con fondos ficticios en entorno de pruebas antes de producción.
+El frontend V2 añade:
+- Supabase Auth: entrar, crear cuenta, cerrar sesión y recuperar contraseña.
+- Lectura de balances desde `cm_wallets`; no se permite escribir balances desde el navegador.
+- Solicitudes draft de compra por enlace en `cm_orders`.
+- Historial de pedidos del usuario autenticado.
 
-Nunca almacenar claves secretas de proveedor, claves de servicio Supabase o claves privadas de criptomonedas en el frontend o en GitHub.
+## Lo que todavía NO está habilitado
+- Recargas, retiros, conversiones ni acreditación de CRX.
+- Integración real con QvaPay o CubaPay.
+- Compra automática o checkout con Amazon, eBay o Temu.
+- Panel administrativo y asignación segura del rol de propietario.
+- Cotizaciones definitivas de productos, envíos o comisiones.
+
+Los enlaces externos permiten navegar por las tiendas; no significan que acepten CRX directamente. Los pedidos enviados son solicitudes, no compras pagadas ni cotizaciones finales.
+
+## Seguridad y pruebas pendientes
+- Configurar y probar las URL de confirmación y recuperación de Auth en Supabase.
+- Ejecutar pruebas de registro, login, sesión, lectura de wallets y creación/listado de pedidos con una cuenta de prueba.
+- Resolver los avisos informativos del asesor de seguridad para las tablas privadas `cm_admin_members` y `cm_provider_events` sin abrir acceso a usuarios normales.
+- Implementar funciones de servidor con idempotencia, verificación de eventos y conciliación antes de cualquier acreditación.
+- Definir el modelo económico/legal de CRX y confirmar compatibilidad de proveedores por país.
+
+No se deben manejar fondos reales hasta completar las pruebas funcionales, de autorización, conciliación, recuperación y revisión legal.
