@@ -4,18 +4,18 @@ const $=s=>document.querySelector(s);
 let supa=null;
 function cfg(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(_){return {}}}
 function init(){const c=cfg();if(c.url&&c.key&&window.supabase&&window.supabase.createClient){try{supa=window.supabase.createClient(c.url,c.key)}catch(_){supa=null}}return supa}
-function escape(s){return String(s||'').replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]))}
-function panel(title,html){const w=$('#work');w.innerHTML='<section class="card"><div class="workhead"><h2>'+title+'</h2><button class="btn ghost" id="nxClose">Cerrar ×</button></div>'+html+'</section>';w.scrollIntoView({behavior:'smooth',block:'start'});$('#nxClose').onclick=()=>w.replaceChildren()}
+function escape(s){return String(s??'').replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]))}
+function panel(title,html){const w=$('#work');w.innerHTML='<section class="card"><div class="workhead"><h2>'+escape(title)+'</h2><button class="btn ghost" id="nxClose">Cerrar ×</button></div>'+html+'</section>';w.scrollIntoView({behavior:'smooth',block:'start'});$('#nxClose').onclick=()=>w.replaceChildren()}
 async function settings(){
  const c=cfg();init();
- const html='<p class="muted">Conecta un proyecto Supabase. Usa solo la URL del proyecto y la clave pública publishable/anon. Nunca introduzcas una clave service_role ni una clave privada de IA.</p>'+
+ const html='<p class="muted">Conecta tu proyecto Supabase con la URL y la clave pública publishable/anon. Nunca introduzcas aquí una clave service_role ni una clave privada de IA.</p>'+
  '<div class="field"><label>Supabase Project URL</label><input id="nxUrl" placeholder="https://proyecto.supabase.co" value="'+escape(c.url)+'"></div>'+
  '<div class="field"><label>Clave pública publishable / anon</label><input id="nxKey" placeholder="sb_publishable_… o anon key" value="'+escape(c.key)+'"></div>'+
- '<button class="btn" id="nxSave">Guardar conexión</button><div class="sep"></div>'+
- '<h3>Cuenta de usuario</h3><div class="field"><label>Correo</label><input id="nxEmail" type="email" autocomplete="email"></div>'+
+ '<button class="btn" id="nxSave">Guardar conexión</button><div class="sep"></div><h3>Cuenta de usuario</h3>'+
+ '<div class="field"><label>Correo</label><input id="nxEmail" type="email" autocomplete="email"></div>'+
  '<div class="field"><label>Contraseña</label><input id="nxPass" type="password" autocomplete="current-password"></div>'+
  '<div class="row"><button class="btn" id="nxLogin">Iniciar sesión</button><button class="btn secondary" id="nxSignup">Crear cuenta</button><button class="btn ghost" id="nxLogout">Cerrar sesión</button></div>'+
- '<div id="nxStatus" class="result">Sin conexión configurada.</div><div class="notice">Para usar IA real, debe desplegarse la función nexo-ai y guardarse OPENAI_API_KEY como secreto en Supabase. Los pagos todavía no están activos.</div>';
+ '<div id="nxStatus" class="result">Sin conexión configurada.</div><div class="notice">La IA real se ejecuta en el backend nexo-ai. La clave de OpenAI permanece en los secretos de Supabase; nunca la pongas en esta página.</div>';
  panel('NEXO CONNECT · Conexión segura',html);
  $('#nxSave').onclick=()=>{const url=$('#nxUrl').value.trim().replace(/\/$/,'');const key=$('#nxKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)||!key){$('#nxStatus').textContent='Revisa la URL y la clave pública.';return}localStorage.setItem(KEY,JSON.stringify({url,key}));init();$('#nxStatus').textContent=supa?'Conexión guardada. Inicia sesión.':'No se pudo iniciar el cliente Supabase.'};
  $('#nxLogin').onclick=async()=>{if(!init())return $('#nxStatus').textContent='Guarda primero la conexión.';const {data,error}=await supa.auth.signInWithPassword({email:$('#nxEmail').value.trim(),password:$('#nxPass').value});$('#nxStatus').textContent=error?error.message:'Sesión iniciada: '+data.user.email;$('#nxPass').value=''};
@@ -24,16 +24,28 @@ async function settings(){
  if(supa){const {data,error}=await supa.auth.getSession();$('#nxStatus').textContent=error?error.message:(data.session?'Sesión activa: '+data.session.user.email:'Conexión lista; falta iniciar sesión.')}
 }
 function wireButton(){if(!$('#settingsBtn')){const top=document.querySelector('.top');if(top){const b=document.createElement('button');b.id='settingsBtn';b.className='btn ghost';b.textContent='Conectar IA';b.style.padding='9px 11px';top.appendChild(b)}}}
-function wrapRun(){
- if(typeof window.runIdea!=='function'||window.runIdea.__nexoRemote)return;
- const local=window.runIdea;
- const remote=async function(text,mode){
-  const c=init();
-  if(c){try{const {data:s}=await c.auth.getSession();if(s&&s.session){panel('NEXO AI · Procesando','<p class="muted">La solicitud se está enviando al backend seguro.</p><div class="result">Esperando respuesta del modelo…</div>');const {data,error}=await c.functions.invoke('nexo-ai',{body:{prompt:String(text||'').slice(0,8000),mode:mode||'business'}});if(error)throw error;if(typeof window.showResult==='function')return window.showResult('NEXO AI · Resultado',String(data&&data.answer||'La IA no devolvió texto.'),mode||'brain');const box=$('#work');box.innerHTML='<section class="card"><div class="workhead"><h2>NEXO AI · Resultado</h2><button class="btn ghost" id="nxClose">Cerrar ×</button></div><div class="result">'+escape(data&&data.answer)+'</div></section>';$('#nxClose').onclick=()=>box.replaceChildren();return}}catch(e){panel('NEXO AI · Error de conexión','<div class="notice">'+escape(e&&e.message||e)+'</div><p class="muted">Comprueba que la función nexo-ai está desplegada y que OPENAI_API_KEY está configurada como secreto en Supabase.</p>');return}}
-  return local(text,mode);
- };
- remote.__nexoRemote=true;window.runIdea=remote;
+async function generate(prompt,mode){
+ if(!prompt||prompt.trim().length<10){alert('Describe tu idea con al menos 10 caracteres.');return}
+ const c=init();
+ if(!c){panel('Conecta NEXO primero','<p>Para usar el modelo de IA, pulsa <b>Conectar IA</b>, guarda la URL y la clave pública de Supabase, y luego inicia sesión.</p>');return}
+ const {data:sessionData,error:sessionError}=await c.auth.getSession();
+ if(sessionError||!sessionData.session){panel('Inicia sesión para generar','<p>Abre <b>Conectar IA</b>, configura Supabase e inicia sesión. La función requiere una sesión autenticada.</p>');return}
+ panel('NEXO AI · Procesando','<p class="muted">Enviando tu instrucción al backend seguro…</p><div class="result">NEXO BRAIN está preparando el resultado.</div>');
+ try{
+  const {data,error}=await c.functions.invoke('nexo-ai',{body:{prompt:prompt.trim().slice(0,20000),mode:mode||'app_blueprint'}});
+  if(error)throw error;
+  if(!data||!data.ok||!data.result)throw new Error((data&&data.error)||'La IA no devolvió un resultado válido.');
+  panel('NEXO AI · Resultado','<p class="muted">Respuesta generada por el modelo: '+escape(data.model||'OpenAI')+'. Esto es un plan/especificación; aún no es una aplicación desplegada.</p><div class="result" id="nxResult">'+escape(data.result)+'</div><div class="row" style="margin-top:10px"><button class="btn" id="nxDownload">Exportar resultado TXT</button></div>');
+  $('#nxDownload').onclick=()=>{const blob=new Blob([data.result],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nexo-ai-especificacion.txt';a.click();URL.revokeObjectURL(url)};
+ }catch(e){panel('NEXO AI · Error','<div class="notice">'+escape(e&&e.message||e)+'</div><p class="muted">Revisa la sesión, el secreto OPENAI_API_KEY y los registros de la función. No compartas claves privadas.</p>')}
 }
-function boot(){wireButton();init();wrapRun();const b=$('#settingsBtn');if(b)b.addEventListener('click',settings);setTimeout(wrapRun,100)}
+function intercept(id,getPrompt,getMode){const b=$(id);if(!b||b.dataset.nexoBound)return;b.dataset.nexoBound='1';b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();generate(getPrompt(),getMode())},true)}
+function boot(){wireButton();init();const b=$('#settingsBtn');if(b)b.addEventListener('click',settings);intercept('#runMain',()=>$('#mainPrompt')?.value||'','app_blueprint');
+ document.addEventListener('click',e=>{const b=e.target.closest('#genApp,#brainGo,#goalGo');if(!b)return;
+  if(b.id==='genApp'){e.preventDefault();e.stopImmediatePropagation();generate((($('#appName')?.value||'Nueva aplicación')+' — '+($('#appDesc')?.value||'')),'app_blueprint')}
+  else if(b.id==='brainGo'){e.preventDefault();e.stopImmediatePropagation();generate($('#brainIdea')?.value||'','business_plan')}
+  else {e.preventDefault();e.stopImmediatePropagation();generate($('#goal')?.value||'',b.id==='goalGo'?'workflow':'business_plan')}
+ },true);
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
