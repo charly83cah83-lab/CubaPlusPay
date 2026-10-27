@@ -39,6 +39,7 @@ async function generate(prompt,mode){
   $('#nxDownload').onclick=()=>{const blob=new Blob([data.result],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nexo-ai-especificacion.txt';a.click();URL.revokeObjectURL(url)};
  }catch(e){panel('NEXO AI · Error','<div class="notice">'+escape(e&&e.message||e)+'</div><p class="muted">Revisa la sesión, el secreto OPENAI_API_KEY y los registros de la función. No compartas claves privadas.</p>')}
 }
+window.nexoGenerate=generate;
 function intercept(id,getPrompt,getMode){const b=$(id);if(!b||b.dataset.nexoBound)return;b.dataset.nexoBound='1';b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();generate(getPrompt(),getMode())},true)}
 function boot(){wireButton();init();const b=$('#settingsBtn');if(b)b.addEventListener('click',settings);intercept('#runMain',()=>$('#mainPrompt')?.value||'','app_blueprint');
  document.addEventListener('click',e=>{const b=e.target.closest('#genApp,#brainGo,#goalGo');if(!b)return;
