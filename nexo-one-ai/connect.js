@@ -48,6 +48,6 @@ function boot(){wireButton();init();const b=$('#settingsBtn');if(b)b.addEventLis
  },true);
 }
 window.nexoOpenSettings=settings;
-document.addEventListener('click',function(e){const b=e.target&&e.target.closest?e.target.closest('#settingsBtn'):null;if(!b)return;e.preventDefault();settings().catch(err=>{const w=$('#work');if(w)w.textContent='No se pudo abrir Conectar IA: '+(err&&err.message?err.message:'error inesperado');});},true);
+document.addEventListener('click',function(e){const b=e.target&&e.target.closest?e.target.closest('#settingsBtn'):null;if(!b)return;e.preventDefault();e.stopImmediatePropagation();settings().catch(err=>{const w=$('#work');if(w)w.textContent='No se pudo abrir Conectar IA: '+(err&&err.message?err.message:'error inesperado');});},true);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
